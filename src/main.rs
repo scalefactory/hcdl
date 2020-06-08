@@ -11,7 +11,10 @@ use sha2::{
     Digest,
     Sha256,
 };
-use std::fs::File;
+use std::fs::{
+    File,
+    OpenOptions,
+};
 use std::io::{
     self,
     prelude::*,
@@ -19,6 +22,10 @@ use std::io::{
 };
 use std::path::Path;
 use tokio;
+use zip::ZipArchive;
+
+#[cfg(target_family = "unix")]
+use std::os::unix::fs::OpenOptionsExt;
 
 // conditionally compiled OS names
 #[cfg(target_os = "freebsd")]
@@ -244,6 +251,39 @@ async fn check_shasum_sig(url: &str, content: &str) -> Result<()> {
     }?;
 
     println!("Signature of SHASUM256 file verified.");
+
+    Ok(())
+}
+
+fn unzip(zipfile: &str, filename: &str, dest: &str) -> Result<()> {
+    println!(
+        "Unzipping '{filename}' from '{zipfile}' to '{dest}'",
+        filename=filename,
+        zipfile=zipfile,
+        dest=dest,
+    );
+
+    let path = Path::new(zipfile);
+    let file = File::open(&path).expect("open zipfile");
+
+    let mut zip    = ZipArchive::new(file).expect("new ziparchive");
+    let mut wanted = zip.by_name(filename).expect("find zip contents");
+
+    let dest = Path::new(dest);
+    let dest = dest.join(filename);
+
+    let mut options = OpenOptions::new();
+
+    #[cfg(target_family = "unix")]
+    options.mode(0o755);
+
+    let mut writer = options
+        .create(true)
+        .write(true)
+        .truncate(true)
+        .open(&dest)?;
+
+    io::copy(&mut wanted, &mut writer)?;
 
     Ok(())
 }
