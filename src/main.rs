@@ -20,7 +20,10 @@ use std::io::{
     prelude::*,
     BufReader,
 };
-use std::path::Path;
+use std::path::{
+    Path,
+    PathBuf,
+};
 use tokio;
 use zip::ZipArchive;
 
@@ -255,12 +258,12 @@ async fn check_shasum_sig(url: &str, content: &str) -> Result<()> {
     Ok(())
 }
 
-fn unzip(zipfile: &str, filename: &str, dest: &str) -> Result<()> {
+fn unzip(zipfile: &str, filename: &str, dest: &PathBuf) -> Result<()> {
     println!(
         "Unzipping '{filename}' from '{zipfile}' to '{dest}'",
         filename=filename,
         zipfile=zipfile,
-        dest=dest,
+        dest=dest.display(),
     );
 
     let path = Path::new(zipfile);
@@ -269,7 +272,6 @@ fn unzip(zipfile: &str, filename: &str, dest: &str) -> Result<()> {
     let mut zip    = ZipArchive::new(file).expect("new ziparchive");
     let mut wanted = zip.by_name(filename).expect("find zip contents");
 
-    let dest = Path::new(dest);
     let dest = dest.join(filename);
 
     let mut options = OpenOptions::new();
@@ -290,6 +292,14 @@ fn unzip(zipfile: &str, filename: &str, dest: &str) -> Result<()> {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    let bin_dir = match dirs::executable_dir() {
+        Some(dir) => dir,
+        None      => {
+            eprintln!("Couldn't find local executable dir. Is $HOME broken?");
+            ::std::process::exit(1);
+        }
+    };
+
     let latest     = check_version("terraform").await?;
     let url_prefix = &latest.current_download_url;
     let info       = get_version(url_prefix).await?;
@@ -334,6 +344,8 @@ async fn main() -> Result<()> {
             ::std::process::exit(1);
         },
     };
+
+    unzip(filename, "terraform", &bin_dir)?;
 
     Ok(())
 }
