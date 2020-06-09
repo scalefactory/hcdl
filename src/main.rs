@@ -30,34 +30,7 @@ use zip::ZipArchive;
 #[cfg(target_family = "unix")]
 use std::os::unix::fs::OpenOptionsExt;
 
-// conditionally compiled OS names
-#[cfg(target_os = "freebsd")]
-const OS: &'static str = "freebsd";
-
-#[cfg(target_os = "linux")]
-const OS: &'static str = "linux";
-
-#[cfg(target_os = "mac_os")]
-const OS: &'static str = "darwin";
-
-#[cfg(target_os = "openbsd")]
-const OS: &'static str = "openbsd";
-
-#[cfg(target_os = "solaris")]
-const OS: &'static str = "solaris";
-
-#[cfg(target_os = "windows")]
-const OS: &'static str = "windows";
-
-// Conditional architectures
-#[cfg(target_arch = "arm")]
-const ARCH: &'static str = "arm";
-
-#[cfg(target_arch = "x86")]
-const ARCH: &'static str = "386";
-
-#[cfg(target_arch = "x86_64")]
-const ARCH: &'static str = "amd64";
+mod cli;
 
 const HASHICORP_GPG_KEY: &'static str = include_str!("../gpg/hashicorp.asc");
 
@@ -300,6 +273,12 @@ async fn main() -> Result<()> {
         }
     };
 
+    let matches = cli::parse_args();
+
+    // Pull options from matches
+    let arch = matches.value_of("ARCH").unwrap();
+    let os = matches.value_of("OS").unwrap();
+
     let latest     = check_version("terraform").await?;
     let url_prefix = &latest.current_download_url;
     let info       = get_version(url_prefix).await?;
@@ -319,17 +298,25 @@ async fn main() -> Result<()> {
         shasums_sig=info.shasums_signature,
     );
 
-    let build = get_build(&info.builds, ARCH, OS).unwrap();
+    let build = get_build(&info.builds, arch, os).unwrap();
     // println!("{:#?}", build);
 
     let download_url = &build.url;
     let filename     = &build.filename;
 
-    download_file(download_url, filename).await?;
+    // Download SHASUMS file
     let shasums = get_shasums(&shasums_url).await?;
+
+    // Verify the SHASUMS file against its signature
     check_shasum_sig(&shasums_sig, &shasums).await?;
+
+    // Get the specific SHASUM for the file we want to download
     let shasum = get_shasum(&shasums, filename).await?;
 
+    // Download the product
+    download_file(download_url, filename).await?;
+
+    // Ensure the SHASUM is correct
     match check_sha256(&shasum, filename)? {
         ChecksumResult::Good => {
             println!("SHA256 of {filename} OK.", filename=filename);
