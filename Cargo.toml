@@ -1,9 +1,24 @@
 [package]
 name = "hcdl"
+description = "Easily download and update HashiCorp tools"
 version = "0.1.0"
 authors = ["David O'Rourke <david.orourke@gmail.com>"]
 edition = "2018"
-license = "Apache-2.0 or MIT"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+homepage = "https://github.com/phyber/hcdl"
+repository = "https://github.com/phyber/hcdl"
+categories = [
+    "command-line-utilities",
+]
+keywords = [
+    "cli",
+    "hashicorp",
+]
+exclude = [
+    ".gitignore",
+    ".github",
+]
 
 [dependencies]
 anyhow = "1.0"
