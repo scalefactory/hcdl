@@ -1,4 +1,4 @@
-// HTTP client
+// client: HTTP client and associated methods
 use anyhow::Result;
 use indicatif::{
     ProgressBar,

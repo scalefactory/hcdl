@@ -1,3 +1,4 @@
+// cli: Handle command line parsing
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
 use clap::{

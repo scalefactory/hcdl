@@ -1,56 +1,13 @@
 // hcdl: Easily update Hashicorp tools
 use anyhow::Result;
-use std::fs::{
-    File,
-    OpenOptions,
-};
-use std::io;
-use std::path::{
-    Path,
-    PathBuf,
-};
+use std::path::Path;
 use tokio;
-use zip::ZipArchive;
-
-#[cfg(target_family = "unix")]
-use std::os::unix::fs::OpenOptionsExt;
 
 mod cli;
 mod client;
+mod install;
 mod shasums;
 mod signature;
-
-fn install(zipfile: &str, filename: &str, dest: &PathBuf) -> Result<()> {
-    println!(
-        "Unzipping '{filename}' from '{zipfile}' to '{dest}'",
-        filename=filename,
-        zipfile=zipfile,
-        dest=dest.display(),
-    );
-
-    let path = Path::new(zipfile);
-    let file = File::open(&path).expect("open zipfile");
-
-    let mut zip    = ZipArchive::new(file).expect("new ziparchive");
-    let mut wanted = zip.by_name(filename).expect("find zip contents");
-
-    let dest = dest.join(filename);
-
-    let mut options = OpenOptions::new();
-
-    #[cfg(target_family = "unix")]
-    options.mode(0o755);
-
-    let mut writer = options
-        .create(true)
-        .write(true)
-        .truncate(true)
-        .open(&dest)?;
-
-    io::copy(&mut wanted, &mut writer)?;
-
-    Ok(())
-}
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -152,7 +109,21 @@ async fn main() -> Result<()> {
             }
         };
 
-        install(filename, product, &bin_dir)?;
+        println!(
+            "Unzipping '{product}' from '{zipfile}' to '{dest}'...",
+            product=product,
+            zipfile=filename,
+            dest=bin_dir.display(),
+        );
+
+        match install::install(filename, product, &bin_dir) {
+            Ok(_)  => println!("  Installation successful."),
+            Err(e) => {
+                eprintln!("  Installation failed with error: {}", e);
+
+                ::std::process::exit(1);
+            }
+        }
     }
 
     Ok(())

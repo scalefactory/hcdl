@@ -1,4 +1,4 @@
-// HTTP client
+// shasums: Handle checking of files against shasums
 use anyhow::{
     anyhow,
     Result,
