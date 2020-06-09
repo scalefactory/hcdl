@@ -27,6 +27,7 @@ async fn main() -> Result<()> {
     let arch    = matches.value_of("ARCH").unwrap();
     let os      = matches.value_of("OS").unwrap();
     let product = matches.value_of("PRODUCT").unwrap();
+    let no_sig  = matches.is_present("NO_VERIFY_SIGNATURE");
 
     let client = client::Client::new();
 
@@ -38,30 +39,32 @@ async fn main() -> Result<()> {
     let download_url = &build.url;
     let filename     = &build.filename;
 
-    println!("Downloading and verifying signature of {}...", info.shasums);
-
-    // Download signature file
-    let signature = client.get_signature(
-        url_prefix,
-        &info.shasums_signature,
-    ).await?;
-
     // Download SHASUMS file
     let shasums = client.get_shasums(url_prefix, &info.shasums).await?;
 
     // Verify the SHASUMS file against its signature
-    match signature.check(&shasums) {
-        Ok(_)  => println!("  Verified against {}.", info.shasums_signature),
-        Err(e) => {
-            eprintln!(
-                "  Verification against {} failed.\nError: {}\nExiting.",
-                info.shasums,
-                e,
-            );
+    if !no_sig {
+        println!("Downloading and verifying signature of {}...", info.shasums);
 
-            ::std::process::exit(1);
-        },
-    };
+        // Download signature file
+        let signature = client.get_signature(
+            url_prefix,
+            &info.shasums_signature,
+        ).await?;
+
+        match signature.check(&shasums) {
+            Ok(_)  => println!("  Verified against {}.", info.shasums_signature),
+            Err(e) => {
+                eprintln!(
+                    "  Verification against {} failed.\nError: {}\nExiting.",
+                    info.shasums,
+                    e,
+                );
+
+                ::std::process::exit(1);
+            },
+        };
+    }
 
     // Download the product
     println!("Downloading {}...", filename);
@@ -81,7 +84,6 @@ async fn main() -> Result<()> {
             ::std::process::exit(1);
         },
     };
-
 
     if matches.is_present("INSTALL") {
         // Try to get an install_dir

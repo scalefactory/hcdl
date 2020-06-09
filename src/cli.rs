@@ -98,12 +98,6 @@ fn create_app<'a, 'b>() -> App<'a, 'b> {
                 .takes_value(false)
         )
         .arg(
-            Arg::with_name("NO_VERIFY_SHASUM")
-                .long("no-verify-shasum")
-                .help("Disable SHASUM verification")
-                .takes_value(false)
-        )
-        .arg(
             Arg::with_name("NO_VERIFY_SIGNATURE")
                 .long("no-verify-signature")
                 .help("Disable GPG signature verification")
