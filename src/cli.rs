@@ -74,6 +74,14 @@ fn create_app<'a, 'b>() -> App<'a, 'b> {
         .about(crate_description!())
         // Flags
         .arg(
+            Arg::with_name("CLEANUP")
+                .long("cleanup")
+                .short("c")
+                .help("Clean up downloaded zip file after install")
+                .takes_value(false)
+                .requires("INSTALL")
+        )
+        .arg(
             Arg::with_name("INSTALL")
                 .long("install")
                 .short("i")
