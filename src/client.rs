@@ -11,7 +11,7 @@ use serde::Deserialize;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
-use super::shasums::*;
+use super::shasums::Shasums;
 use super::signature::Signature;
 
 static CHECKPOINT_URL: &str = "https://checkpoint-api.hashicorp.com/v1/check/";
