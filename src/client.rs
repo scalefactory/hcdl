@@ -10,6 +10,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
 use super::shasums::*;
+use super::signature::Signature;
 
 static CHECKPOINT_URL: &str = "https://checkpoint-api.hashicorp.com/v1/check/";
 
@@ -21,6 +22,7 @@ static PROGRESS_TEMPLATE: &str = concat!(
     "[{bar:40.cyan/blue}] ",
     "{bytes}/{total_bytes} ",
     "({eta})",
+    " {msg}",
 );
 
 static USER_AGENT: &str = concat!(
@@ -144,8 +146,6 @@ impl Client {
             ProgressBar::new_spinner()
         };
 
-        pb.set_message(output);
-
         // Start downloading chunks.
         while let Some(chunk) = resp.chunk().await? {
             // Write the chunk to the output file.
@@ -160,12 +160,20 @@ impl Client {
             }
         }
 
+        pb.finish_with_message("done.");
+
         Ok(())
     }
 
-    pub async fn get_shasums(&self, url: &str) -> Result<Shasums> {
+    pub async fn get_shasums(
+        &self,
+        url: &str,
+        filename: &str,
+    ) -> Result<Shasums> {
+        let url = format!("{}{}", url, filename);
+
         let shasums = self.client
-            .get(url)
+            .get(&url)
             .send()
             .await?
             .text()
@@ -174,6 +182,25 @@ impl Client {
         let shasums = Shasums::new(shasums);
 
         Ok(shasums)
+    }
+
+    pub async fn get_signature(
+        &self,
+        url: &str,
+        filename: &str,
+    ) -> Result<Signature> {
+        let url = format!("{}{}", url, filename);
+
+        let signature = self.client
+            .get(&url)
+            .send()
+            .await?
+            .bytes()
+            .await?;
+
+        let signature = Signature::new(signature);
+
+        Ok(signature)
     }
 
     pub async fn get_version(&self, url: &str) -> Result<ProductVersion> {

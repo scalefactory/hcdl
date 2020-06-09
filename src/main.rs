@@ -1,15 +1,10 @@
 // hcdl: Easily update Hashicorp tools
 use anyhow::Result;
-use bytes::buf::BufExt;
-use reqwest;
 use std::fs::{
     File,
     OpenOptions,
 };
-use std::io::{
-    self,
-    BufReader,
-};
+use std::io;
 use std::path::{
     Path,
     PathBuf,
@@ -23,38 +18,7 @@ use std::os::unix::fs::OpenOptionsExt;
 mod cli;
 mod client;
 mod shasums;
-
-const HASHICORP_GPG_KEY: &'static str = include_str!("../gpg/hashicorp.asc");
-
-async fn check_shasum_sig(url: &str, content: &str) -> Result<()> {
-    // Signature is a binary file
-    let signature = reqwest::get(url)
-        .await?
-        .bytes()
-        .await?;
-
-    let mut keyring = gpgrv::Keyring::new();
-    let gpg_key = BufReader::new(HASHICORP_GPG_KEY.as_bytes());
-
-    // compat handles an Error returned by the Failure crate.
-    match keyring.append_keys_from_armoured(gpg_key) {
-        Ok(_)  => Ok(()),
-        Err(e) => Err(e.compat()),
-    }?;
-
-    // Readers for signature and content
-    //let signature = BufReader::new(signature);
-    let shasums   = BufReader::new(content.as_bytes());
-
-    match gpgrv::verify_detached(signature.reader(), shasums, &keyring) {
-        Ok(_)  => Ok(()),
-        Err(e) => Err(e.compat()),
-    }?;
-
-    println!("Signature of SHASUM256 file verified.");
-
-    Ok(())
-}
+mod signature;
 
 fn install(zipfile: &str, filename: &str, dest: &PathBuf) -> Result<()> {
     println!(
@@ -105,35 +69,38 @@ async fn main() -> Result<()> {
     let url_prefix = &latest.current_download_url;
     let info       = client.get_version(url_prefix).await?;
 
-    // println!("{:#?}", latest);
-    // println!("{:#?}", info);
-
-    let shasums_url = format!(
-        "{prefix}{shasums}",
-        prefix=url_prefix,
-        shasums=info.shasums,
-    );
-
-    let shasums_sig = format!(
-        "{prefix}{shasums_sig}",
-        prefix=url_prefix,
-        shasums_sig=info.shasums_signature,
-    );
-
-    //let build = get_build(&info.builds, arch, os).unwrap();
     let build = info.build(arch, os).unwrap();
-    // println!("{:#?}", build);
 
     let download_url = &build.url;
     let filename     = &build.filename;
 
+    println!("Downloading and verifying signature of {}...", info.shasums);
+
+    // Download signature file
+    let signature = client.get_signature(
+        url_prefix,
+        &info.shasums_signature,
+    ).await?;
+
     // Download SHASUMS file
-    let shasums = client.get_shasums(&shasums_url).await?;
+    let shasums = client.get_shasums(url_prefix, &info.shasums).await?;
 
     // Verify the SHASUMS file against its signature
-    //check_shasum_sig(&shasums_sig, &shasums).await?;
+    match signature.check(&shasums) {
+        Ok(_)  => println!("  Verified against {}.", info.shasums_signature),
+        Err(e) => {
+            eprintln!(
+                "  Verification against {} failed.\nError: {}\nExiting.",
+                info.shasums,
+                e,
+            );
+
+            ::std::process::exit(1);
+        },
+    };
 
     // Download the product
+    println!("Downloading {}...", filename);
     client.download(download_url, filename).await?;
 
     // Ensure the SHASUM is correct

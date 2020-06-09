@@ -54,6 +54,11 @@ impl Shasums {
         Ok(res)
     }
 
+    // Return a reference to the shasums
+    pub fn content(&self) -> &str {
+        &self.shasums
+    }
+
     // Return the shasum for the specified filename
     fn shasum(&self, filename: &str) -> Option<String> {
         // Filter the shasum list down to the filename we're interested in
