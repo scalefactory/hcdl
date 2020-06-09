@@ -15,10 +15,13 @@ $ hcdl --install terraform
 You'll see output like the following:
 
 ```shell
-Signature of SHASUM256 file verified.
+Downloading and verifying signature of terraform_0.12.26_SHA256SUMS...
+  Verified against terraform_0.12.26_SHA256SUMS.sig.
 Downloading terraform_0.12.26_freebsd_amd64.zip...
+  [00:00:02] [########################################] 16.06MB/16.06MB (0s) done.
 SHA256 of terraform_0.12.26_freebsd_amd64.zip OK.
-Unzipping 'terraform' from 'terraform_0.12.26_freebsd_amd64.zip' to '/home/user/.local/bin'
+Unzipping 'terraform' from 'terraform_0.12.26_freebsd_amd64.zip' to '/home/user/.local/bin'...
+  Installation successful.
 ```
 
 `hcdl` has performed the following steps:
@@ -80,7 +83,8 @@ ID `51852D87348FFC4C` with fingerprint
 key published by HashiCorp.
 
 If a GPG key isn't present and you still wish to use the tool, you will be
-required to explicitly disable the signature verification.
+required to explicitly disable the signature verification with the
+`--no-verify-signature` flag.
 
 <!-- links -->
 [FreeBSD]: https://www.freebsd.org/
