@@ -8,6 +8,7 @@ use tokio;
 mod cli;
 mod client;
 mod install;
+mod products;
 mod shasums;
 mod signature;
 
@@ -15,20 +16,24 @@ mod signature;
 async fn main() -> Result<()> {
     let matches = cli::parse_args();
 
+    // We don't need to do very much if we're listing products
+    if matches.is_present("LIST_PRODUCTS") {
+        println!("Products: {}", products::PRODUCTS_LIST.join(", "));
+
+        ::std::process::exit(0);
+    };
+
     // Pull options from matches
-    let product     = matches.value_of("PRODUCT").unwrap();
-    let arch        = matches.value_of("ARCH").unwrap();
-    let os          = matches.value_of("OS").unwrap();
-    let do_install  = matches.is_present("INSTALL");
-    let install_dir = matches.value_of("INSTALL_DIR");
+    let arch    = matches.value_of("ARCH").unwrap();
+    let os      = matches.value_of("OS").unwrap();
+    let product = matches.value_of("PRODUCT").unwrap();
 
     let client = client::Client::new();
 
     let latest     = client.check_version(product).await?;
     let url_prefix = &latest.current_download_url;
     let info       = client.get_version(url_prefix).await?;
-
-    let build = info.build(arch, os).unwrap();
+    let build      = info.build(arch, os).unwrap();
 
     let download_url = &build.url;
     let filename     = &build.filename;
@@ -77,8 +82,11 @@ async fn main() -> Result<()> {
         },
     };
 
-    if do_install {
+
+    if matches.is_present("INSTALL") {
         // Try to get an install_dir
+        let install_dir = matches.value_of("INSTALL_DIR");
+
         let bin_dir = if let Some(dir) = install_dir {
             // If a --install-dir was given, use that. We validated this in the
             // CLI so we know this is good.

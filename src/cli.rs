@@ -11,6 +11,7 @@ use clap::{
     ArgMatches,
 };
 use std::path::Path;
+use super::products::PRODUCTS_LIST;
 
 #[cfg(target_arch = "arm")]
 const DEFAULT_ARCH: &'static str = "arm";
@@ -90,6 +91,13 @@ fn create_app<'a, 'b>() -> App<'a, 'b> {
                 .takes_value(false)
         )
         .arg(
+            Arg::with_name("LIST_PRODUCTS")
+                .long("list-products")
+                .short("l")
+                .help("List all available HashiCorp products")
+                .takes_value(false)
+        )
+        .arg(
             Arg::with_name("NO_VERIFY_SHASUM")
                 .long("no-verify-shasum")
                 .help("Disable SHASUM verification")
@@ -133,8 +141,9 @@ fn create_app<'a, 'b>() -> App<'a, 'b> {
             Arg::with_name("PRODUCT")
                 .help("Name of the Hashicorp product to download")
                 .index(1)
-                .required(true)
+                .required_unless("LIST_PRODUCTS")
                 .takes_value(true)
+                .possible_values(PRODUCTS_LIST)
         )
 }
 
