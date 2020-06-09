@@ -21,9 +21,9 @@ zip = "0.5"
 version = "0.10"
 default-features = false
 features = [
+    "gzip",
     "json",
     "rustls-tls",
-    "stream",
 ]
 
 [dependencies.serde]
