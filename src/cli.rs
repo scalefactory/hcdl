@@ -9,6 +9,7 @@ use clap::{
     Arg,
     ArgMatches,
 };
+use std::path::Path;
 
 #[cfg(target_arch = "arm")]
 const DEFAULT_ARCH: &'static str = "arm";
@@ -51,6 +52,20 @@ const VALID_OS: &[&str] = &[
     "solaris",
     "windows",
 ];
+
+fn is_valid_install_dir(s: String) -> Result<(), String> {
+    let path = Path::new(&s);
+
+    if !path.exists() {
+        return Err("install-dir does not exist".into());
+    }
+
+    if !path.is_dir() {
+        return Err("install-dir is not a directory".into());
+    }
+
+    Ok(())
+}
 
 fn create_app<'a, 'b>() -> App<'a, 'b> {
     App::new(crate_name!())
@@ -95,6 +110,17 @@ fn create_app<'a, 'b>() -> App<'a, 'b> {
                 .help("Specify product architecture to download")
                 .default_value(DEFAULT_ARCH)
                 .possible_values(VALID_ARCH)
+        )
+        .arg(
+            Arg::with_name("INSTALL_DIR")
+                .env("HCDL_INSTALL_DIR")
+                .hide_env_values(true)
+                .long("install-dir")
+                .short("I")
+                .help("Specify directory to install to")
+                .takes_value(true)
+                .requires("INSTALL")
+                .validator(is_valid_install_dir)
         )
         .arg(
             Arg::with_name("OS")

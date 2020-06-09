@@ -265,21 +265,14 @@ fn install(zipfile: &str, filename: &str, dest: &PathBuf) -> Result<()> {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let bin_dir = match dirs::executable_dir() {
-        Some(dir) => dir,
-        None      => {
-            eprintln!("Couldn't find local executable dir. Is $HOME broken?");
-            ::std::process::exit(1);
-        }
-    };
-
     let matches = cli::parse_args();
 
     // Pull options from matches
-    let product    = matches.value_of("PRODUCT").unwrap();
-    let arch       = matches.value_of("ARCH").unwrap();
-    let os         = matches.value_of("OS").unwrap();
-    let do_install = matches.is_present("INSTALL");
+    let product     = matches.value_of("PRODUCT").unwrap();
+    let arch        = matches.value_of("ARCH").unwrap();
+    let os          = matches.value_of("OS").unwrap();
+    let do_install  = matches.is_present("INSTALL");
+    let install_dir = matches.value_of("INSTALL_DIR");
 
     let latest     = check_version(product).await?;
     let url_prefix = &latest.current_download_url;
@@ -335,6 +328,39 @@ async fn main() -> Result<()> {
     };
 
     if do_install {
+        // Try to get an install_dir
+        let bin_dir = if let Some(dir) = install_dir {
+            // If a --install-dir was given, use that. We validated this in the
+            // CLI so we know this is good.
+            Path::new(dir).to_path_buf()
+        }
+        else {
+            // If a --install-dir wasn't given, try to use the XDG executable
+            // dir.
+            match dirs::executable_dir() {
+                Some(dir) => {
+                    // We don't currently handle creating these directories.
+                    if !dir.exists() {
+                        eprintln!(
+                            "'{dir}' does not exist, create it and try again",
+                            dir=dir.display(),
+                        );
+
+                        ::std::process::exit(1);
+                    }
+
+                    dir
+                },
+                None => {
+                    // If we get None, we're likely on Windows.
+                    eprintln!("Could not find suitable install-dir.");
+                    eprintln!("Consider passing --install-dir to manually specify");
+
+                    ::std::process::exit(1);
+                },
+            }
+        };
+
         install(filename, product, &bin_dir)?;
     }
 
