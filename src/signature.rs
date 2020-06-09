@@ -1,4 +1,6 @@
 // signature: Check GPG signatures
+#![forbid(unsafe_code)]
+#![forbid(missing_docs)]
 use anyhow::Result;
 use bytes::{
     buf::BufExt,

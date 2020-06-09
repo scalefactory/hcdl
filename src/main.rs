@@ -1,4 +1,6 @@
-// hcdl: Easily update Hashicorp tools
+//! hcdl: Easily update Hashicorp tools
+#![forbid(unsafe_code)]
+#![forbid(missing_docs)]
 use anyhow::Result;
 use std::path::Path;
 use tokio;

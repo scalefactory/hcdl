@@ -1,4 +1,6 @@
 // shasums: Handle checking of files against shasums
+#![forbid(unsafe_code)]
+#![forbid(missing_docs)]
 use anyhow::{
     anyhow,
     Result,

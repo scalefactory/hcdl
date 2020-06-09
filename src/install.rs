@@ -1,4 +1,6 @@
 // install: Handle installation of product.
+#![forbid(unsafe_code)]
+#![forbid(missing_docs)]
 use anyhow::Result;
 use std::fs::{
     File,

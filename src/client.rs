@@ -1,4 +1,6 @@
 // client: HTTP client and associated methods
+#![forbid(unsafe_code)]
+#![forbid(missing_docs)]
 use anyhow::Result;
 use indicatif::{
     ProgressBar,
