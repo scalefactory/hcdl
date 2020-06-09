@@ -72,7 +72,6 @@ fn is_valid_install_dir(s: String) -> Result<(), String> {
 fn create_app<'a, 'b>() -> App<'a, 'b> {
     App::new(crate_name!())
         .version(crate_version!())
-        .author(crate_authors!())
         .about(crate_description!())
         // Flags
         .arg(
