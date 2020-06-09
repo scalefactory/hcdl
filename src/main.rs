@@ -231,7 +231,7 @@ async fn check_shasum_sig(url: &str, content: &str) -> Result<()> {
     Ok(())
 }
 
-fn unzip(zipfile: &str, filename: &str, dest: &PathBuf) -> Result<()> {
+fn install(zipfile: &str, filename: &str, dest: &PathBuf) -> Result<()> {
     println!(
         "Unzipping '{filename}' from '{zipfile}' to '{dest}'",
         filename=filename,
@@ -276,10 +276,12 @@ async fn main() -> Result<()> {
     let matches = cli::parse_args();
 
     // Pull options from matches
-    let arch = matches.value_of("ARCH").unwrap();
-    let os = matches.value_of("OS").unwrap();
+    let product    = matches.value_of("PRODUCT").unwrap();
+    let arch       = matches.value_of("ARCH").unwrap();
+    let os         = matches.value_of("OS").unwrap();
+    let do_install = matches.is_present("INSTALL");
 
-    let latest     = check_version("terraform").await?;
+    let latest     = check_version(product).await?;
     let url_prefix = &latest.current_download_url;
     let info       = get_version(url_prefix).await?;
 
@@ -332,7 +334,9 @@ async fn main() -> Result<()> {
         },
     };
 
-    unzip(filename, "terraform", &bin_dir)?;
+    if do_install {
+        install(filename, product, &bin_dir)?;
+    }
 
     Ok(())
 }
