@@ -3,6 +3,7 @@
 #![forbid(missing_docs)]
 use anyhow::Result;
 use std::fs::{
+    remove_file,
     File,
     OpenOptions,
 };
@@ -15,6 +16,12 @@ use zip::ZipArchive;
 
 #[cfg(target_family = "unix")]
 use std::os::unix::fs::OpenOptionsExt;
+
+pub fn cleanup(filename: &str) -> Result<()> {
+    remove_file(filename)?;
+
+    Ok(())
+}
 
 pub fn install(zipfile: &str, filename: &str, dest: &PathBuf) -> Result<()> {
     let path = Path::new(zipfile);

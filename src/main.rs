@@ -136,6 +136,19 @@ async fn main() -> Result<()> {
                 ::std::process::exit(1);
             }
         }
+
+        if matches.is_present("CLEANUP") {
+            println!("Cleaning up after install...");
+
+            match install::cleanup(filename) {
+                Ok(_)  => println!("  Deleted {}.", filename),
+                Err(e) => {
+                    eprintln!("  Cleanup failed with error: {}", e);
+
+                    ::std::process::exit(1);
+                },
+            }
+        }
     }
 
     Ok(())

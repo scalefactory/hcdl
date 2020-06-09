@@ -2,7 +2,6 @@
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
 use clap::{
-    crate_authors,
     crate_description,
     crate_name,
     crate_version,
