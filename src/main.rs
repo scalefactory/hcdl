@@ -128,7 +128,7 @@ async fn main() -> Result<()> {
             dest=bin_dir.display(),
         );
 
-        match install::install(filename, product, &bin_dir) {
+        match install::install(filename, &bin_dir) {
             Ok(_)  => println!("  Installation successful."),
             Err(e) => {
                 eprintln!("  Installation failed with error: {}", e);

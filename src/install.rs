@@ -12,7 +12,10 @@ use std::path::{
     Path,
     PathBuf,
 };
-use zip::ZipArchive;
+use zip::{
+    read::ZipFile,
+    ZipArchive,
+};
 
 #[cfg(target_family = "unix")]
 use std::os::unix::fs::OpenOptionsExt;
@@ -23,14 +26,9 @@ pub fn cleanup(filename: &str) -> Result<()> {
     Ok(())
 }
 
-pub fn install(zipfile: &str, filename: &str, dest: &PathBuf) -> Result<()> {
-    let path = Path::new(zipfile);
-    let file = File::open(&path).expect("open zipfile");
-
-    let mut zip    = ZipArchive::new(file).expect("new ziparchive");
-    let mut wanted = zip.by_name(filename).expect("find zip contents");
-
-    let dest = dest.join(filename);
+fn extract_file(mut zipfile: &mut ZipFile, dest: &PathBuf) -> Result<()> {
+    let name = zipfile.name();
+    let dest = dest.join(name);
 
     let mut options = OpenOptions::new();
 
@@ -43,7 +41,22 @@ pub fn install(zipfile: &str, filename: &str, dest: &PathBuf) -> Result<()> {
         .truncate(true)
         .open(&dest)?;
 
-    io::copy(&mut wanted, &mut writer)?;
+    io::copy(&mut zipfile, &mut writer)?;
+
+    Ok(())
+}
+
+pub fn install(zipfile: &str, dest: &PathBuf) -> Result<()> {
+    let path = Path::new(zipfile);
+    let file = File::open(&path).expect("open zipfile");
+
+    let mut zip    = ZipArchive::new(file).expect("new ziparchive");
+
+    for i in 0..zip.len() {
+        let mut file = zip.by_index(i)?;
+
+        extract_file(&mut file, &dest)?;
+    }
 
     Ok(())
 }
