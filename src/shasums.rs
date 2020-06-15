@@ -89,7 +89,6 @@ impl Shasums {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use indoc::indoc;
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -114,20 +113,24 @@ mod tests {
 
     #[test]
     fn test_content() {
-        let shasums_content = indoc!("
-            5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03 test
-        ");
+        let shasums_content = format!(
+            "{shasum} {filename}",
+            shasum="5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03",
+            filename="test",
+        );
 
-        let shasums = Shasums::new(shasums_content.into());
+        let shasums = Shasums::new(shasums_content.clone().into());
 
         assert_eq!(shasums_content, shasums.content())
     }
 
     #[test]
     fn test_shasum() {
-        let shasums_content = indoc!("
-            5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03 test
-        ");
+        let shasums_content = format!(
+            "{shasum} {filename}",
+            shasum="5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03",
+            filename="test",
+        );
 
         let shasums  = Shasums::new(shasums_content.into());
         let expected = "5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03";

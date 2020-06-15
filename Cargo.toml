@@ -58,5 +58,4 @@ features = [
 ]
 
 [dev-dependencies]
-indoc = "0.3"
 pretty_assertions = "0.6"
