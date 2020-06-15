@@ -44,7 +44,7 @@ impl Shasums {
 
         io::copy(&mut file, &mut hasher)?;
 
-        let hash = hasher.result();
+        let hash = hasher.finalize();
 
         let res = if hex::encode(hash) == shasum {
             Checksum::OK
