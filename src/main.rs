@@ -42,9 +42,7 @@ async fn main() -> Result<()> {
         client.get_version(product, build_version).await?
     };
 
-    let build        = info.build(arch, os).unwrap();
-    let download_url = &build.url;
-    let filename     = &build.filename;
+    let build = info.build(arch, os).unwrap();
 
     // Download SHASUMS file
     let shasums = client.get_shasums(&info).await?;
@@ -71,6 +69,9 @@ async fn main() -> Result<()> {
     }
 
     // Download the product
+    let download_url = &build.url;
+    let filename     = &build.filename;
+
     println!("Downloading {}...", filename);
     client.download(download_url, filename).await?;
 
