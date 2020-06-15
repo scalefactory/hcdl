@@ -67,9 +67,7 @@ impl Client {
             product=product,
         );
 
-        let resp = self.client
-            .get(&url)
-            .send()
+        let resp = self.get(&url)
             .await?
             .json::<VersionCheck>()
             .await?;
@@ -84,10 +82,7 @@ impl Client {
         let mut file = File::create(&path)?;
 
         // Start the GET and attempt to get a content-length
-        let mut resp = self.client
-            .get(url)
-            .send()
-            .await?;
+        let mut resp   = self.get(url).await?;
         let total_size = resp.content_length();
 
         // Setup the progress display
@@ -183,9 +178,7 @@ impl Client {
             version=version,
         );
 
-        let resp = self.client
-            .get(&url)
-            .send()
+        let resp = self.get(&url)
             .await?
             .json::<ProductVersion>()
             .await?;
