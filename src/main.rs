@@ -24,33 +24,37 @@ async fn main() -> Result<()> {
     };
 
     // Pull options from matches
-    let arch    = matches.value_of("ARCH").unwrap();
-    let os      = matches.value_of("OS").unwrap();
-    let product = matches.value_of("PRODUCT").unwrap();
-    let no_sig  = matches.is_present("NO_VERIFY_SIGNATURE");
+    let arch          = matches.value_of("ARCH").unwrap();
+    let build_version = matches.value_of("BUILD").unwrap();
+    let os            = matches.value_of("OS").unwrap();
+    let product       = matches.value_of("PRODUCT").unwrap();
+    let no_sig        = matches.is_present("NO_VERIFY_SIGNATURE");
 
     let client = client::Client::new();
 
-    let latest     = client.check_version(product).await?;
-    let url_prefix = &latest.current_download_url;
-    let info       = client.get_version(url_prefix).await?;
-    let build      = info.build(arch, os).unwrap();
+    let info = if build_version == "latest" {
+        let latest          = client.check_version(product).await?;
+        let current_version = &latest.current_version;
 
+        client.get_version(product, current_version).await?
+    }
+    else {
+        client.get_version(product, build_version).await?
+    };
+
+    let build        = info.build(arch, os).unwrap();
     let download_url = &build.url;
     let filename     = &build.filename;
 
     // Download SHASUMS file
-    let shasums = client.get_shasums(url_prefix, &info.shasums).await?;
+    let shasums = client.get_shasums(&info).await?;
 
     // Verify the SHASUMS file against its signature
     if !no_sig {
         println!("Downloading and verifying signature of {}...", info.shasums);
 
         // Download signature file
-        let signature = client.get_signature(
-            url_prefix,
-            &info.shasums_signature,
-        ).await?;
+        let signature = client.get_signature(&info).await?;
 
         match signature.check(&shasums) {
             Ok(_)  => println!("  Verified against {}.", info.shasums_signature),

@@ -2,17 +2,23 @@
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
 use anyhow::Result;
+use bytes::Bytes;
 use indicatif::{
     ProgressBar,
     ProgressStyle,
 };
 use reqwest;
-use serde::Deserialize;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
 use super::shasums::Shasums;
 use super::signature::Signature;
+
+mod build;
+mod product_version;
+use product_version::*;
+mod version_check;
+use version_check::*;
 
 static CHECKPOINT_URL: &str = "https://checkpoint-api.hashicorp.com/v1/check/";
 
@@ -27,59 +33,13 @@ static PROGRESS_TEMPLATE: &str = concat!(
     " {msg}",
 );
 
+static RELEASES_URL: &str = "https://releases.hashicorp.com/";
+
 static USER_AGENT: &str = concat!(
     env!("CARGO_PKG_NAME"),
     "/",
     env!("CARGO_PKG_VERSION"),
 );
-
-#[derive(Clone, Debug, Deserialize)]
-pub struct Build {
-    arch:         String,
-    name:         String,
-    os:           String,
-    version:      String,
-    pub filename: String,
-    pub url:      String,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-pub struct ProductVersion {
-    builds:                Vec<Build>,
-    name:                  String,
-    version:               String,
-    pub shasums:           String,
-    pub shasums_signature: String,
-}
-
-impl ProductVersion {
-    // Pull a specific build out of the product version builds.
-    pub fn build(&self, arch: &str, os: &str) -> Option<Build> {
-        let filtered: Vec<Build> = self.builds
-            .iter()
-            .filter(|b| b.arch == arch && b.os == os)
-            .map(|b| b.clone())
-            .collect();
-
-        if filtered.is_empty() {
-            None
-        }
-        else {
-            Some(filtered[0].to_owned())
-        }
-    }
-}
-
-#[derive(Clone, Debug, Deserialize)]
-pub struct VersionCheck {
-    alerts:                   Vec<String>,
-    current_changelog_url:    String,
-    current_release:          u64,
-    current_version:          String,
-    product:                  String,
-    project_website:          String,
-    pub current_download_url: String,
-}
 
 pub struct Client {
     client: reqwest::Client,
@@ -166,20 +126,39 @@ impl Client {
         Ok(())
     }
 
-    pub async fn get_shasums(
-        &self,
-        url: &str,
-        filename: &str,
-    ) -> Result<Shasums> {
-        let url = format!("{}{}", url, filename);
-
-        let shasums = self.client
-            .get(&url)
+    pub async fn get(&self, url: &str) -> Result<reqwest::Response> {
+        let resp = self.client
+            .get(url)
             .send()
+            .await?;
+
+        Ok(resp)
+    }
+
+    pub async fn get_bytes(&self, url: &str) -> Result<Bytes> {
+        let resp: Bytes = self.get(url)
+            .await?
+            .bytes()
+            .await?;
+
+        Ok(resp)
+    }
+
+    pub async fn get_text(&self, url: &str) -> Result<String> {
+        let resp = self.get(url)
             .await?
             .text()
             .await?;
 
+        Ok(resp)
+    }
+
+    pub async fn get_shasums(
+        &self,
+        version: &ProductVersion,
+    ) -> Result<Shasums> {
+        let url     = version.shasums_url();
+        let shasums = self.get_text(&url).await?;
         let shasums = Shasums::new(shasums);
 
         Ok(shasums)
@@ -187,25 +166,22 @@ impl Client {
 
     pub async fn get_signature(
         &self,
-        url: &str,
-        filename: &str,
+        version: &ProductVersion,
     ) -> Result<Signature> {
-        let url = format!("{}{}", url, filename);
-
-        let signature = self.client
-            .get(&url)
-            .send()
-            .await?
-            .bytes()
-            .await?;
-
+        let url       = version.shasums_signature_url();
+        let signature = self.get_bytes(&url).await?;
         let signature = Signature::new(signature);
 
         Ok(signature)
     }
 
-    pub async fn get_version(&self, url: &str) -> Result<ProductVersion> {
-        let url = format!("{url}index.json", url=url);
+    pub async fn get_version(&self, product: &str, version: &str) -> Result<ProductVersion> {
+        let url = format!(
+            "{releases_url}{product}/{version}/index.json",
+            releases_url=RELEASES_URL,
+            product=product,
+            version=version,
+        );
 
         let resp = self.client
             .get(&url)

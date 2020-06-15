@@ -54,6 +54,8 @@ const VALID_OS: &[&str] = &[
     "windows",
 ];
 
+const DEFAULT_VERSION: &'static str = "latest";
+
 fn is_valid_install_dir(s: String) -> Result<(), String> {
     let path = Path::new(&s);
 
@@ -109,6 +111,14 @@ fn create_app<'a, 'b>() -> App<'a, 'b> {
                 .help("Specify product architecture to download")
                 .default_value(DEFAULT_ARCH)
                 .possible_values(VALID_ARCH)
+        )
+        .arg(
+            Arg::with_name("BUILD")
+                .long("build")
+                .short("b")
+                .help("Specify product build version to download")
+                .default_value(DEFAULT_VERSION)
+                .value_name("VERSION")
         )
         .arg(
             Arg::with_name("INSTALL_DIR")
