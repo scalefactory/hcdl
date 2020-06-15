@@ -1,0 +1,2 @@
+The shasum of this file is checked in the shasums::tests::test_shasums_check
+test.
