@@ -92,7 +92,27 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     #[test]
-    fn test_check() {
+    fn test_check_bad() {
+        let test_data_path = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/test-data/",
+            "shasums-check.txt"
+        );
+
+        let shasums_content = format!(
+            "{shasum} {filename}",
+            shasum="badbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadb",
+            filename=test_data_path,
+        );
+
+        let shasums = Shasums::new(shasums_content.into());
+        let res     = shasums.check(&test_data_path).unwrap();
+
+        assert_eq!(Checksum::Bad, res);
+    }
+
+    #[test]
+    fn test_check_ok() {
         let test_data_path = concat!(
             env!("CARGO_MANIFEST_DIR"),
             "/test-data/",
