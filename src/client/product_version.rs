@@ -59,6 +59,47 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_build() {
+        let version = ProductVersion {
+            name:              "terraform".into(),
+            shasums:           "terraform_0.12.26_SHA256SUMS".into(),
+            shasums_signature: "terraform_0.12.26_SHA256SUMS.sig".into(),
+            version:           "0.12.26".into(),
+            builds:            vec![
+                Build {
+                    arch:     "amd64".into(),
+                    filename: "terraform_0.12.26_freebsd_amd64.zip".into(),
+                    name:     "terraform".into(),
+                    os:       "freebsd".into(),
+                    url:      "".into(),
+                    version:  "0.12.26".into(),
+                },
+                Build {
+                    arch:     "amd64".into(),
+                    filename: "terraform_0.12.26_linux_amd64.zip".into(),
+                    name:     "terraform".into(),
+                    os:       "linux".into(),
+                    url:      "".into(),
+                    version:  "0.12.26".into(),
+                },
+            ],
+        };
+
+        let expected = Build {
+            arch:     "amd64".into(),
+            filename: "terraform_0.12.26_freebsd_amd64.zip".into(),
+            name:     "terraform".into(),
+            os:       "freebsd".into(),
+            url:      "".into(),
+            version:  "0.12.26".into(),
+        };
+
+        let build = version.build("amd64", "freebsd").unwrap();
+
+        assert_eq!(build, expected)
+    }
+
+    #[test]
     fn test_shasums_url() {
         let version = ProductVersion {
             builds:            vec![],

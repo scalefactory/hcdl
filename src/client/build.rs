@@ -3,7 +3,7 @@
 #![forbid(missing_docs)]
 use serde::Deserialize;
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq)]
 pub struct Build {
     pub arch:     String,
     pub filename: String,
