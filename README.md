@@ -43,20 +43,12 @@ and architecture you like by specifying the `--os` and `--arch` options.
 ## HashiCorp GPG Key
 
 Due to the GPG signature checking, `hcdl` needs to know the HashiCorp GPG key.
-There are two ways of providing this information:
+To enable this, place the HashiCorp GPG key from
+https://www.hashicorp.com/security into the `~/.local/share/hcdl` directory as
+a file named `hashicorp.asc`.
 
-  - Place the HashiCorp GPG key from https://www.hashicorp.com/security into
-    the `~/.local/share/hcdl` directory as a file named `hashicorp.asc`
-  - Enable the `embedded_gpg_key` Cargo feature at compile time, which will
-    compile the GPG key from `gpg/hashicorp.asc` in this repository into the
-    binary
-
-By default `embedded_gpg_key` is not enabled and you are required to download
-and install the GPG key if you wish to use the GPG signature checking.
-
-If you choose to embed the GPG key, you are encouraged to verify that the GPG
-key provided here does indeed match the GPG key on the HashiCorp security page,
-you may do this with the following command:
+The key you place here should match the key ID and fingerprint shown on the
+security page, and they can be checked as follows:
 
 ```shell
 $ gpg \

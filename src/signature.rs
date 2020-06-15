@@ -1,28 +1,22 @@
 // signature: Check GPG signatures
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
-use anyhow::Result;
+use anyhow::{
+    anyhow,
+    Result,
+};
 use bytes::{
     buf::BufExt,
     Bytes,
 };
 use gpgrv::Keyring;
-use std::io::BufReader;
+use std::fs::File;
+use std::io::{
+    prelude::*,
+    BufReader,
+};
 use super::shasums::Shasums;
 
-#[cfg(not(feature = "embedded_gpg_key"))]
-use anyhow::anyhow;
-
-#[cfg(not(feature = "embedded_gpg_key"))]
-use std::fs::File;
-
-#[cfg(not(feature = "embedded_gpg_key"))]
-use std::io::prelude::*;
-
-#[cfg(feature = "embedded_gpg_key")]
-const HASHICORP_GPG_KEY: &'static str = include_str!("../gpg/hashicorp.asc");
-
-#[cfg(not(feature = "embedded_gpg_key"))]
 const HASHICORP_GPG_KEY_FILENAME: &'static str = "hashicorp.asc";
 
 pub struct Signature {
@@ -62,12 +56,6 @@ impl Signature {
     }
 }
 
-#[cfg(feature = "embedded_gpg_key")]
-fn get_gpg_key() -> Result<String> {
-    Ok(HASHICORP_GPG_KEY.to_owned())
-}
-
-#[cfg(not(feature = "embedded_gpg_key"))]
 fn get_gpg_key() -> Result<String> {
     let mut path = match dirs::data_dir() {
         Some(dir) => Ok(dir),
