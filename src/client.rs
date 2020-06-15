@@ -57,8 +57,7 @@ impl ProductVersion {
     pub fn build(&self, arch: &str, os: &str) -> Option<Build> {
         let filtered: Vec<Build> = self.builds
             .iter()
-            .filter(|b| b.arch == arch)
-            .filter(|b| b.os == os)
+            .filter(|b| b.arch == arch && b.os == os)
             .map(|b| b.clone())
             .collect();
 
