@@ -165,7 +165,7 @@ impl Client {
     ) -> Result<Signature> {
         let url       = version.shasums_signature_url();
         let signature = self.get_bytes(&url).await?;
-        let signature = Signature::new(signature);
+        let signature = Signature::new(signature)?;
 
         Ok(signature)
     }
