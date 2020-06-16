@@ -6,6 +6,7 @@ use super::build::*;
 
 static RELEASES_URL: &str = "https://releases.hashicorp.com/";
 
+// Represents a single version of a HashiCorp product
 #[derive(Clone, Debug, Deserialize)]
 pub struct ProductVersion {
     builds:                Vec<Build>,
@@ -32,6 +33,7 @@ impl ProductVersion {
         }
     }
 
+    // Create and return the shasums signature URL.
     pub fn shasums_signature_url(&self) -> String {
         format!(
             "{releases_url}{product}/{version}/{filename}",
@@ -42,6 +44,7 @@ impl ProductVersion {
         )
     }
 
+    // Create and return the shasums URL.
     pub fn shasums_url(&self) -> String {
         format!(
             "{releases_url}{product}/{version}/{filename}",
@@ -109,12 +112,8 @@ mod tests {
             version:           "0.12.26".into(),
         };
 
-        let expected = format!(
-            "{releases_url}terraform/0.12.26/terraform_0.12.26_SHA256SUMS",
-            releases_url=RELEASES_URL,
-        );
-
-        let url = version.shasums_url();
+        let expected = "https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS";
+        let url      = version.shasums_url();
 
         assert_eq!(url, expected)
     }
@@ -129,12 +128,8 @@ mod tests {
             version:           "0.12.26".into(),
         };
 
-        let expected = format!(
-            "{releases_url}terraform/0.12.26/terraform_0.12.26_SHA256SUMS.sig",
-            releases_url=RELEASES_URL,
-        );
-
-        let url = version.shasums_signature_url();
+        let expected = "https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.sig";
+        let url      = version.shasums_signature_url();
 
         assert_eq!(url, expected)
     }

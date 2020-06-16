@@ -59,7 +59,7 @@ impl Client {
         }
     }
 
-    // Version check the given product
+    // Version check the given product via the checkpoint API
     pub async fn check_version(&self, product: &str) -> Result<VersionCheck> {
         let url = format!(
             "{checkpoint}{product}",
@@ -121,6 +121,7 @@ impl Client {
         Ok(())
     }
 
+    // Perform an HTTP GET on the given URL
     pub async fn get(&self, url: &str) -> Result<reqwest::Response> {
         let resp = self.client
             .get(url)
@@ -130,6 +131,7 @@ impl Client {
         Ok(resp)
     }
 
+    // Perform an HTTP GET on the given URL and return the result as Bytes
     pub async fn get_bytes(&self, url: &str) -> Result<Bytes> {
         let resp: Bytes = self.get(url)
             .await?
@@ -139,6 +141,7 @@ impl Client {
         Ok(resp)
     }
 
+    // Perform an HTTP GET on the given URL and return the result as a String
     pub async fn get_text(&self, url: &str) -> Result<String> {
         let resp = self.get(url)
             .await?
@@ -148,6 +151,7 @@ impl Client {
         Ok(resp)
     }
 
+    // Get the shasums for the given product version and return a new Shasums.
     pub async fn get_shasums(
         &self,
         version: &ProductVersion,
@@ -159,6 +163,8 @@ impl Client {
         Ok(shasums)
     }
 
+    // Get the signature for the given ProductVersion and return a new
+    // Signature.
     pub async fn get_signature(
         &self,
         version: &ProductVersion,
@@ -170,6 +176,7 @@ impl Client {
         Ok(signature)
     }
 
+    // Get the ProductVersion for a given product and version.
     pub async fn get_version(&self, product: &str, version: &str) -> Result<ProductVersion> {
         let url = format!(
             "{releases_url}{product}/{version}/index.json",

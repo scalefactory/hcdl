@@ -27,11 +27,11 @@ pub fn cleanup(filename: &str) -> Result<()> {
 }
 
 fn extract_file(mut zipfile: &mut ZipFile, dest: &PathBuf) -> Result<()> {
-    let name = zipfile.name();
-    let dest = dest.join(name);
-
+    let name        = zipfile.name();
+    let dest        = dest.join(name);
     let mut options = OpenOptions::new();
 
+    // On Unix type OSs we set the written file as executable.
     #[cfg(target_family = "unix")]
     options.mode(0o755);
 
@@ -47,10 +47,9 @@ fn extract_file(mut zipfile: &mut ZipFile, dest: &PathBuf) -> Result<()> {
 }
 
 pub fn install(zipfile: &str, dest: &PathBuf) -> Result<()> {
-    let path = Path::new(zipfile);
-    let file = File::open(&path).expect("open zipfile");
-
-    let mut zip    = ZipArchive::new(file).expect("new ziparchive");
+    let path    = Path::new(zipfile);
+    let file    = File::open(&path).expect("open zipfile");
+    let mut zip = ZipArchive::new(file).expect("new ziparchive");
 
     for i in 0..zip.len() {
         let mut file = zip.by_index(i)?;

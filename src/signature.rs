@@ -73,6 +73,7 @@ impl Signature {
     }
 }
 
+// Read a file's content into a String
 fn read_file_content(path: &PathBuf) -> Result<String> {
     let file         = File::open(&path)?;
     let mut reader   = BufReader::new(file);
@@ -83,6 +84,7 @@ fn read_file_content(path: &PathBuf) -> Result<String> {
     Ok(contents)
 }
 
+// Location and read the GPG key.
 fn get_gpg_key() -> Result<String> {
     let mut path = match dirs::data_dir() {
         Some(dir) => Ok(dir),
@@ -122,6 +124,7 @@ mod tests {
     use std::path::Path;
     use super::*;
 
+    // Read a file's contents into Bytes
     fn read_file_bytes(path: &PathBuf) -> Result<Bytes> {
         let file         = File::open(&path)?;
         let mut reader   = BufReader::new(file);

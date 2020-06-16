@@ -3,6 +3,7 @@
 #![forbid(missing_docs)]
 use serde::Deserialize;
 
+// Represents a single build of a HashiCorp product
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 pub struct Build {
     pub arch:     String,

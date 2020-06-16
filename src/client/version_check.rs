@@ -3,6 +3,7 @@
 #![forbid(missing_docs)]
 use serde::Deserialize;
 
+// Represents a result from the checkpoint API
 #[derive(Clone, Debug, Deserialize)]
 pub struct VersionCheck {
     alerts:                   Vec<String>,

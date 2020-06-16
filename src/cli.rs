@@ -56,6 +56,7 @@ const VALID_OS: &[&str] = &[
 
 const DEFAULT_VERSION: &'static str = "latest";
 
+// Ensure that the installation dir exists and is a directory.
 fn is_valid_install_dir(s: String) -> Result<(), String> {
     let path = Path::new(&s);
 
