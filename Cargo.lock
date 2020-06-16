@@ -11,9 +11,9 @@ dependencies = [
 
 [[package]]
 name = "adler32"
-version = "1.0.4"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5d2e7343e7fc9de883d1b0341e0b13970f764c14101234857d2ddafa1cb1cac2"
+checksum = "567b077b825e468cc974f0020d4082ee6e03132512f207ef1a02fd5d00d1f32d"
 
 [[package]]
 name = "ansi_term"
@@ -94,9 +94,9 @@ checksum = "b41b7ea54a0c9d92199de89e20e58d49f02f8e699814ef3fdf266f6f748d15c7"
 
 [[package]]
 name = "base64"
-version = "0.12.1"
+version = "0.12.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "53d1ccbaf7d9ec9537465a97bf19edc1a4e158ecb49fc16178202238c569cc42"
+checksum = "e223af0dc48c96d4f8342ec01a4974f139df863896b316681efd36742f22cc67"
 
 [[package]]
 name = "bitflags"
@@ -1070,7 +1070,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3b82c9238b305f26f53443e3a4bc8528d64b8d0bee408ec949eb7bf5635ec680"
 dependencies = [
  "async-compression",
- "base64 0.12.1",
+ "base64 0.12.2",
  "bytes",
  "encoding_rs",
  "futures-core",
