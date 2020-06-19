@@ -7,13 +7,13 @@ use super::build::*;
 static RELEASES_URL: &str = "https://releases.hashicorp.com/";
 
 // Represents a single version of a HashiCorp product
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq)]
 pub struct ProductVersion {
-    builds:                Vec<Build>,
-    name:                  String,
-    version:               String,
+    pub builds:            Vec<Build>,
+    pub name:              String,
     pub shasums:           String,
     pub shasums_signature: String,
+    pub version:           String,
 }
 
 impl ProductVersion {

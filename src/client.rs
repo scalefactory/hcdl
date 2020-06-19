@@ -45,7 +45,16 @@ static PROGRESS_TEMPLATE: &str = concat!(
     " {msg}",
 );
 
-static RELEASES_URL: &str = "https://releases.hashicorp.com/";
+#[cfg(not(test))]
+static RELEASES_URL: &str = "https://releases.hashicorp.com";
+
+#[cfg(test)]
+lazy_static! {
+    static ref RELEASES_URL: Box<String> = {
+        let url = mockito::server_url();
+        Box::new(url)
+    };
+}
 
 static USER_AGENT: &str = concat!(
     env!("CARGO_PKG_NAME"),
@@ -192,8 +201,8 @@ impl Client {
     // Get the ProductVersion for a given product and version.
     pub async fn get_version(&self, product: &str, version: &str) -> Result<ProductVersion> {
         let url = format!(
-            "{releases_url}{product}/{version}/index.json",
-            releases_url=RELEASES_URL,
+            "{releases_url}/{product}/{version}/index.json",
+            releases_url=RELEASES_URL.to_string(),
             product=product,
             version=version,
         );
@@ -210,6 +219,7 @@ impl Client {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::client::build::Build;
     use mockito::mock;
     use pretty_assertions::assert_eq;
 
@@ -244,6 +254,45 @@ mod tests {
 
         let client = Client::new();
         let ret    = client.check_version("terraform").await.unwrap();
+
+        assert_eq!(expected, ret)
+    }
+
+    #[tokio::test]
+    async fn test_get_version() {
+        let expected = ProductVersion {
+            name:              "terraform".into(),
+            shasums:           "terraform_0.12.26_SHA256SUMS".into(),
+            shasums_signature: "terraform_0.12.26_SHA256SUMS.sig".into(),
+            version:           "0.12.26".into(),
+            builds:            vec![
+                Build {
+                    arch:     "amd64".into(),
+                    filename: "terraform_0.12.26_freebsd_amd64.zip".into(),
+                    name:     "terraform".into(),
+                    os:       "freebsd".into(),
+                    url:      "https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_freebsd_amd64.zip".into(),
+                    version:  "0.12.26".into(),
+                },
+                Build {
+                    arch:     "amd64".into(),
+                    filename: "terraform_0.12.26_linux_amd64.zip".into(),
+                    name:     "terraform".into(),
+                    os:       "linux".into(),
+                    url:      "https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_linux_amd64.zip".into(),
+                    version:  "0.12.26".into(),
+                },
+            ],
+        };
+
+        let data = data_path("get_version.json");
+        let _m   = mock("GET", "/terraform/0.12.26/index.json")
+            .with_status(200)
+            .with_body_from_file(&data)
+            .create();
+
+        let client = Client::new();
+        let ret    = client.get_version("terraform", "0.12.26").await.unwrap();
 
         assert_eq!(expected, ret)
     }
