@@ -199,7 +199,11 @@ impl Client {
     }
 
     // Get the ProductVersion for a given product and version.
-    pub async fn get_version(&self, product: &str, version: &str) -> Result<ProductVersion> {
+    pub async fn get_version(
+        &self,
+        product: &str,
+        version: &str,
+    ) -> Result<ProductVersion> {
         let url = format!(
             "{releases_url}/{product}/{version}/index.json",
             releases_url=RELEASES_URL.to_string(),
