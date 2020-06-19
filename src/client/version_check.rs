@@ -4,13 +4,13 @@
 use serde::Deserialize;
 
 // Represents a result from the checkpoint API
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq)]
 pub struct VersionCheck {
-    alerts:                   Vec<String>,
-    current_changelog_url:    String,
-    current_release:          u64,
-    product:                  String,
-    project_website:          String,
-    pub current_download_url: String,
-    pub current_version:      String,
+    pub alerts:                Vec<String>,
+    pub current_changelog_url: String,
+    pub current_download_url:  String,
+    pub current_release:       u64,
+    pub current_version:       String,
+    pub product:               String,
+    pub project_website:       String,
 }

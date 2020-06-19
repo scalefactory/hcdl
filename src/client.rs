@@ -20,7 +20,19 @@ use product_version::*;
 mod version_check;
 use version_check::*;
 
-static CHECKPOINT_URL: &str = "https://checkpoint-api.hashicorp.com/v1/check/";
+#[cfg(not(test))]
+static CHECKPOINT_URL: &str = "https://checkpoint-api.hashicorp.com/v1/check";
+
+#[cfg(test)]
+use lazy_static::lazy_static;
+
+#[cfg(test)]
+lazy_static! {
+    static ref CHECKPOINT_URL: Box<String> = {
+        let url = mockito::server_url();
+        Box::new(url)
+    };
+}
 
 static PROGRESS_CHARS: &str = "#>-";
 
@@ -61,9 +73,10 @@ impl Client {
 
     // Version check the given product via the checkpoint API
     pub async fn check_version(&self, product: &str) -> Result<VersionCheck> {
+        // We to_string here for the test scenario.
         let url = format!(
-            "{checkpoint}{product}",
-            checkpoint=CHECKPOINT_URL,
+            "{checkpoint}/{product}",
+            checkpoint=CHECKPOINT_URL.to_string(),
             product=product,
         );
 
@@ -191,5 +204,47 @@ impl Client {
             .await?;
 
         Ok(resp)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use mockito::mock;
+    use pretty_assertions::assert_eq;
+
+    const TEST_DATA_DIR: &str = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/test-data/",
+    );
+
+    // Builds up the path to the test file
+    fn data_path(filename: &str) -> String {
+        format!("{}{}", TEST_DATA_DIR, filename)
+    }
+
+    #[tokio::test]
+    async fn test_check_version_ok() {
+        let expected = VersionCheck {
+            alerts:                Vec::new(),
+            current_changelog_url: "https://github.com/hashicorp/terraform/blob/v0.12.26/CHANGELOG.md".into(),
+            current_download_url:  "https://releases.hashicorp.com/terraform/0.12.26/".into(),
+            current_release:       1590599832,
+            current_version:       "0.12.26".into(),
+            product:               "terraform".into(),
+            project_website:       "https://www.terraform.io".into(),
+        };
+
+        let data = data_path("check_terraform.http");
+        let _m   = mock("GET", "/terraform")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body_from_file(&data)
+            .create();
+
+        let client = Client::new();
+        let ret    = client.check_version("terraform").await.unwrap();
+
+        assert_eq!(expected, ret)
     }
 }
