@@ -259,6 +259,40 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn get_get_bytes() {
+        let server_url = mockito::server_url();
+        let url        = format!("{}/test.txt", server_url);
+        let expected   = "Test text\n";
+        let data       = data_path("test.txt");
+        let _m         = mock("GET", "/test.txt")
+            .with_status(200)
+            .with_body_from_file(&data)
+            .create();
+
+        let client = Client::new();
+        let ret    = client.get_bytes(&url).await.unwrap();
+
+        assert_eq!(expected, ret)
+    }
+
+    #[tokio::test]
+    async fn get_get_text() {
+        let server_url = mockito::server_url();
+        let url        = format!("{}/test.txt", server_url);
+        let expected   = Bytes::from("Test text\n");
+        let data       = data_path("test.txt");
+        let _m         = mock("GET", "/test.txt")
+            .with_status(200)
+            .with_body_from_file(&data)
+            .create();
+
+        let client = Client::new();
+        let ret    = client.get_text(&url).await.unwrap();
+
+        assert_eq!(expected, ret)
+    }
+
+    #[tokio::test]
     async fn test_get_version() {
         let expected = ProductVersion {
             name:              "terraform".into(),
