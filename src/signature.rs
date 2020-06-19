@@ -20,6 +20,7 @@ use super::shasums::Shasums;
 
 const HASHICORP_GPG_KEY_FILENAME: &'static str = "hashicorp.asc";
 
+#[derive(Debug, PartialEq)]
 pub struct Signature {
     // This is the signature of the shasums file.
     signature: Bytes,
@@ -86,33 +87,50 @@ fn read_file_content(path: &PathBuf) -> Result<String> {
 
 // Location and read the GPG key.
 fn get_gpg_key() -> Result<String> {
-    let mut path = match dirs::data_dir() {
-        Some(dir) => Ok(dir),
-        None      => Err(anyhow!("Couldn't find shared data directory")),
-    }?;
-
-    // Ensure that the data dir exists
-    if !path.exists() || !path.is_dir() {
-        let msg = anyhow!(
-            "Data directory {} does not exist or is not a directory",
-            path.display(),
+    // During tests we short circuit the path discovery to just take the
+    // GPG key from the test-data directory.
+    let path = if cfg!(test) {
+        let test_data_dir = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/test-data/",
         );
 
-        return Err(msg);
+        let mut path = PathBuf::new();
+        path.push(test_data_dir);
+        path.push(HASHICORP_GPG_KEY_FILENAME);
+        path
     }
+    else {
+        let mut path = match dirs::data_dir() {
+            Some(dir) => Ok(dir),
+            None      => Err(anyhow!("Couldn't find shared data directory")),
+        }?;
 
-    path = path.join(env!("CARGO_PKG_NAME"));
-    path = path.join(HASHICORP_GPG_KEY_FILENAME);
+        // Ensure that the data dir exists
+        if !path.exists() || !path.is_dir() {
+            let msg = anyhow!(
+                "Data directory {} does not exist or is not a directory",
+                path.display(),
+            );
 
-    // Ensure that the GPG key exists
-    if !path.exists() || !path.is_file() {
-        let msg = anyhow!(
-            "GPG key file {} does not exist or is not a file",
-            path.display()
-        );
+            return Err(msg);
+        }
 
-        return Err(msg);
-    }
+        path = path.join(env!("CARGO_PKG_NAME"));
+        path = path.join(HASHICORP_GPG_KEY_FILENAME);
+
+        // Ensure that the GPG key exists
+        if !path.exists() || !path.is_file() {
+            let msg = anyhow!(
+                "GPG key file {} does not exist or is not a file",
+                path.display()
+            );
+
+            return Err(msg);
+        }
+
+        path
+    };
 
     let contents = read_file_content(&path)?;
 

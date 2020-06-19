@@ -222,6 +222,8 @@ mod tests {
     use crate::client::build::Build;
     use mockito::mock;
     use pretty_assertions::assert_eq;
+    use std::io::BufReader;
+    use std::path::PathBuf;
 
     const TEST_DATA_DIR: &str = concat!(
         env!("CARGO_MANIFEST_DIR"),
@@ -231,6 +233,16 @@ mod tests {
     // Builds up the path to the test file
     fn data_path(filename: &str) -> String {
         format!("{}{}", TEST_DATA_DIR, filename)
+    }
+
+    fn read_file_bytes(path: &PathBuf) -> Bytes {
+        let file         = File::open(&path).unwrap();
+        let mut reader   = BufReader::new(file);
+        let mut contents = Vec::new();
+
+        reader.read_to_end(&mut contents).unwrap();
+
+        Bytes::from(contents)
     }
 
     #[tokio::test]
@@ -259,7 +271,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn get_get_bytes() {
+    async fn test_get_bytes() {
         let server_url = mockito::server_url();
         let url        = format!("{}/test.txt", server_url);
         let expected   = "Test text\n";
@@ -276,7 +288,55 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn get_get_text() {
+    async fn test_get_signature() {
+        let data = data_path("terraform_0.12.26_SHA256SUMS.sig");
+        let _m   = mock("GET", "/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.sig")
+            .with_status(200)
+            .with_body_from_file(&data)
+            .create();
+
+        let version = ProductVersion {
+            name:              "terraform".into(),
+            shasums:           "terraform_0.12.26_SHA256SUMS".into(),
+            shasums_signature: "terraform_0.12.26_SHA256SUMS.sig".into(),
+            version:           "0.12.26".into(),
+            builds:            vec![
+                Build {
+                    arch:     "amd64".into(),
+                    filename: "terraform_0.12.26_freebsd_amd64.zip".into(),
+                    name:     "terraform".into(),
+                    os:       "freebsd".into(),
+                    url:      "https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_freebsd_amd64.zip".into(),
+                    version:  "0.12.26".into(),
+                },
+                Build {
+                    arch:     "amd64".into(),
+                    filename: "terraform_0.12.26_linux_amd64.zip".into(),
+                    name:     "terraform".into(),
+                    os:       "linux".into(),
+                    url:      "https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_linux_amd64.zip".into(),
+                    version:  "0.12.26".into(),
+                },
+            ],
+        };
+
+        let gpg_key_path = data_path("hashicorp.asc");
+        let gpg_key      = read_file_bytes(&Path::new(&gpg_key_path).to_path_buf());
+        let signature    = read_file_bytes(&Path::new(&data).to_path_buf());
+
+        let expected = Signature::new_with_gpg_key(
+            signature,
+            ::std::str::from_utf8(&gpg_key).unwrap().to_string(),
+        );
+
+        let client = Client::new();
+        let ret    = client.get_signature(&version).await.unwrap();
+
+        assert_eq!(expected, ret)
+    }
+
+    #[tokio::test]
+    async fn test_get_text() {
         let server_url = mockito::server_url();
         let url        = format!("{}/test.txt", server_url);
         let expected   = Bytes::from("Test text\n");
