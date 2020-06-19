@@ -245,7 +245,7 @@ mod tests {
             project_website:       "https://www.terraform.io".into(),
         };
 
-        let data = data_path("check_terraform.http");
+        let data = data_path("check_terraform.json");
         let _m   = mock("GET", "/terraform")
             .with_status(200)
             .with_header("content-type", "application/json")
