@@ -22,7 +22,7 @@ impl ProductVersion {
         let filtered: Vec<Build> = self.builds
             .iter()
             .filter(|b| b.arch == arch && b.os == os)
-            .map(|b| b.clone())
+            .cloned()
             .collect();
 
         if filtered.is_empty() {

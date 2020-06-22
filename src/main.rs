@@ -7,7 +7,6 @@ use chrono::{
     Utc,
 };
 use std::path::Path;
-use tokio;
 
 mod cli;
 mod client;

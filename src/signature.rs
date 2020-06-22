@@ -18,7 +18,7 @@ use std::io::{
 use std::path::PathBuf;
 use super::shasums::Shasums;
 
-const HASHICORP_GPG_KEY_FILENAME: &'static str = "hashicorp.asc";
+const HASHICORP_GPG_KEY_FILENAME: &str = "hashicorp.asc";
 
 #[derive(Debug, PartialEq)]
 pub struct Signature {

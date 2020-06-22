@@ -7,7 +7,6 @@ use indicatif::{
     ProgressBar,
     ProgressStyle,
 };
-use reqwest;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
@@ -21,7 +20,7 @@ mod version_check;
 use version_check::*;
 
 #[cfg(not(test))]
-static CHECKPOINT_URL: &str = "https://checkpoint-api.hashicorp.com/v1/check";
+const CHECKPOINT_URL: &str = "https://checkpoint-api.hashicorp.com/v1/check";
 
 #[cfg(test)]
 use lazy_static::lazy_static;
@@ -34,9 +33,9 @@ lazy_static! {
     };
 }
 
-static PROGRESS_CHARS: &str = "#>-";
+const PROGRESS_CHARS: &str = "#>-";
 
-static PROGRESS_TEMPLATE: &str = concat!(
+const PROGRESS_TEMPLATE: &str = concat!(
     "{spinner:green} ",
     "[{elapsed_precise}] ",
     "[{bar:40.cyan/blue}] ",
@@ -46,7 +45,7 @@ static PROGRESS_TEMPLATE: &str = concat!(
 );
 
 #[cfg(not(test))]
-static RELEASES_URL: &str = "https://releases.hashicorp.com";
+const RELEASES_URL: &str = "https://releases.hashicorp.com";
 
 #[cfg(test)]
 lazy_static! {
@@ -56,7 +55,7 @@ lazy_static! {
     };
 }
 
-static USER_AGENT: &str = concat!(
+const USER_AGENT: &str = concat!(
     env!("CARGO_PKG_NAME"),
     "/",
     env!("CARGO_PKG_VERSION"),
@@ -127,7 +126,7 @@ impl Client {
         // Start downloading chunks.
         while let Some(chunk) = resp.chunk().await? {
             // Write the chunk to the output file.
-            file.write(&chunk)?;
+            file.write_all(&chunk)?;
 
             // Poke the progress indicator
             if total_size.is_some() {
