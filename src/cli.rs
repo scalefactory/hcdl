@@ -77,6 +77,15 @@ fn create_app<'a, 'b>() -> App<'a, 'b> {
         .about(crate_description!())
         // Flags
         .arg(
+            Arg::with_name("CHECK")
+                .long("check")
+                .help("Check for the latest version and exit without downloading")
+                .takes_value(false)
+                .conflicts_with_all(&[
+                    "BUILD",
+                ])
+        )
+        .arg(
             Arg::with_name("CLEANUP")
                 .long("cleanup")
                 .short("c")

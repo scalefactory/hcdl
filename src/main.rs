@@ -2,6 +2,10 @@
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
 use anyhow::Result;
+use chrono::{
+    TimeZone,
+    Utc,
+};
 use std::path::Path;
 use tokio;
 
@@ -35,6 +39,20 @@ async fn main() -> Result<()> {
     let info = if build_version == "latest" {
         let latest          = client.check_version(product).await?;
         let current_version = &latest.current_version;
+
+        // Check only, no download.
+        if matches.is_present("CHECK") {
+            let current_release = latest.current_release;
+
+            println!(
+                "Latest version of {product} is {version} from {datetime}",
+                product=product,
+                version=current_version,
+                datetime=Utc.timestamp(current_release as i64, 0).to_rfc2822(),
+            );
+
+            ::std::process::exit(0);
+        }
 
         client.get_version(product, current_version).await?
     }
