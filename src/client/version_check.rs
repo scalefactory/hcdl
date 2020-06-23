@@ -31,3 +31,27 @@ impl fmt::Display for VersionCheck {
         )
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use pretty_assertions::assert_eq;
+
+    #[test]
+    fn test_display() {
+        let version = VersionCheck {
+            alerts:                Vec::new(),
+            current_changelog_url: "https://github.com/hashicorp/terraform/blob/v0.12.26/CHANGELOG.md".into(),
+            current_download_url:  "https://releases.hashicorp.com/terraform/0.12.26/".into(),
+            current_release:       1590599832,
+            current_version:       "0.12.26".into(),
+            product:               "terraform".into(),
+            project_website:       "https://www.terraform.io".into(),
+        };
+
+        let expected = "terraform v0.12.26 from Wed, 27 May 2020 17:17:12 +0000";
+        let ret      = format!("{}", version);
+
+        assert_eq!(expected, ret)
+    }
+}
