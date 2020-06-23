@@ -1,7 +1,6 @@
 # `hcdl`: HashiCorp Downloader
 
-`hcdl` is a tool for easily downloading and (optionally) installing
-[HashiCorp] products.
+`hcdl` is a tool for easily downloading and installing [HashiCorp] products.
 
 ## Usage
 
@@ -9,7 +8,7 @@
 the latest version of [Terraform], we can run the following:
 
 ```shell
-$ hcdl --install terraform
+$ hcdl terraform
 ```
 
 You'll see output like the following:
@@ -77,6 +76,57 @@ key published by HashiCorp.
 If a GPG key isn't present and you still wish to use the tool, you will be
 required to explicitly disable the signature verification with the
 `--no-verify-signature` flag.
+
+## Examples
+
+### Checking for the latest Terraform version
+
+```shell
+$ hcdl --check terraform
+Latest version: terraform v0.12.26 from Wed, 27 May 2020 17:17:12 +0000
+```
+
+### Retaining Downloaded Zip File after Installation
+
+```shell
+$ hcdl --keep terraform
+Latest version: terraform v0.12.26 from Wed, 27 May 2020 17:17:12 +0000
+Downloading and verifying signature of terraform_0.12.26_SHA256SUMS...
+  Verified against terraform_0.12.26_SHA256SUMS.sig.
+Downloading terraform_0.12.26_freebsd_amd64.zip...
+  [00:00:03] [########################################] 16.06MB/16.06MB (0s) done.
+SHA256 of terraform_0.12.26_freebsd_amd64.zip OK.
+Unzipping 'terraform' from 'terraform_0.12.26_freebsd_amd64.zip' to '/home/phyber/.local/bin'...
+  Installation successful.
+Keeping zipfile terraform_0.12.26_freebsd_amd64.zip in current directory.
+```
+
+### Download a Product for a Different OS
+
+```shell
+$ target/release/hcdl --os linux terraform
+Latest version: terraform v0.12.26 from Wed, 27 May 2020 17:17:12 +0000
+Downloading and verifying signature of terraform_0.12.26_SHA256SUMS...
+  Verified against terraform_0.12.26_SHA256SUMS.sig.
+Downloading terraform_0.12.26_linux_amd64.zip...
+  [00:00:02] [########################################] 16.06MB/16.06MB (0s) done.
+SHA256 of terraform_0.12.26_linux_amd64.zip OK.
+Product downloaded for different OS, freebsd != linux.
+  Skipping install and keeping zipfile 'terraform_0.12.26_linux_amd64.zip' in current directory.
+```
+
+### Download a Specific Version of a Product
+
+```shell
+$ target/release/hcdl --build 0.12.25 terraform
+Downloading and verifying signature of terraform_0.12.25_SHA256SUMS...
+  Verified against terraform_0.12.25_SHA256SUMS.sig.
+Downloading terraform_0.12.25_freebsd_amd64.zip...
+  [00:00:02] [########################################] 15.97MB/15.97MB (0s) done.
+SHA256 of terraform_0.12.25_freebsd_amd64.zip OK.
+Unzipping 'terraform' from 'terraform_0.12.25_freebsd_amd64.zip' to '/home/phyber/.local/bin'...
+  Installation successful.
+```
 
 <!-- links -->
 [FreeBSD]: https://www.freebsd.org/
