@@ -138,30 +138,7 @@ async fn main() -> Result<()> {
             Path::new(dir).to_path_buf()
         }
         else {
-            // If a --install-dir wasn't given, try to use the XDG executable
-            // dir.
-            match dirs::executable_dir() {
-                Some(dir) => {
-                    // We don't currently handle creating these directories.
-                    if !dir.exists() {
-                        eprintln!(
-                            "'{dir}' does not exist, create it and try again",
-                            dir=dir.display(),
-                        );
-
-                        exit(1);
-                    }
-
-                    dir
-                },
-                None => {
-                    // If we get None, we're likely on Windows.
-                    eprintln!("Could not find suitable install-dir.");
-                    eprintln!("Consider passing --install-dir to manually specify");
-
-                    exit(1);
-                },
-            }
+            install::bin_dir()?
         };
 
         println!(

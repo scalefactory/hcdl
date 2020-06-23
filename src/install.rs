@@ -1,8 +1,14 @@
 // install: Handle installation of product.
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
-use anyhow::Result;
-use std::fs::OpenOptions;
+use anyhow::{
+    anyhow,
+    Result,
+};
+use std::fs::{
+    self,
+    OpenOptions,
+};
 use std::io::{
     self,
     Read,
@@ -16,6 +22,31 @@ use zip::{
 
 #[cfg(target_family = "unix")]
 use std::os::unix::fs::OpenOptionsExt;
+
+// Find a suitable bindir for installing to.
+pub fn bin_dir() -> Result<PathBuf> {
+    let dir = match dirs::executable_dir() {
+        Some(dir) => {
+            // Attempt to create the directory if it doesn't exist
+            if !dir.exists() {
+                fs::create_dir_all(&dir)?;
+            }
+
+            dir
+        },
+        None => {
+            // If we get None, we're likely on Windows.
+            let msg = concat!(
+                "Could not find suitable install-dir.\n",
+                "Consider passing --install-dir to manually specify",
+            );
+
+            Err(anyhow!(msg))?
+        },
+    };
+
+    Ok(dir)
+}
 
 fn extract_file(mut zipfile: &mut ZipFile, dest: &PathBuf) -> Result<()> {
     let name        = zipfile.name();
