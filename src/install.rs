@@ -41,7 +41,7 @@ pub fn bin_dir() -> Result<PathBuf> {
                 "Consider passing --install-dir to manually specify",
             );
 
-            Err(anyhow!(msg))?
+            return Err(anyhow!(msg))
         },
     };
 
