@@ -90,6 +90,23 @@ impl Shasums {
 mod tests {
     use super::*;
     use pretty_assertions::assert_eq;
+    use std::fs::File;
+    use std::io::{
+        self,
+        BufReader,
+    };
+
+    // Copies the given content into the tmpfile handle.
+    fn tmpfile_from_file(path: &str) -> TmpFile {
+        let file        = File::open(&path).unwrap();
+        let mut reader  = BufReader::new(file);
+        let mut tmpfile = TmpFile::new(&path).unwrap();
+        let mut handle  = tmpfile.handle().unwrap();
+
+        io::copy(&mut reader, &mut handle).unwrap();
+
+        tmpfile
+    }
 
     #[test]
     fn test_check_bad() {
@@ -105,8 +122,10 @@ mod tests {
             filename=test_data_path,
         );
 
+        let mut tmpfile = tmpfile_from_file(&test_data_path);
+
         let shasums = Shasums::new(shasums_content.into());
-        let res     = shasums.check(&test_data_path).unwrap();
+        let res     = shasums.check(&mut tmpfile).unwrap();
 
         assert_eq!(Checksum::Bad, res);
     }
@@ -125,8 +144,10 @@ mod tests {
             filename=test_data_path,
         );
 
+        let mut tmpfile = tmpfile_from_file(&test_data_path);
+
         let shasums = Shasums::new(shasums_content.into());
-        let res     = shasums.check(&test_data_path).unwrap();
+        let res     = shasums.check(&mut tmpfile).unwrap();
 
         assert_eq!(Checksum::OK, res);
     }
