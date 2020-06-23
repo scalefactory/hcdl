@@ -128,41 +128,44 @@ async fn main() -> Result<()> {
         },
     };
 
-    if !matches.is_present("DOWNLOAD_ONLY") {
-        // Try to get an install_dir
-        let install_dir = matches.value_of("INSTALL_DIR");
+    // If we're only downloading, just persist the file and we're done.
+    if matches.is_present("DOWNLOAD_ONLY") {
+        tmpfile.persist()?;
 
-        let bin_dir = if let Some(dir) = install_dir {
-            // If a --install-dir was given, use that. We validated this in the
-            // CLI so we know this is good.
-            Path::new(dir).to_path_buf()
-        }
-        else {
-            install::bin_dir()?
-        };
+        exit(0);
+    }
 
-        println!(
-            "Unzipping '{product}' from '{zipfile}' to '{dest}'...",
-            product=product,
-            zipfile=filename,
-            dest=bin_dir.display(),
-        );
+    // Continue to attempt installation
+    // Try to get an install_dir
+    let install_dir = matches.value_of("INSTALL_DIR");
 
-        let mut handle = tmpfile.handle()?;
-        match install::install(&mut handle, &bin_dir) {
-            Ok(_)  => println!("  Installation successful."),
-            Err(e) => {
-                eprintln!("  Installation failed with error: {error}", error=e);
-
-                exit(1);
-            }
-        }
-
-        if matches.is_present("KEEP") {
-            tmpfile.persist()?;
-        }
+    let bin_dir = if let Some(dir) = install_dir {
+        // If a --install-dir was given, use that. We validated this in the
+        // CLI so we know this is good.
+        Path::new(dir).to_path_buf()
     }
     else {
+        install::bin_dir()?
+    };
+
+    println!(
+        "Unzipping '{product}' from '{zipfile}' to '{dest}'...",
+        product=product,
+        zipfile=filename,
+        dest=bin_dir.display(),
+    );
+
+    let mut handle = tmpfile.handle()?;
+    match install::install(&mut handle, &bin_dir) {
+        Ok(_)  => println!("  Installation successful."),
+        Err(e) => {
+            eprintln!("  Installation failed with error: {error}", error=e);
+
+            exit(1);
+        }
+    }
+
+    if matches.is_present("KEEP") {
         tmpfile.persist()?;
     }
 
