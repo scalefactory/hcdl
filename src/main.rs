@@ -20,12 +20,17 @@ async fn main() -> Result<()> {
 
     // We don't need to do very much if we're listing products
     if matches.is_present("LIST_PRODUCTS") {
-        println!("Products: {}", products::PRODUCTS_LIST.join(", "));
+        println!(
+            "Products: {products}",
+            products=products::PRODUCTS_LIST.join(", "),
+        );
 
-        ::std::process::exit(0);
+        exit(0);
     };
 
     // Pull options from matches
+    // Unwraps here should be fine as these are checked and have default
+    // values.
     let arch          = matches.value_of("ARCH").unwrap();
     let build_version = matches.value_of("BUILD").unwrap();
     let os            = matches.value_of("OS").unwrap();
@@ -34,16 +39,17 @@ async fn main() -> Result<()> {
 
     let client = client::Client::new();
 
-    let info = if build_version == "latest" {
-        let latest          = client.check_version(product).await?;
-        let current_version = &latest.current_version;
+    let builds = if build_version == "latest" {
+        let latest = client.check_version(product).await?;
 
         // Check only, no download.
         if matches.is_present("CHECK") {
-            println!("Latest version: {}", latest);
+            println!("Latest version: {latest}", latest=latest);
 
             exit(0);
         }
+
+        let current_version = &latest.current_version;
 
         client.get_version(product, current_version).await?
     }
@@ -51,25 +57,44 @@ async fn main() -> Result<()> {
         client.get_version(product, build_version).await?
     };
 
-    let build = info.build(arch, os).unwrap();
+    let build = match builds.build(arch, os) {
+        Some(build) => build,
+        None        => {
+            eprintln!(
+                "Couldn't find build for {os}-{arch}",
+                os=os,
+                arch=arch,
+            );
+
+            exit(1);
+        },
+    };
 
     // Download SHASUMS file
-    let shasums = client.get_shasums(&info).await?;
+    let shasums = client.get_shasums(&builds).await?;
 
     // Verify the SHASUMS file against its signature
     if !no_sig {
-        println!("Downloading and verifying signature of {}...", info.shasums);
+        println!(
+            "Downloading and verifying signature of {shasums}...",
+            shasums=builds.shasums,
+        );
 
         // Download signature file
-        let signature = client.get_signature(&info).await?;
+        let signature = client.get_signature(&builds).await?;
 
         match signature.check(&shasums) {
-            Ok(_)  => println!("  Verified against {}.", info.shasums_signature),
+            Ok(_)  => {
+                println!(
+                    "  Verified against {signature}.",
+                    signature=builds.shasums_signature,
+                )
+            },
             Err(e) => {
                 eprintln!(
-                    "  Verification against {} failed.\nError: {}\nExiting.",
-                    info.shasums,
-                    e,
+                    "  Verification against {shasums} failed.\nError: {error}\nExiting.",
+                    shasums=builds.shasums,
+                    error=e,
                 );
 
                 exit(1);
@@ -84,7 +109,7 @@ async fn main() -> Result<()> {
     // Get a new tmpfile for the download.
     let mut tmpfile = TmpFile::new(&filename)?;
 
-    println!("Downloading {}...", &filename);
+    println!("Downloading {filename}...", filename=&filename);
     client.download(&download_url, &mut tmpfile).await?;
 
     // Ensure the SHASUM is correct
@@ -150,7 +175,7 @@ async fn main() -> Result<()> {
         match install::install(&mut handle, &bin_dir) {
             Ok(_)  => println!("  Installation successful."),
             Err(e) => {
-                eprintln!("  Installation failed with error: {}", e);
+                eprintln!("  Installation failed with error: {error}", error=e);
 
                 exit(1);
             }
