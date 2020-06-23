@@ -127,7 +127,8 @@ async fn main() -> Result<()> {
         },
     };
 
-    // If we're only downloading, just persist the file and we're done.
+    // If we're DOWNLOAD_ONLY (implies KEEP), just persist the file and
+    // we're done.
     if matches.is_present("DOWNLOAD_ONLY") {
         tmpfile.persist()?;
 
@@ -163,6 +164,11 @@ async fn main() -> Result<()> {
     }
 
     if matches.is_present("KEEP") {
+        println!(
+            "Keeping zipfile {filename} in current directory.",
+            filename=filename,
+        );
+
         tmpfile.persist()?;
     }
 
