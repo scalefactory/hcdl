@@ -2,16 +2,13 @@
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
 use anyhow::Result;
-use std::fs::{
-    remove_file,
-    File,
-    OpenOptions,
+use std::fs::OpenOptions;
+use std::io::{
+    self,
+    Read,
+    Seek,
 };
-use std::io;
-use std::path::{
-    Path,
-    PathBuf,
-};
+use std::path::PathBuf;
 use zip::{
     read::ZipFile,
     ZipArchive,
@@ -19,12 +16,6 @@ use zip::{
 
 #[cfg(target_family = "unix")]
 use std::os::unix::fs::OpenOptionsExt;
-
-pub fn cleanup(filename: &str) -> Result<()> {
-    remove_file(filename)?;
-
-    Ok(())
-}
 
 fn extract_file(mut zipfile: &mut ZipFile, dest: &PathBuf) -> Result<()> {
     let name        = zipfile.name();
@@ -46,10 +37,9 @@ fn extract_file(mut zipfile: &mut ZipFile, dest: &PathBuf) -> Result<()> {
     Ok(())
 }
 
-pub fn install(zipfile: &str, dest: &PathBuf) -> Result<()> {
-    let path    = Path::new(zipfile);
-    let file    = File::open(&path).expect("open zipfile");
-    let mut zip = ZipArchive::new(file).expect("new ziparchive");
+pub fn install<F>(zipfile: &mut F, dest: &PathBuf) -> Result<()>
+where F: Read + Seek {
+    let mut zip = ZipArchive::new(zipfile).expect("new ziparchive");
 
     for i in 0..zip.len() {
         let mut file = zip.by_index(i)?;
