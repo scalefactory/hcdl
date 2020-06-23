@@ -222,8 +222,12 @@ mod tests {
     use crate::client::build::Build;
     use mockito::mock;
     use pretty_assertions::assert_eq;
+    use std::fs::File;
     use std::io::BufReader;
-    use std::path::PathBuf;
+    use std::path::{
+        Path,
+        PathBuf,
+    };
 
     const TEST_DATA_DIR: &str = concat!(
         env!("CARGO_MANIFEST_DIR"),
