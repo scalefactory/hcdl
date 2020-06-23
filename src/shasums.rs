@@ -9,9 +9,8 @@ use sha2::{
     Digest,
     Sha256,
 };
-use std::fs::File;
 use std::io;
-use std::path::Path;
+use super::TmpFile;
 
 #[derive(Debug, PartialEq)]
 pub enum Checksum {
@@ -31,7 +30,9 @@ impl Shasums {
     }
 
     // Check the shasum of the specified file
-    pub fn check(&self, filename: &str) -> Result<Checksum> {
+    pub fn check(&self, tmpfile: &mut TmpFile) -> Result<Checksum> {
+        let filename = &tmpfile.filename;
+
         let shasum = match self.shasum(filename) {
             Some(shasum) => Ok(shasum),
             None         => {
@@ -39,8 +40,7 @@ impl Shasums {
             },
         }?;
 
-        let path       = Path::new(filename);
-        let mut file   = File::open(&path)?;
+        let mut file   = tmpfile.handle()?;
         let mut hasher = Sha256::new();
 
         io::copy(&mut file, &mut hasher)?;
