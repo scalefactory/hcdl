@@ -31,11 +31,8 @@ async fn main() -> Result<()> {
     // Pull options from matches
     // Unwraps here should be fine as these are checked and have default
     // values.
-    let arch          = matches.value_of("ARCH").unwrap();
     let build_version = matches.value_of("BUILD").unwrap();
-    let os            = matches.value_of("OS").unwrap();
     let product       = matches.value_of("PRODUCT").unwrap();
-    let no_sig        = matches.is_present("NO_VERIFY_SIGNATURE");
 
     let client = client::Client::new();
 
@@ -57,6 +54,8 @@ async fn main() -> Result<()> {
         client.get_version(product, build_version).await?
     };
 
+    let arch  = matches.value_of("ARCH").unwrap();
+    let os    = matches.value_of("OS").unwrap();
     let build = match builds.build(arch, os) {
         Some(build) => build,
         None        => {
@@ -74,6 +73,7 @@ async fn main() -> Result<()> {
     let shasums = client.get_shasums(&builds).await?;
 
     // Verify the SHASUMS file against its signature
+    let no_sig = matches.is_present("NO_VERIFY_SIGNATURE");
     if !no_sig {
         println!(
             "Downloading and verifying signature of {shasums}...",
@@ -113,7 +113,6 @@ async fn main() -> Result<()> {
     client.download(&download_url, &mut tmpfile).await?;
 
     // Ensure the SHASUM is correct
-    //match shasums.check(filename)? {
     match shasums.check(&mut tmpfile)? {
         shasums::Checksum::OK => {
             println!("SHA256 of {filename} OK.", filename=filename);
@@ -137,9 +136,7 @@ async fn main() -> Result<()> {
 
     // Continue to attempt installation
     // Try to get an install_dir
-    let install_dir = matches.value_of("INSTALL_DIR");
-
-    let bin_dir = if let Some(dir) = install_dir {
+    let bin_dir = if let Some(dir) = matches.value_of("INSTALL_DIR") {
         // If a --install-dir was given, use that. We validated this in the
         // CLI so we know this is good.
         Path::new(dir).to_path_buf()
