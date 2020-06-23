@@ -7,16 +7,15 @@ use indicatif::{
     ProgressBar,
     ProgressStyle,
 };
-use std::fs::File;
 use std::io::prelude::*;
-use std::path::Path;
 use super::shasums::Shasums;
 use super::signature::Signature;
+use super::tmpfile::TmpFile;
 
 mod build;
 mod product_version;
-use product_version::*;
 mod version_check;
+use product_version::*;
 use version_check::*;
 
 #[cfg(not(test))]
@@ -97,13 +96,11 @@ impl Client {
     }
 
     // Download from the given URL to the output file.
-    pub async fn download(&self, url: &str, output: &str) -> Result<()> {
-        // Attempt to create the output file.
-        let path     = Path::new(output);
-        let mut file = File::create(&path)?;
+    pub async fn download(&self, url: &str, tmpfile: &mut TmpFile) -> Result<()> {
+        let file = tmpfile.handle()?;
 
         // Start the GET and attempt to get a content-length
-        let mut resp   = self.get(url).await?;
+        let mut resp   = self.get(&url).await?;
         let total_size = resp.content_length();
 
         // Setup the progress display
