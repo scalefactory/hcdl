@@ -2,11 +2,8 @@
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
 use anyhow::Result;
-use chrono::{
-    TimeZone,
-    Utc,
-};
 use std::path::Path;
+use std::process::exit;
 
 mod cli;
 mod client;
@@ -14,6 +11,8 @@ mod install;
 mod products;
 mod shasums;
 mod signature;
+mod tmpfile;
+use tmpfile::TmpFile;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -41,16 +40,9 @@ async fn main() -> Result<()> {
 
         // Check only, no download.
         if matches.is_present("CHECK") {
-            let current_release = latest.current_release;
+            println!("Latest version: {}", latest);
 
-            println!(
-                "Latest version of {product} is {version} from {datetime}",
-                product=product,
-                version=current_version,
-                datetime=Utc.timestamp(current_release as i64, 0).to_rfc2822(),
-            );
-
-            ::std::process::exit(0);
+            exit(0);
         }
 
         client.get_version(product, current_version).await?
@@ -80,7 +72,7 @@ async fn main() -> Result<()> {
                     e,
                 );
 
-                ::std::process::exit(1);
+                exit(1);
             },
         };
     }
@@ -89,11 +81,15 @@ async fn main() -> Result<()> {
     let download_url = &build.url;
     let filename     = &build.filename;
 
-    println!("Downloading {}...", filename);
-    client.download(download_url, filename).await?;
+    // Get a new tmpfile for the download.
+    let mut tmpfile = TmpFile::new(&filename)?;
+
+    println!("Downloading {}...", &filename);
+    client.download(&download_url, &mut tmpfile).await?;
 
     // Ensure the SHASUM is correct
-    match shasums.check(filename)? {
+    //match shasums.check(filename)? {
+    match shasums.check(&mut tmpfile)? {
         shasums::Checksum::OK => {
             println!("SHA256 of {filename} OK.", filename=filename);
         },
@@ -103,11 +99,11 @@ async fn main() -> Result<()> {
                 filename=filename,
             );
 
-            ::std::process::exit(1);
+            exit(1);
         },
     };
 
-    if matches.is_present("INSTALL") {
+    if !matches.is_present("DOWNLOAD_ONLY") {
         // Try to get an install_dir
         let install_dir = matches.value_of("INSTALL_DIR");
 
@@ -128,7 +124,7 @@ async fn main() -> Result<()> {
                             dir=dir.display(),
                         );
 
-                        ::std::process::exit(1);
+                        exit(1);
                     }
 
                     dir
@@ -138,7 +134,7 @@ async fn main() -> Result<()> {
                     eprintln!("Could not find suitable install-dir.");
                     eprintln!("Consider passing --install-dir to manually specify");
 
-                    ::std::process::exit(1);
+                    exit(1);
                 },
             }
         };
@@ -150,27 +146,22 @@ async fn main() -> Result<()> {
             dest=bin_dir.display(),
         );
 
-        match install::install(filename, &bin_dir) {
+        let mut handle = tmpfile.handle()?;
+        match install::install(&mut handle, &bin_dir) {
             Ok(_)  => println!("  Installation successful."),
             Err(e) => {
                 eprintln!("  Installation failed with error: {}", e);
 
-                ::std::process::exit(1);
+                exit(1);
             }
         }
 
-        if matches.is_present("CLEANUP") {
-            println!("Cleaning up after install...");
-
-            match install::cleanup(filename) {
-                Ok(_)  => println!("  Deleted {}.", filename),
-                Err(e) => {
-                    eprintln!("  Cleanup failed with error: {}", e);
-
-                    ::std::process::exit(1);
-                },
-            }
+        if matches.is_present("KEEP") {
+            tmpfile.persist()?;
         }
+    }
+    else {
+        tmpfile.persist()?;
     }
 
     Ok(())
