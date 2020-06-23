@@ -13,13 +13,13 @@ use std::path::Path;
 use super::products::PRODUCTS_LIST;
 
 #[cfg(target_arch = "arm")]
-const DEFAULT_ARCH: &str = "arm";
+pub const DEFAULT_ARCH: &str = "arm";
 
 #[cfg(target_arch = "x86")]
-const DEFAULT_ARCH: &str = "386";
+pub const DEFAULT_ARCH: &str = "386";
 
 #[cfg(target_arch = "x86_64")]
-const DEFAULT_ARCH: &str = "amd64";
+pub const DEFAULT_ARCH: &str = "amd64";
 
 const VALID_ARCH: &[&str] = &[
     "386",
@@ -28,22 +28,22 @@ const VALID_ARCH: &[&str] = &[
 ];
 
 #[cfg(target_os = "freebsd")]
-const DEFAULT_OS: &str = "freebsd";
+pub const DEFAULT_OS: &str = "freebsd";
 
 #[cfg(target_os = "linux")]
-const DEFAULT_OS: &str = "linux";
+pub const DEFAULT_OS: &str = "linux";
 
 #[cfg(target_os = "mac_os")]
-const DEFAULT_OS: &str = "darwin";
+pub const DEFAULT_OS: &str = "darwin";
 
 #[cfg(target_os = "openbsd")]
-const DEFAULT_OS: &str = "openbsd";
+pub const DEFAULT_OS: &str = "openbsd";
 
 #[cfg(target_os = "solaris")]
-const DEFAULT_OS: &str = "solaris";
+pub const DEFAULT_OS: &str = "solaris";
 
 #[cfg(target_os = "windows")]
-const DEFAULT_OS: &str = "windows";
+pub const DEFAULT_OS: &str = "windows";
 
 const VALID_OS: &[&str] = &[
     "darwin",

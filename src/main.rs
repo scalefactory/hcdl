@@ -135,6 +135,26 @@ async fn main() -> Result<()> {
         exit(0);
     }
 
+    // Work out if what we downloaded is installable. This is a crude check to
+    // see if the OS we asked for matches what we were built for.
+    let installable = os == cli::DEFAULT_OS;
+    if !installable {
+        println!(
+            "Product downloaded for different OS, {os} != {requested}.",
+            os=cli::DEFAULT_OS,
+            requested=os,
+        );
+
+        println!(
+            "  Skipping install and keeping zipfile '{filename}' in current directory.",
+            filename=filename,
+        );
+
+        tmpfile.persist()?;
+
+        exit(0);
+    }
+
     // Continue to attempt installation
     // Try to get an install_dir
     let bin_dir = if let Some(dir) = matches.value_of("INSTALL_DIR") {
