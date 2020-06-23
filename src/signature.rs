@@ -33,8 +33,8 @@ impl Signature {
         let gpg_key = get_gpg_key()?;
 
         let signature = Self {
-            signature: signature,
-            gpg_key:   gpg_key,
+            signature,
+            gpg_key,
         };
 
         Ok(signature)
@@ -44,8 +44,8 @@ impl Signature {
     #[allow(dead_code)]
     pub fn new_with_gpg_key(signature: Bytes, gpg_key: String) -> Self {
         Self {
-            signature: signature,
-            gpg_key:   gpg_key,
+            signature,
+            gpg_key,
         }
     }
 

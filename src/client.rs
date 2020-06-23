@@ -74,7 +74,7 @@ impl Client {
             .unwrap();
 
         Self {
-            client: client,
+            client,
         }
     }
 

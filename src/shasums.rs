@@ -25,7 +25,7 @@ pub struct Shasums {
 impl Shasums {
     pub fn new(shasums: String) -> Self {
         Self {
-            shasums: shasums,
+            shasums,
         }
     }
 
