@@ -39,16 +39,14 @@ async fn main() -> Result<()> {
     let builds = if build_version == "latest" {
         let latest = client.check_version(product).await?;
 
+        println!("Latest version: {latest}", latest=latest);
+
         // Check only, no download.
         if matches.is_present("CHECK") {
-            println!("Latest version: {latest}", latest=latest);
-
             exit(0);
         }
 
-        let current_version = &latest.current_version;
-
-        client.get_version(product, current_version).await?
+        client.get_version(product, &latest.current_version).await?
     }
     else {
         client.get_version(product, build_version).await?
