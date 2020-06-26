@@ -9,7 +9,6 @@ use sha2::{
     Digest,
     Sha256,
 };
-use std::fmt;
 use std::io;
 use super::TmpFile;
 
@@ -84,12 +83,6 @@ impl Shasums {
 
         // Return the shasum hex
         Some(shasum)
-    }
-}
-
-impl fmt::Display for Shasums {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.content())
     }
 }
 
