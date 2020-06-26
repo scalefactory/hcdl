@@ -8,6 +8,7 @@ use std::process::exit;
 mod cli;
 mod client;
 mod install;
+mod messages;
 mod products;
 mod shasums;
 mod signature;
@@ -20,10 +21,7 @@ async fn main() -> Result<()> {
 
     // We don't need to do very much if we're listing products
     if matches.is_present("LIST_PRODUCTS") {
-        println!(
-            "Products: {products}",
-            products=products::PRODUCTS_LIST.join(", "),
-        );
+        messages::list_products(products::PRODUCTS_LIST);
 
         exit(0);
     };
@@ -39,7 +37,7 @@ async fn main() -> Result<()> {
     let builds = if build_version == "latest" {
         let latest = client.check_version(product).await?;
 
-        println!("Latest version: {latest}", latest=latest);
+        messages::latest_version(&latest.to_string());
 
         // Check only, no download.
         if matches.is_present("CHECK") {
@@ -57,11 +55,7 @@ async fn main() -> Result<()> {
     let build = match builds.build(arch, os) {
         Some(build) => build,
         None        => {
-            eprintln!(
-                "Couldn't find build for {os}-{arch}",
-                os=os,
-                arch=arch,
-            );
+            messages::find_build_failed(os, arch);
 
             exit(1);
         },
@@ -73,27 +67,19 @@ async fn main() -> Result<()> {
     // Verify the SHASUMS file against its signature
     let no_sig = matches.is_present("NO_VERIFY_SIGNATURE");
     if !no_sig {
-        println!(
-            "Downloading and verifying signature of {shasums}...",
-            shasums=builds.shasums,
-        );
+        messages::verifying_signature(&builds.shasums);
 
         // Download signature file
         let signature = client.get_signature(&builds).await?;
 
         match signature.check(&shasums) {
             Ok(_)  => {
-                println!(
-                    "  Verified against {signature}.",
-                    signature=builds.shasums_signature,
-                )
+                messages::signature_verification_success(
+                    &builds.shasums_signature,
+                );
             },
             Err(e) => {
-                eprintln!(
-                    "  Verification against {shasums} failed.\nError: {error}\nExiting.",
-                    shasums=builds.shasums,
-                    error=e,
-                );
+                messages::signature_verification_failed(&e);
 
                 exit(1);
             },
@@ -107,19 +93,14 @@ async fn main() -> Result<()> {
     // Get a new tmpfile for the download.
     let mut tmpfile = TmpFile::new(&filename)?;
 
-    println!("Downloading {filename}...", filename=&filename);
+    messages::downloading(&filename);
     client.download(&download_url, &mut tmpfile).await?;
 
     // Ensure the SHASUM is correct
     match shasums.check(&mut tmpfile)? {
-        shasums::Checksum::OK => {
-            println!("SHA256 of {filename} OK.", filename=filename);
-        },
+        shasums::Checksum::OK  => messages::checksum_ok(&filename),
         shasums::Checksum::Bad => {
-            println!(
-                "SHA256 of {filename} did not match.",
-                filename=filename,
-            );
+            messages::checksum_bad(&filename);
 
             exit(1);
         },
@@ -137,16 +118,8 @@ async fn main() -> Result<()> {
     // see if the OS we asked for matches what we were built for.
     let installable = os == cli::DEFAULT_OS;
     if !installable {
-        println!(
-            "Product downloaded for different OS, {os} != {requested}.",
-            os=cli::DEFAULT_OS,
-            requested=os,
-        );
-
-        println!(
-            "  Skipping install and keeping zipfile '{filename}' in current directory.",
-            filename=filename,
-        );
+        messages::os_mismatch(cli::DEFAULT_OS, os);
+        messages::skipped_install(&filename);
 
         tmpfile.persist()?;
 
@@ -164,28 +137,20 @@ async fn main() -> Result<()> {
         install::bin_dir()?
     };
 
-    println!(
-        "Unzipping '{product}' from '{zipfile}' to '{dest}'...",
-        product=product,
-        zipfile=filename,
-        dest=bin_dir.display(),
-    );
+    messages::product_install(&product, &filename, &bin_dir);
 
     let mut handle = tmpfile.handle()?;
     match install::install(&mut handle, &bin_dir) {
-        Ok(_)  => println!("  Installation successful."),
+        Ok(_)  => messages::installation_successful(),
         Err(e) => {
-            eprintln!("  Installation failed with error: {error}", error=e);
+            messages::installation_failed(&e);
 
             exit(1);
         }
     }
 
     if matches.is_present("KEEP") {
-        println!(
-            "Keeping zipfile {filename} in current directory.",
-            filename=filename,
-        );
+        messages::keep_zipfile(&filename);
 
         tmpfile.persist()?;
     }
