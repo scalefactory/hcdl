@@ -1,6 +1,7 @@
 // shasums: Handle checking of files against shasums
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
+use super::TmpFile;
 use anyhow::{
     anyhow,
     Result,
@@ -10,7 +11,6 @@ use sha2::{
     Sha256,
 };
 use std::io;
-use super::TmpFile;
 
 #[derive(Debug, PartialEq)]
 pub enum Checksum {

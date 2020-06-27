@@ -1,6 +1,5 @@
 // Handles a tmpfile for downloading
 use anyhow::Result;
-use tempfile::NamedTempFile;
 use std::fs::OpenOptions;
 use std::io::{
     self,
@@ -8,6 +7,7 @@ use std::io::{
     SeekFrom,
 };
 use std::path::Path;
+use tempfile::NamedTempFile;
 
 #[cfg(target_family = "unix")]
 use std::os::unix::fs::OpenOptionsExt;

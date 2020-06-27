@@ -1,6 +1,7 @@
 // cli: Handle command line parsing
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
+use super::products::PRODUCTS_LIST;
 use clap::{
     crate_description,
     crate_name,
@@ -10,7 +11,6 @@ use clap::{
     ArgMatches,
 };
 use std::path::Path;
-use super::products::PRODUCTS_LIST;
 
 #[cfg(target_arch = "arm")]
 pub const DEFAULT_ARCH: &str = "arm";

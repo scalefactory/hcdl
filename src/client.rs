@@ -1,6 +1,9 @@
 // client: HTTP client and associated methods
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
+use super::shasums::Shasums;
+use super::signature::Signature;
+use super::tmpfile::TmpFile;
 use anyhow::Result;
 use bytes::Bytes;
 use indicatif::{
@@ -8,15 +11,12 @@ use indicatif::{
     ProgressStyle,
 };
 use std::io::prelude::*;
-use super::shasums::Shasums;
-use super::signature::Signature;
-use super::tmpfile::TmpFile;
 
 mod build;
 mod product_version;
 mod version_check;
-use product_version::*;
-use version_check::*;
+use product_version::ProductVersion;
+use version_check::VersionCheck;
 
 #[cfg(not(test))]
 const CHECKPOINT_URL: &str = "https://checkpoint-api.hashicorp.com/v1/check";

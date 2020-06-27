@@ -1,8 +1,8 @@
 // client: HTTP client and associated methods
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
+use super::build::Build;
 use serde::Deserialize;
-use super::build::*;
 
 static RELEASES_URL: &str = "https://releases.hashicorp.com/";
 
@@ -58,8 +58,8 @@ impl ProductVersion {
 
 #[cfg(test)]
 mod tests {
-    use pretty_assertions::assert_eq;
     use super::*;
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn test_build() {

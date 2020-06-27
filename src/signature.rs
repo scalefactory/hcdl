@@ -1,6 +1,7 @@
 // signature: Check GPG signatures
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
+use super::shasums::Shasums;
 use anyhow::{
     anyhow,
     Result,
@@ -16,7 +17,6 @@ use std::io::{
     BufReader,
 };
 use std::path::PathBuf;
-use super::shasums::Shasums;
 
 const HASHICORP_GPG_KEY_FILENAME: &str = "hashicorp.asc";
 
@@ -140,8 +140,8 @@ fn get_gpg_key() -> Result<String> {
 
 #[cfg(test)]
 mod tests {
-    use std::path::Path;
     use super::*;
+    use std::path::Path;
 
     // Read a file's contents into Bytes
     fn read_file_bytes(path: &PathBuf) -> Result<Bytes> {
