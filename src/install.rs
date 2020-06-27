@@ -41,7 +41,7 @@ pub fn bin_dir() -> Result<PathBuf> {
                 "Consider passing --install-dir to manually specify",
             );
 
-            return Err(anyhow!(msg))
+            return Err(anyhow!(msg));
         },
     };
 
@@ -69,7 +69,9 @@ fn extract_file(mut zipfile: &mut ZipFile, dest: &PathBuf) -> Result<()> {
 }
 
 pub fn install<F>(zipfile: &mut F, dest: &PathBuf) -> Result<()>
-where F: Read + Seek {
+where
+    F: Read + Seek,
+{
     let mut zip = ZipArchive::new(zipfile).expect("new ziparchive");
 
     for i in 0..zip.len() {

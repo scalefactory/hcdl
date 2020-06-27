@@ -45,8 +45,8 @@ impl Signature {
     #[allow(dead_code)]
     pub fn new_with_gpg_key(signature: Bytes, gpg_key: String) -> Self {
         Self {
-            signature,
-            gpg_key,
+            signature: signature,
+            gpg_key:   gpg_key,
         }
     }
 
@@ -60,13 +60,10 @@ impl Signature {
             Err(e) => Err(e.compat()),
         }?;
 
-        let shasums = BufReader::new(shasums.content().as_bytes());
+        let shasums   = BufReader::new(shasums.content().as_bytes());
+        let signature = self.signature.clone().reader();
 
-        match gpgrv::verify_detached(
-            self.signature.clone().reader(),
-            shasums,
-            &keyring,
-        ) {
+        match gpgrv::verify_detached(signature, shasums, &keyring) {
             Ok(_)  => Ok(()),
             Err(e) => Err(e.compat()),
         }?;
