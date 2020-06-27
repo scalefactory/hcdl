@@ -62,20 +62,23 @@ const USER_AGENT: &str = concat!(
 
 pub struct Client {
     client: reqwest::Client,
+    quiet:  bool,
 }
 
 impl Client {
     // Return a new reqwest client with our user-agent
-    pub fn new() -> Self {
+    pub fn new(quiet: bool) -> Result<Self> {
         let client = reqwest::ClientBuilder::new()
             .gzip(true)
             .user_agent(USER_AGENT)
-            .build()
-            .unwrap();
+            .build()?;
 
-        Self {
+        let this = Self {
             client,
-        }
+            quiet,
+        };
+
+        Ok(this)
     }
 
     // Version check the given product via the checkpoint API
@@ -95,16 +98,14 @@ impl Client {
         Ok(resp)
     }
 
-    // Download from the given URL to the output file.
-    pub async fn download(&self, url: &str, tmpfile: &mut TmpFile) -> Result<()> {
-        let file = tmpfile.handle()?;
+    // Handle creation of an appropriate progress bar
+    fn progress_bar(&self, total_size: Option<u64>) -> ProgressBar {
+        // No progress bar for quiet mode.
+        if self.quiet {
+            return ProgressBar::hidden();
+        }
 
-        // Start the GET and attempt to get a content-length
-        let mut resp   = self.get(&url).await?;
-        let total_size = resp.content_length();
-
-        // Setup the progress display
-        let pb = if let Some(size) = total_size {
+        if let Some(size) = total_size {
             // If we know the total size, setup a nice bar
             let style = ProgressStyle::default_bar()
                 .template(PROGRESS_TEMPLATE)
@@ -118,7 +119,19 @@ impl Client {
         else {
             // Otherwise, just a simple spinner
             ProgressBar::new_spinner()
-        };
+        }
+    }
+
+    // Download from the given URL to the output file.
+    pub async fn download(&self, url: &str, tmpfile: &mut TmpFile) -> Result<()> {
+        let file = tmpfile.handle()?;
+
+        // Start the GET and attempt to get a content-length
+        let mut resp   = self.get(&url).await?;
+        let total_size = resp.content_length();
+
+        // Setup the progress display
+        let pb = self.progress_bar(total_size);
 
         // Start downloading chunks.
         while let Some(chunk) = resp.chunk().await? {

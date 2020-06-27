@@ -83,6 +83,7 @@ fn create_app<'a, 'b>() -> App<'a, 'b> {
                 .takes_value(false)
                 .conflicts_with_all(&[
                     "BUILD",
+                    "QUIET",
                 ])
         )
         .arg(
@@ -110,6 +111,13 @@ fn create_app<'a, 'b>() -> App<'a, 'b> {
             Arg::with_name("NO_VERIFY_SIGNATURE")
                 .long("no-verify-signature")
                 .help("Disable GPG signature verification.")
+                .takes_value(false)
+        )
+        .arg(
+            Arg::with_name("QUIET")
+                .long("quiet")
+                .short("q")
+                .help("Silence all non-error output")
                 .takes_value(false)
         )
         // Options

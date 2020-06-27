@@ -13,15 +13,19 @@ mod products;
 mod shasums;
 mod signature;
 mod tmpfile;
+
+use messages::Messages;
 use tmpfile::TmpFile;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let matches = cli::parse_args();
+    let matches  = cli::parse_args();
+    let is_quiet = matches.is_present("QUIET");
+    let messages = Messages::new(is_quiet);
 
     // We don't need to do very much if we're listing products
     if matches.is_present("LIST_PRODUCTS") {
-        messages::list_products(products::PRODUCTS_LIST);
+        messages.list_products(products::PRODUCTS_LIST);
 
         exit(0);
     };
@@ -32,12 +36,12 @@ async fn main() -> Result<()> {
     let build_version = matches.value_of("BUILD").unwrap();
     let product       = matches.value_of("PRODUCT").unwrap();
 
-    let client = client::Client::new();
+    let client = client::Client::new(is_quiet)?;
 
     let builds = if build_version == "latest" {
         let latest = client.check_version(product).await?;
 
-        messages::latest_version(&latest.to_string());
+        messages.latest_version(&latest.to_string());
 
         // Check only, no download.
         if matches.is_present("CHECK") {
@@ -55,7 +59,7 @@ async fn main() -> Result<()> {
     let build = match builds.build(arch, os) {
         Some(build) => build,
         None        => {
-            messages::find_build_failed(os, arch);
+            messages.find_build_failed(os, arch);
 
             exit(1);
         },
@@ -67,19 +71,19 @@ async fn main() -> Result<()> {
     // Verify the SHASUMS file against its signature
     let no_sig = matches.is_present("NO_VERIFY_SIGNATURE");
     if !no_sig {
-        messages::verifying_signature(&builds.shasums);
+        messages.verifying_signature(&builds.shasums);
 
         // Download signature file
         let signature = client.get_signature(&builds).await?;
 
         match signature.check(&shasums) {
             Ok(_)  => {
-                messages::signature_verification_success(
+                messages.signature_verification_success(
                     &builds.shasums_signature,
                 );
             },
             Err(e) => {
-                messages::signature_verification_failed(&e);
+                messages.signature_verification_failed(&e);
 
                 exit(1);
             },
@@ -93,14 +97,14 @@ async fn main() -> Result<()> {
     // Get a new tmpfile for the download.
     let mut tmpfile = TmpFile::new(&filename)?;
 
-    messages::downloading(&filename);
+    messages.downloading(&filename);
     client.download(&download_url, &mut tmpfile).await?;
 
     // Ensure the SHASUM is correct
     match shasums.check(&mut tmpfile)? {
-        shasums::Checksum::OK  => messages::checksum_ok(&filename),
+        shasums::Checksum::OK  => messages.checksum_ok(&filename),
         shasums::Checksum::Bad => {
-            messages::checksum_bad(&filename);
+            messages.checksum_bad(&filename);
 
             exit(1);
         },
@@ -118,8 +122,8 @@ async fn main() -> Result<()> {
     // see if the OS we asked for matches what we were built for.
     let installable = os == cli::DEFAULT_OS;
     if !installable {
-        messages::os_mismatch(cli::DEFAULT_OS, os);
-        messages::skipped_install(&filename);
+        messages.os_mismatch(cli::DEFAULT_OS, os);
+        messages.skipped_install(&filename);
 
         tmpfile.persist()?;
 
@@ -137,20 +141,20 @@ async fn main() -> Result<()> {
         install::bin_dir()?
     };
 
-    messages::product_install(&product, &filename, &bin_dir);
+    messages.product_install(&product, &filename, &bin_dir);
 
     let mut handle = tmpfile.handle()?;
     match install::install(&mut handle, &bin_dir) {
-        Ok(_)  => messages::installation_successful(),
+        Ok(_)  => messages.installation_successful(),
         Err(e) => {
-            messages::installation_failed(&e);
+            messages.installation_failed(&e);
 
             exit(1);
         }
     }
 
     if matches.is_present("KEEP") {
-        messages::keep_zipfile(&filename);
+        messages.keep_zipfile(&filename);
 
         tmpfile.persist()?;
     }
