@@ -281,7 +281,7 @@ mod tests {
             .with_body_from_file(&data)
             .create();
 
-        let client = Client::new();
+        let client = Client::new(true).unwrap();
         let ret    = client.check_version("terraform").await.unwrap();
 
         assert_eq!(expected, ret)
@@ -298,7 +298,7 @@ mod tests {
             .with_body_from_file(&data)
             .create();
 
-        let client = Client::new();
+        let client = Client::new(true).unwrap();
         let ret    = client.get_bytes(&url).await.unwrap();
 
         assert_eq!(expected, ret)
@@ -346,7 +346,7 @@ mod tests {
             ::std::str::from_utf8(&gpg_key).unwrap().to_string(),
         );
 
-        let client = Client::new();
+        let client = Client::new(true).unwrap();
         let ret    = client.get_signature(&version).await.unwrap();
 
         assert_eq!(expected, ret)
@@ -363,7 +363,7 @@ mod tests {
             .with_body_from_file(&data)
             .create();
 
-        let client = Client::new();
+        let client = Client::new(true).unwrap();
         let ret    = client.get_text(&url).await.unwrap();
 
         assert_eq!(expected, ret)
@@ -402,7 +402,7 @@ mod tests {
             .with_body_from_file(&data)
             .create();
 
-        let client = Client::new();
+        let client = Client::new(true).unwrap();
         let ret    = client.get_version("terraform", "0.12.26").await.unwrap();
 
         assert_eq!(expected, ret)
