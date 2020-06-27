@@ -73,12 +73,12 @@ impl Client {
             .user_agent(USER_AGENT)
             .build()?;
 
-        let this = Self {
-            client,
-            quiet,
+        let client = Self {
+            client: client,
+            quiet:  quiet,
         };
 
-        Ok(this)
+        Ok(client)
     }
 
     // Version check the given product via the checkpoint API

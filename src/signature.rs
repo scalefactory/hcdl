@@ -24,6 +24,7 @@ const HASHICORP_GPG_KEY_FILENAME: &str = "hashicorp.asc";
 pub struct Signature {
     // This is the signature of the shasums file.
     signature: Bytes,
+
     // The GPG key that the signature was signed with.
     gpg_key: String,
 }
@@ -33,8 +34,8 @@ impl Signature {
         let gpg_key = get_gpg_key()?;
 
         let signature = Self {
-            signature,
-            gpg_key,
+            signature: signature,
+            gpg_key:   gpg_key,
         };
 
         Ok(signature)

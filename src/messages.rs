@@ -11,7 +11,7 @@ pub struct Messages {
 impl Messages {
     pub fn new(quiet: bool) -> Self {
         Self {
-            quiet,
+            quiet: quiet,
         }
     }
 
