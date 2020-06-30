@@ -20,6 +20,10 @@ exclude = [
     ".github",
 ]
 
+[features]
+default = []
+embed_gpg_key = []
+
 [dependencies]
 anyhow = "1.0"
 bytes = "0.5"

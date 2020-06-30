@@ -242,6 +242,11 @@ mod tests {
         PathBuf,
     };
 
+    const GPG_DIR: &str = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/gpg/",
+    );
+
     const TEST_DATA_DIR: &str = concat!(
         env!("CARGO_MANIFEST_DIR"),
         "/test-data/",
@@ -337,7 +342,7 @@ mod tests {
             ],
         };
 
-        let gpg_key_path = data_path("hashicorp.asc");
+        let gpg_key_path = format!("{}{}", GPG_DIR, "hashicorp.asc");
         let gpg_key      = read_file_bytes(&Path::new(&gpg_key_path).to_path_buf());
         let signature    = read_file_bytes(&Path::new(&data).to_path_buf());
 

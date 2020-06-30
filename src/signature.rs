@@ -2,10 +2,7 @@
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
 use super::shasums::Shasums;
-use anyhow::{
-    anyhow,
-    Result,
-};
+use anyhow::Result;
 use bytes::{
     buf::BufExt,
     Bytes,
@@ -18,7 +15,13 @@ use std::io::{
 };
 use std::path::PathBuf;
 
+#[cfg(not(feature = "embed_gpg_key"))]
+use anyhow::anyhow;
+
 const HASHICORP_GPG_KEY_FILENAME: &str = "hashicorp.asc";
+
+#[cfg(feature = "embed_gpg_key")]
+const HASHICORP_GPG_KEY: &str = include_str!("../gpg/hashicorp.asc");
 
 #[derive(Debug, PartialEq)]
 pub struct Signature {
@@ -84,13 +87,14 @@ fn read_file_content(path: &PathBuf) -> Result<String> {
 }
 
 // Location and read the GPG key.
+#[cfg(not(feature = "embed_gpg_key"))]
 fn get_gpg_key() -> Result<String> {
     // During tests we short circuit the path discovery to just take the
     // GPG key from the test-data directory.
     let path = if cfg!(test) {
         let test_data_dir = concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/test-data/",
+            "/gpg/",
         );
 
         let mut path = PathBuf::new();
@@ -135,6 +139,13 @@ fn get_gpg_key() -> Result<String> {
     Ok(contents)
 }
 
+#[cfg(feature = "embed_gpg_key")]
+fn get_gpg_key() -> Result<String> {
+    let gpg_key = HASHICORP_GPG_KEY.to_string();
+
+    Ok(gpg_key)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -153,6 +164,11 @@ mod tests {
 
     #[test]
     fn test_signature_check() {
+        let gpg_path = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/gpg/",
+        );
+
         let test_data_path = concat!(
             env!("CARGO_MANIFEST_DIR"),
             "/test-data/",
@@ -160,7 +176,7 @@ mod tests {
 
         let gpg_key_file_path = Path::new(&format!(
             "{}{}",
-            test_data_path,
+            gpg_path,
             HASHICORP_GPG_KEY_FILENAME,
         )).to_path_buf();
 
