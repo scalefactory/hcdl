@@ -77,7 +77,7 @@ async fn main() -> Result<()> {
         let signature = client.get_signature(&builds).await?;
 
         match signature.check(&shasums) {
-            Ok(_)  => {
+            Ok(_) => {
                 messages.signature_verification_success(
                     &builds.shasums_signature,
                 );
