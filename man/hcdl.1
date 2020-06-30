@@ -1,0 +1,139 @@
+.Dd June 29, 2020
+.Dt HCDL 1
+.Os
+.Sh NAME
+.Nm hcdl
+.Nd Tool for safely downloading and installing HashiCorp products
+.Sh SYNOPSIS
+.Nm
+.Op Fl hVl
+.Op Fl Fl help
+.Op Fl Fl list-products
+.Op Fl Fl version
+.Nm
+.Op Fl Fl check
+.Op Ar product
+.Nm
+.Op Fl Dkq
+.Op Fl Fl no-verify-signature
+.Op Fl a Ar arch
+.Op Fl b Ar version
+.Op Fl d Ar install-dir
+.Op Fl o Ar OS
+.Op Ar product
+.Sh DESCRIPTION
+.Nm
+is a tool for safely downloading and installing HashiCorp products.
+To do this, it makes use of the HashiCorp checkpoint API and JSON release
+information.
+Downloaded products will be verified against the provided SHA256 sums, and
+those SHA256 sums will be verified against the HashiCorp GPG key.
+.Pp
+The HashiCorp GPG key is not provided with the utility and you will be required
+to download it from
+.Lk https://www.hashicorp.com/security
+and place it in a file named
+.Pa hashicorp.asc
+under one of the following directories depending on which operating system you
+are running
+.Nm
+on:
+.Bl -column Windows
+.It macOS Ta Pa ~/Library/Application Support/hcdl
+.It Windows Ta Pa %APPDATA%
+.It Other Ta Pa $XDG_DATA_HOME
+or
+.Pa ~/.local/share
+.El
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl h , Fl Fl help
+Prints help information
+.It Fl V , Fl Fl version
+Prints version information
+.It Fl c , Fl Fl check
+Checks for the latest version of the given product and exits without
+downloading or installing.
+.It Fl D , Fl Fl download-only
+Only download the product, but do not install it.
+Implies
+.Fl Fl keep .
+.It Fl k , Fl Fl keep
+Keep the downloaded zipfile after install.
+.It Fl l , Fl Fl list-products
+List HashiCorp products downloadable with
+.Nm .
+.It Fl Fl no-verify-signature
+Disable GPG signature verification of the SHA256 sums file.
+.It Fl q , Fl Fl quiet
+Silence all non-error output.
+.It Fl a , Fl Fl arch Ns = Ns Ar architecture
+Specify
+.Ar product
+architecture to download.
+.It Fl b , Fl Fl build Ns = Ns Ar version
+Specify
+.Ar product
+build version to download.
+Defaults to
+.Ar latest .
+.It Fl d , Fl Fl install-dir Ns = Ns Ar directory
+Specify a directory to install the
+.Ar product
+to.
+.It Fl o , Fl Fl os Ns = Ns Ar operating-system
+Specify
+.Ar product
+OS family to download.
+.El
+.Sh FILES
+.Bl -tag -width /usr/local/bin/hcdl -compact
+.It Pa /usr/local/bin/hcdl
+the
+.Nm
+binary.
+.El
+.Sh EXIT STATUS
+The
+.Nm
+utility exits 0 on success and >0 if an error occurs.
+.Sh EXAMPLES
+Download and install the latest version of
+.Dq Terraform :
+.Pp
+.Dl $ hcdl terraform
+.Pp
+Download and install a specific
+.Ar version
+of
+.Dq Terraform
+and keep the downloaded zip file:
+.Pp
+.Dl $ hcdl --build=0.12.26 --keep terraform
+.Pp
+Check what the latest version of
+.Dq Consul
+is, and when it was released:
+.Pp
+.Dl $ hcdl --check consul
+.Pp
+Download and install the latest version of
+.Dq Terraform
+without checking the GPG signature (not recommended):
+.Pp
+.Dl $ hcdl --no-verify-signature terraform
+.Pp
+Download the latest
+.Dq Nomad
+for a specific
+.Ar OS
+and
+.Ar architecture :
+.Pp
+.Dl $ hcdl --os=linux --arch=386 nomad
+.Sh AUTHORS
+.An David O'Rourke .
+.Sh BUGS
+Please report bugs, issues, and feature requests to
+.Lk https://github.com/phyber/hcdl/issues
