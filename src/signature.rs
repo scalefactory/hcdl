@@ -8,16 +8,21 @@ use bytes::{
     Bytes,
 };
 use gpgrv::Keyring;
+use std::io::BufReader;
+
+#[cfg(not(feature = "embed_gpg_key"))]
+use std::io::prelude::*;
+
+#[cfg(not(feature = "embed_gpg_key"))]
 use std::fs::File;
-use std::io::{
-    prelude::*,
-    BufReader,
-};
+
+#[cfg(not(feature = "embed_gpg_key"))]
 use std::path::PathBuf;
 
 #[cfg(not(feature = "embed_gpg_key"))]
 use anyhow::anyhow;
 
+#[cfg(not(feature = "embed_gpg_key"))]
 const HASHICORP_GPG_KEY_FILENAME: &str = "hashicorp.asc";
 
 #[cfg(feature = "embed_gpg_key")]
@@ -76,6 +81,7 @@ impl Signature {
 }
 
 // Read a file's content into a String
+#[cfg(not(feature = "embed_gpg_key"))]
 fn read_file_content(path: &PathBuf) -> Result<String> {
     let file         = File::open(&path)?;
     let mut reader   = BufReader::new(file);
