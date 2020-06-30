@@ -14,13 +14,14 @@ $ hcdl terraform
 You'll see output like the following:
 
 ```shell
-Downloading and verifying signature of terraform_0.12.26_SHA256SUMS...
-  Verified against terraform_0.12.26_SHA256SUMS.sig.
-Downloading terraform_0.12.26_freebsd_amd64.zip...
-  [00:00:02] [########################################] 16.06MB/16.06MB (0s) done.
-SHA256 of terraform_0.12.26_freebsd_amd64.zip OK.
-Unzipping 'terraform' from 'terraform_0.12.26_freebsd_amd64.zip' to '/home/user/.local/bin'...
-  Installation successful.
+Latest version: terraform v0.12.28 from Thu, 25 Jun 2020 16:21:37 +0000
+Downloading and verifying signature of terraform_0.12.28_SHA256SUMS...
+Verified against terraform_0.12.28_SHA256SUMS.sig.
+Downloading terraform_0.12.28_freebsd_amd64.zip...
+  [00:00:04] [########################################] 27.07MB/27.07MB (0s) done.
+SHA256 of terraform_0.12.28_freebsd_amd64.zip OK.
+Unzipping 'terraform' from 'terraform_0.12.28_freebsd_amd64.zip' to '/home/user/.local/bin'
+Installation successful.
 ```
 
 `hcdl` has performed the following steps:
@@ -42,9 +43,19 @@ and architecture you like by specifying the `--os` and `--arch` options.
 ## HashiCorp GPG Key
 
 Due to the GPG signature checking, `hcdl` needs to know the HashiCorp GPG key.
-To enable this, place the HashiCorp GPG key from
-https://www.hashicorp.com/security into the `~/.local/share/hcdl` directory as
-a file named `hashicorp.asc`.
+There are two ways to provide the GPG key material:
+
+### Provide `hashicorp.asc` via the Filesystem
+
+To enable this, place a file named `hashicorp.asc` containing the HashiCorp GPG
+key from https://www.hashicorp.com/security into an appropriate directory for
+your operating system, according to the following table:
+
+| Operating System | Path                                          |
+|------------------|-----------------------------------------------|
+| macOS            | `~/Library/Application Support/hcdl`          |
+| Windows          | `%APPDATA%/hcdl`                              |
+| Other            | `$XDG_DATA_DIR/hcdl` or `~/.local/share/hcdl` |
 
 The key you place here should match the key ID and fingerprint shown on the
 security page, and they can be checked as follows:
@@ -75,9 +86,26 @@ key published by HashiCorp.
 
 If a GPG key isn't present and you still wish to use the tool, you will be
 required to explicitly disable the signature verification with the
-`--no-verify-signature` flag.
+`--no-verify-signature` flag. Running `hcdl` by disabling the GPG signature
+verification is NOT recommended.
+
+### Compile the HashiCorp GPG Key into the Application
+
+`hcdl` provides the `embed_gpg_key` feature to compile the GPG key directly
+into the application. It will use the GPG key provided at `gpg/hashicorp.asc`
+in the source repository. You are encouraged to check the validity of this GPG
+key using the steps above before using this feature.
+
+Once you are happy that the GPG key is valid, you can compile `hcdl` as follows
+to enable the GPG key embedding:
+
+```shell
+$ cargo build --features=embed_gpg_key --release
+```
 
 ## Examples
+
+The following examples were gathered on an x86\_64 FreeBSD machine.
 
 ### Checking for the latest Terraform version
 
@@ -90,42 +118,42 @@ Latest version: terraform v0.12.26 from Wed, 27 May 2020 17:17:12 +0000
 
 ```shell
 $ hcdl --keep terraform
-Latest version: terraform v0.12.26 from Wed, 27 May 2020 17:17:12 +0000
-Downloading and verifying signature of terraform_0.12.26_SHA256SUMS...
-  Verified against terraform_0.12.26_SHA256SUMS.sig.
-Downloading terraform_0.12.26_freebsd_amd64.zip...
-  [00:00:03] [########################################] 16.06MB/16.06MB (0s) done.
-SHA256 of terraform_0.12.26_freebsd_amd64.zip OK.
-Unzipping 'terraform' from 'terraform_0.12.26_freebsd_amd64.zip' to '/home/phyber/.local/bin'...
-  Installation successful.
-Keeping zipfile terraform_0.12.26_freebsd_amd64.zip in current directory.
+Latest version: terraform v0.12.28 from Thu, 25 Jun 2020 16:21:37 +0000
+Downloading and verifying signature of terraform_0.12.28_SHA256SUMS...
+Verified against terraform_0.12.28_SHA256SUMS.sig.
+Downloading terraform_0.12.28_freebsd_amd64.zip...
+  [00:00:07] [########################################] 27.07MB/27.07MB (0s) done.
+SHA256 of terraform_0.12.28_freebsd_amd64.zip OK.
+Unzipping 'terraform' from 'terraform_0.12.28_freebsd_amd64.zip' to '/home/user/.local/bin'
+Installation successful.
+Keeping zipfile terraform_0.12.28_freebsd_amd64.zip in current directory.
 ```
 
 ### Download a Product for a Different OS
 
 ```shell
-$ target/release/hcdl --os linux terraform
-Latest version: terraform v0.12.26 from Wed, 27 May 2020 17:17:12 +0000
-Downloading and verifying signature of terraform_0.12.26_SHA256SUMS...
-  Verified against terraform_0.12.26_SHA256SUMS.sig.
-Downloading terraform_0.12.26_linux_amd64.zip...
-  [00:00:02] [########################################] 16.06MB/16.06MB (0s) done.
-SHA256 of terraform_0.12.26_linux_amd64.zip OK.
-Product downloaded for different OS, freebsd != linux.
-  Skipping install and keeping zipfile 'terraform_0.12.26_linux_amd64.zip' in current directory.
+$ hcdl --os linux terraform
+Latest version: terraform v0.12.28 from Thu, 25 Jun 2020 16:21:37 +0000
+Downloading and verifying signature of terraform_0.12.28_SHA256SUMS...
+Verified against terraform_0.12.28_SHA256SUMS.sig.
+Downloading terraform_0.12.28_linux_amd64.zip...
+  [00:00:04] [########################################] 27.11MB/27.11MB (0s) done.
+SHA256 of terraform_0.12.28_linux_amd64.zip OK.
+Product downloaded for different OS, freebsd != linux
+Skipping install and keeping zipfile 'terraform_0.12.28_linux_amd64.zip' in current directory.
 ```
 
 ### Download a Specific Version of a Product
 
 ```shell
-$ target/release/hcdl --build 0.12.25 terraform
+$ hcdl --build 0.12.25 terraform
 Downloading and verifying signature of terraform_0.12.25_SHA256SUMS...
-  Verified against terraform_0.12.25_SHA256SUMS.sig.
+Verified against terraform_0.12.25_SHA256SUMS.sig.
 Downloading terraform_0.12.25_freebsd_amd64.zip...
-  [00:00:02] [########################################] 15.97MB/15.97MB (0s) done.
+  [00:00:03] [########################################] 15.97MB/15.97MB (0s) done.
 SHA256 of terraform_0.12.25_freebsd_amd64.zip OK.
-Unzipping 'terraform' from 'terraform_0.12.25_freebsd_amd64.zip' to '/home/phyber/.local/bin'...
-  Installation successful.
+Unzipping 'terraform' from 'terraform_0.12.25_freebsd_amd64.zip' to '/home/user/.local/bin'
+Installation successful.
 ```
 
 <!-- links -->
