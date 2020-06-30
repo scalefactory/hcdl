@@ -1,0 +1,37 @@
+---
+name: 'Continuous Integration'
+on:
+  push:
+    branches:
+      - 'main'
+jobs:
+  test:
+    name: 'Test Suite'
+    runs-on: 'ubuntu-latest'
+    steps:
+      - name: 'Checkout'
+        uses: 'actions/checkout@v2'
+        with:
+          fetch-depth: 1
+      - name: 'Target Cache'
+        uses: 'actions/cache@v1'
+        env:
+          cache-name: 'target-cache'
+        with:
+          path: 'target'
+          key: "${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('Cargo.lock') }}"
+      - name: 'Install Toolchain'
+        uses: 'actions-rs/toolchain@v1'
+        with:
+          profile: 'minimal'
+          toolchain: 'stable'
+          override: true
+      - name: 'Run Tests'
+        run: |
+          # Run cargo tests for all features
+          # Default feature set
+          cargo test
+          # Embedded GPG key
+          cargo test \
+            --no-default-features \
+            --features=embed_gpg_key
