@@ -28,11 +28,11 @@ Installation successful.
 
   - Loaded the HashiCorp GPG key
   - Found the latest version of Terraform
-  - Downloaded the SHASUM256 GPG signature file
-  - Downloaded the SHASUM256 file
-  - Verified the SHASUM256 file against the signature
+  - Downloaded the SHA256SUMS GPG signature file
+  - Downloaded the SHA256SUMS file
+  - Verified the SHA256SUMS file against the signature
   - Downloaded the latest version of Terraform
-  - Verified that the SHA256 of the downloaded file matches the SHASUM256 file
+  - Verified that the SHA256 of the downloaded file matches the SHA256SUMS file
   - Installed the `terraform` binary to `~/.local/bin`
 
 By default, `hcdl` will download products for the operating system and
