@@ -46,6 +46,15 @@ impl Messages {
         self.stdout(&msg);
     }
 
+    pub fn download_only(&self, filename: &str) {
+        let msg = format!(
+            "Download only mode, keeping {filename}.",
+            filename = filename,
+        );
+
+        self.stdout(&msg);
+    }
+
     pub fn find_build_failed(&self, os: &str, arch: &str) {
         let msg = format!(
             "Could not find build for {os}-{arch}",

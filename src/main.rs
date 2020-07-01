@@ -113,6 +113,8 @@ async fn main() -> Result<()> {
     // If we're DOWNLOAD_ONLY (implies KEEP), just persist the file and
     // we're done.
     if matches.is_present("DOWNLOAD_ONLY") {
+        messages.download_only(&filename);
+
         tmpfile.persist()?;
 
         exit(0);
