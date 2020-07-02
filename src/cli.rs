@@ -10,6 +10,10 @@ use clap::{
     Arg,
     ArgMatches,
 };
+use std::ffi::{
+    OsStr,
+    OsString,
+};
 use std::path::Path;
 
 #[cfg(target_arch = "arm")]
@@ -57,7 +61,7 @@ const VALID_OS: &[&str] = &[
 const DEFAULT_VERSION: &str = "latest";
 
 // Ensure that the installation dir exists and is a directory.
-fn is_valid_install_dir(s: String) -> Result<(), String> {
+fn is_valid_install_dir(s: &OsStr) -> Result<(), OsString> {
     let path = Path::new(&s);
 
     if !path.exists() {
@@ -144,8 +148,7 @@ fn create_app<'a, 'b>() -> App<'a, 'b> {
                 .help("Specify directory to install product to.")
                 .takes_value(true)
                 .value_name("DIR")
-                .requires("INSTALL")
-                .validator(is_valid_install_dir)
+                .validator_os(is_valid_install_dir)
         )
         .arg(
             Arg::with_name("OS")
