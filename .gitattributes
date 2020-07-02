@@ -1,1 +1,3 @@
-test-data/test.txt eol=lf
+# Ensure that checkouts on Windows don't modify these files, as this will cause
+# some tests to fail.
+test-data/* eol=lf
