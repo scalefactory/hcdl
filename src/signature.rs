@@ -41,17 +41,15 @@ impl Signature {
     pub fn new(signature: Bytes) -> Result<Self> {
         let gpg_key = get_gpg_key()?;
 
-        let signature = Self {
-            signature: signature,
-            gpg_key:   gpg_key,
-        };
+        let signature = Self::with_gpg_key(
+            signature,
+            gpg_key,
+        );
 
         Ok(signature)
     }
 
-    // Dead code allowed here because we use this during testing.
-    #[allow(dead_code)]
-    pub fn new_with_gpg_key(signature: Bytes, gpg_key: String) -> Self {
+    pub fn with_gpg_key(signature: Bytes, gpg_key: String) -> Self {
         Self {
             signature: signature,
             gpg_key:   gpg_key,
@@ -194,7 +192,7 @@ mod tests {
 
         let gpg_key_content   = read_file_content(&gpg_key_file_path).unwrap();
         let signature_content = read_file_bytes(&signature_file_path).unwrap();
-        let signature         = Signature::new_with_gpg_key(
+        let signature         = Signature::with_gpg_key(
             Bytes::from(signature_content),
             gpg_key_content,
         );

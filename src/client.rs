@@ -346,7 +346,7 @@ mod tests {
         let gpg_key      = read_file_bytes(&Path::new(&gpg_key_path).to_path_buf());
         let signature    = read_file_bytes(&Path::new(&data).to_path_buf());
 
-        let expected = Signature::new_with_gpg_key(
+        let expected = Signature::with_gpg_key(
             signature,
             ::std::str::from_utf8(&gpg_key).unwrap().to_string(),
         );
