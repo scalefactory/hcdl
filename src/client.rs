@@ -33,7 +33,7 @@ lazy_static! {
 }
 
 const PROGRESS_CHARS: &str = "#>-";
-
+const PROGRESS_FINISHED_MSG: &str = "done.";
 const PROGRESS_TEMPLATE: &str = concat!(
     "{spinner:green} ",
     "[{elapsed_precise}] ",
@@ -86,8 +86,8 @@ impl Client {
         // We to_string here for the test scenario.
         let url = format!(
             "{checkpoint}/{product}",
-            checkpoint=CHECKPOINT_URL.to_string(),
-            product=product,
+            checkpoint = CHECKPOINT_URL.to_string(),
+            product = product,
         );
 
         let resp = self.get(&url)
@@ -147,7 +147,7 @@ impl Client {
             }
         }
 
-        pb.finish_with_message("done.");
+        pb.finish_with_message(PROGRESS_FINISHED_MSG);
 
         Ok(())
     }
@@ -215,9 +215,9 @@ impl Client {
     ) -> Result<ProductVersion> {
         let url = format!(
             "{releases_url}/{product}/{version}/index.json",
-            releases_url=RELEASES_URL.to_string(),
-            product=product,
-            version=version,
+            releases_url = RELEASES_URL.to_string(),
+            product = product,
+            version = version,
         );
 
         let resp = self.get(&url)
