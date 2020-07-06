@@ -90,9 +90,9 @@ fn read_file_content(path: &PathBuf) -> Result<String> {
     Ok(contents)
 }
 
-// Location and read the GPG key.
+// Find the path where the GPG key should be stored.
 #[cfg(not(feature = "embed_gpg_key"))]
-fn get_gpg_key() -> Result<String> {
+fn get_gpg_key_path() -> Result<PathBuf> {
     // During tests we short circuit the path discovery to just take the
     // GPG key from the test-data directory.
     let path = if cfg!(test) {
@@ -108,9 +108,11 @@ fn get_gpg_key() -> Result<String> {
     }
     else {
         let mut path = match dirs::data_dir() {
-            Some(dir) => Ok(dir),
-            None      => Err(anyhow!("Couldn't find shared data directory")),
-        }?;
+            Some(dir) => dir,
+            None      => {
+                return Err(anyhow!("Couldn't find shared data directory"));
+            },
+        };
 
         // Ensure that the data dir exists
         if !path.exists() || !path.is_dir() {
@@ -127,17 +129,25 @@ fn get_gpg_key() -> Result<String> {
 
         // Ensure that the GPG key exists
         if !path.exists() || !path.is_file() {
-            let msg = anyhow!(
-                "GPG key file {} does not exist or is not a file",
-                path.display()
+            let msg = format!(
+                "GPG key file {} does not exist or it not a file.\
+                 Check https://www.hashicorp.com/security to find the GPG key",
+                path.display(),
             );
 
-            return Err(msg);
+            return Err(anyhow!(msg));
         }
 
         path
     };
 
+    Ok(path)
+}
+
+// Locate and read the GPG key.
+#[cfg(not(feature = "embed_gpg_key"))]
+fn get_gpg_key() -> Result<String> {
+    let path     = get_gpg_key_path()?;
     let contents = read_file_content(&path)?;
 
     Ok(contents)
