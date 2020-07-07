@@ -143,10 +143,10 @@ async fn main() -> Result<()> {
         install::bin_dir()?
     };
 
-    messages.product_install(&product, &filename, &bin_dir);
+    messages.unzipping(&filename, &bin_dir);
 
-    let mut handle = tmpfile.handle()?;
-    match install::install(&mut handle, &bin_dir) {
+    let mut zip_handle = tmpfile.handle()?;
+    match install::install(&messages, &mut zip_handle, &bin_dir) {
         Ok(_)  => messages.installation_successful(),
         Err(e) => {
             messages.installation_failed(&e);

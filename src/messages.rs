@@ -55,6 +55,16 @@ impl Messages {
         self.stdout(&msg);
     }
 
+    pub fn extracting_file(&self, filename: &str, dest: &PathBuf) {
+        let msg = format!(
+            " -> Extracting '{filename}' to '{dest}'...",
+            filename = filename,
+            dest = dest.display(),
+        );
+
+        self.stdout(&msg);
+    }
+
     pub fn find_build_failed(&self, os: &str, arch: &str) {
         let msg = format!(
             "Could not find build for {os}-{arch}",
@@ -112,17 +122,6 @@ impl Messages {
         self.stdout(&msg);
     }
 
-    pub fn product_install(&self, product: &str, zipfile: &str, dest: &PathBuf) {
-        let msg = format!(
-            "Unzipping '{product}' from '{zipfile}' to '{dest}'",
-            product = product,
-            zipfile = zipfile,
-            dest = dest.display(),
-        );
-
-        self.stdout(&msg);
-    }
-
     pub fn signature_verification_failed(&self, error: &Error) {
         let msg = format!(
             "Verification failed, error: {error}",
@@ -146,6 +145,16 @@ impl Messages {
             "Skipping install and keeping zipfile '{filename}' in current \
              directory.",
             filename = filename,
+        );
+
+        self.stdout(&msg);
+    }
+
+    pub fn unzipping(&self, zipfile: &str, dest: &PathBuf) {
+        let msg = format!(
+            "Unzipping contents of '{zipfile}' to '{dest}'",
+            zipfile = zipfile,
+            dest = dest.display(),
         );
 
         self.stdout(&msg);

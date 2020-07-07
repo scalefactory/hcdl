@@ -1,6 +1,7 @@
 // install: Handle installation of product.
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
+use super::Messages;
 use anyhow::{
     anyhow,
     Result,
@@ -49,8 +50,6 @@ pub fn bin_dir() -> Result<PathBuf> {
 }
 
 fn extract_file(mut zipfile: &mut ZipFile, dest: &PathBuf) -> Result<()> {
-    let name        = zipfile.name();
-    let dest        = dest.join(name);
     let mut options = OpenOptions::new();
 
     // On Unix type OSs we set the written file as executable.
@@ -68,7 +67,7 @@ fn extract_file(mut zipfile: &mut ZipFile, dest: &PathBuf) -> Result<()> {
     Ok(())
 }
 
-pub fn install<F>(zipfile: &mut F, dest: &PathBuf) -> Result<()>
+pub fn install<F>(messages: &Messages, zipfile: &mut F, dest: &PathBuf) -> Result<()>
 where
     F: Read + Seek,
 {
@@ -76,6 +75,10 @@ where
 
     for i in 0..zip.len() {
         let mut file = zip.by_index(i)?;
+        let filename = file.name();
+        let dest     = dest.join(filename);
+
+        messages.extracting_file(&filename, &dest);
 
         extract_file(&mut file, &dest)?;
     }
