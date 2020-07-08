@@ -55,10 +55,10 @@ impl Messages {
         self.stdout(&msg);
     }
 
-    pub fn extracting_file(&self, filename: &str, dest: &PathBuf) {
+    pub fn extracting_file(&self, filename: &PathBuf, dest: &PathBuf) {
         let msg = format!(
             " -> Extracting '{filename}' to '{dest}'...",
-            filename = filename,
+            filename = filename.display(),
             dest = dest.display(),
         );
 

@@ -75,8 +75,8 @@ where
 
     for i in 0..zip.len() {
         let mut file = zip.by_index(i)?;
-        let filename = file.name();
-        let dest     = dest.join(filename);
+        let filename = file.sanitized_name();
+        let dest     = dest.join(&filename);
 
         messages.extracting_file(&filename, &dest);
 
