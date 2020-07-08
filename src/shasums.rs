@@ -118,8 +118,8 @@ mod tests {
 
         let shasums_content = format!(
             "{shasum} {filename}",
-            shasum="badbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadb",
-            filename=test_data_path,
+            shasum = "badbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadb",
+            filename = test_data_path,
         );
 
         let mut tmpfile = tmpfile_from_file(&test_data_path);
@@ -140,8 +140,8 @@ mod tests {
 
         let shasums_content = format!(
             "{shasum} {filename}",
-            shasum="bd6abe380b9ffdca9375f1202b36e1c7b8ca3e8b5de4ae8582c0037949c30ce8",
-            filename=test_data_path,
+            shasum = "bd6abe380b9ffdca9375f1202b36e1c7b8ca3e8b5de4ae8582c0037949c30ce8",
+            filename = test_data_path,
         );
 
         let mut tmpfile = tmpfile_from_file(&test_data_path);
@@ -156,8 +156,8 @@ mod tests {
     fn test_content() {
         let shasums_content = format!(
             "{shasum} {filename}",
-            shasum="5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03",
-            filename="test",
+            shasum = "5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03",
+            filename = "test",
         );
 
         let shasums = Shasums::new(shasums_content.clone().into());
@@ -169,8 +169,8 @@ mod tests {
     fn test_shasum() {
         let shasums_content = format!(
             "{shasum} {filename}",
-            shasum="5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03",
-            filename="test",
+            shasum = "5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03",
+            filename = "test",
         );
 
         let shasums  = Shasums::new(shasums_content.into());

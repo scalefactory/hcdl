@@ -37,10 +37,10 @@ impl ProductVersion {
     pub fn shasums_signature_url(&self) -> String {
         format!(
             "{releases_url}{product}/{version}/{filename}",
-            releases_url=RELEASES_URL,
-            product=self.name,
-            version=self.version,
-            filename=self.shasums_signature,
+            releases_url = RELEASES_URL,
+            product = self.name,
+            version = self.version,
+            filename = self.shasums_signature,
         )
     }
 
@@ -48,10 +48,10 @@ impl ProductVersion {
     pub fn shasums_url(&self) -> String {
         format!(
             "{releases_url}{product}/{version}/{filename}",
-            releases_url=RELEASES_URL,
-            product=self.name,
-            version=self.version,
-            filename=self.shasums,
+            releases_url = RELEASES_URL,
+            product = self.name,
+            version = self.version,
+            filename = self.shasums,
         )
     }
 }
