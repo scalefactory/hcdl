@@ -2,6 +2,29 @@
 
 `hcdl` is a tool for easily downloading and installing [HashiCorp] products.
 
+## Installation
+
+`hcdl` is available for install from [crates.io] if you have the stable [Rust]
+toolchain installed.
+
+This can be done with the standard Cargo install command:
+
+```shell
+$ cargo install hcdl
+```
+
+By default, `hcdl` will require you to provide the HashiCorp GPG key material
+as detailed below. You may compile the HashiCorp GPG key into the tool with the
+following command:
+
+```shell
+$ cargo install --features=embed_gpg_key
+```
+
+The GPG key that will be used can be found in the `gpg` directory of the source
+code in the `hashicorp.asc` file. You may verify this key against the details
+given at https://www.hashicorp.com/security as detailed below.
+
 ## Usage
 
 `hcdl` usage is very simple, for example, if we want to download and install
@@ -157,6 +180,8 @@ Installation successful.
 ```
 
 <!-- links -->
+[crates.io]: https://crates.io/crates/hcdl
 [FreeBSD]: https://www.freebsd.org/
 [HashiCorp]: https://www.hashicorp.com/
+[Rust]: https://www.rust-lang.org/
 [Terraform]: https://www.terraform.io/
