@@ -1,5 +1,10 @@
 # `hcdl` Changelog
 
+## v0.9.2
+
+  - Improve output when unzipping files
+  - Use safer unzipping method which properly sanitizes filenames
+
 ## v0.9.1
 
   - Add missing message for `--download-only` mode
