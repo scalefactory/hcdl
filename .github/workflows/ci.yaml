@@ -26,12 +26,12 @@ jobs:
           profile: 'minimal'
           toolchain: 'stable'
           override: true
-      - name: 'Run Tests'
-        run: |
-          # Run cargo tests for all features
-          # Default feature set
-          cargo test
-          # Embedded GPG key
-          cargo test \
-            --no-default-features \
-            --features=embed_gpg_key
+      - name: 'Run Default Feature Tests'
+        uses: 'actions-rs/cargo@v1'
+        with:
+          command: 'test'
+      - name: 'Run Embedded GPG Key Feature Tests'
+        uses: 'actions-rs/cargo@v1'
+        with:
+          command: 'test'
+          args: '--no-default-features --features=embed_gpg_key'
