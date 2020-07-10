@@ -7,6 +7,7 @@ use std::process::exit;
 
 mod cli;
 mod client;
+mod crc32;
 mod install;
 mod messages;
 mod products;

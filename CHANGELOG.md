@@ -1,5 +1,13 @@
 # `hcdl` Changelog
 
+## v0.9.3
+
+  - Add CRC32 verification of files extracted from zip
+  - Extraction of files from zips now go via temporary files to avoid
+    clobbering existing working binaries in the event of extraction failure.
+  - On `unix` type systems the permissions of the extracted files are now taken
+    from the zipfile instead of being forced to `0755`
+
 ## v0.9.2
 
   - Improve output when unzipping files

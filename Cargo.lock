@@ -603,12 +603,13 @@ dependencies = [
 
 [[package]]
 name = "hcdl"
-version = "0.9.2"
+version = "0.9.3"
 dependencies = [
  "anyhow",
  "bytes",
  "chrono",
  "clap",
+ "crc32fast",
  "dirs",
  "gpgrv",
  "hex",

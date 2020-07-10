@@ -43,7 +43,8 @@ Verified against terraform_0.12.28_SHA256SUMS.sig.
 Downloading terraform_0.12.28_freebsd_amd64.zip...
   [00:00:04] [########################################] 27.07MB/27.07MB (0s) done.
 SHA256 of terraform_0.12.28_freebsd_amd64.zip OK.
-Unzipping 'terraform' from 'terraform_0.12.28_freebsd_amd64.zip' to '/home/user/.local/bin'
+Unzipping contents of 'terraform_0.12.28_freebsd_amd64.zip' to '/home/user/.local/bin'
+-> Extracting 'terraform' to '/home/user/.local/bin'...
 Installation successful.
 ```
 
@@ -56,7 +57,12 @@ Installation successful.
   - Verified the SHA256SUMS file against the signature
   - Downloaded the latest version of Terraform
   - Verified that the SHA256 of the downloaded file matches the SHA256SUMS file
-  - Installed the `terraform` binary to `~/.local/bin`
+  - Extracted the `terraform` binary to a temporary file
+  - Ensured that the CRC32 of the extracted temporary file matches the record
+    in the zip file
+  - Installed the `terraform` binary to `~/.local/bin` by moving the temporary
+    file to the appropriate location
+  - Set the appropriate permissions on the extracted binary
 
 By default, `hcdl` will download products for the operating system and
 architecture that it was compiled for (above we were running `hcdl` on an
@@ -147,7 +153,8 @@ Verified against terraform_0.12.28_SHA256SUMS.sig.
 Downloading terraform_0.12.28_freebsd_amd64.zip...
   [00:00:07] [########################################] 27.07MB/27.07MB (0s) done.
 SHA256 of terraform_0.12.28_freebsd_amd64.zip OK.
-Unzipping 'terraform' from 'terraform_0.12.28_freebsd_amd64.zip' to '/home/user/.local/bin'
+Unzipping contents of 'terraform_0.12.28_freebsd_amd64.zip' to '/home/user/.local/bin'
+-> Extracting 'terraform' to '/home/user/.local/bin'...
 Installation successful.
 Keeping zipfile terraform_0.12.28_freebsd_amd64.zip in current directory.
 ```
@@ -175,7 +182,8 @@ Verified against terraform_0.12.25_SHA256SUMS.sig.
 Downloading terraform_0.12.25_freebsd_amd64.zip...
   [00:00:03] [########################################] 15.97MB/15.97MB (0s) done.
 SHA256 of terraform_0.12.25_freebsd_amd64.zip OK.
-Unzipping 'terraform' from 'terraform_0.12.25_freebsd_amd64.zip' to '/home/user/.local/bin'
+Unzipping contents of 'terraform_0.12.25_freebsd_amd64.zip' to '/home/user/.local/bin'
+-> Extracting 'terraform' to '/home/user/.local/bin'...
 Installation successful.
 ```
 
