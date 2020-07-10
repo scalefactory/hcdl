@@ -57,7 +57,7 @@ pub fn bin_dir() -> Result<PathBuf> {
 // Extracts a given `zipfile` to a temporary file under `dir`. Also checks
 // the CRC32 of the extracted file to make sure extraction was successful.
 // Returns a TempPath which the caller is responsible for persisting.
-pub fn extract(mut zipfile: &mut ZipFile, dir: &PathBuf) -> Result<TempPath> {
+fn extract(mut zipfile: &mut ZipFile, dir: &PathBuf) -> Result<TempPath> {
     // Get a tempfile to extract to under the dest path
     let mut tmpfile = NamedTempFile::new_in(&dir)?;
 
