@@ -38,12 +38,21 @@ jobs:
 
           echo "::set-output name=asset_name::${ASSET_NAME}"
           echo "::set-output name=asset_path::${ASSET_PATH}"
+      - name: 'Generate Release Changelog'
+        id: 'generate_changelog'
+        run: |
+          VERSION="$(basename ${{ github.ref }})"
+
+          sed -n "/## ${VERSION}/,/^##/p;" CHANGELOG.md \
+            | sed '$ d' \
+            > release_changelog.md
       - name: 'Create Release'
         id: 'create_release'
         uses: 'actions/create-release@v1'
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
         with:
+          body_path: 'release_changelog.md'
           draft: false
           prerelease: false
           release_name: 'Release ${{ github.ref }}'
