@@ -1,6 +1,6 @@
 # `hcdl` Changelog
 
-## v0.9.4
+## v0.10.0
 
   - Default to embedding the GPG key in the application for ease of use when
     installing via Cargo
