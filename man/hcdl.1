@@ -29,8 +29,13 @@ information.
 Downloaded products will be verified against the provided SHA256 sums, and
 those SHA256 sums will be verified against the HashiCorp GPG key.
 .Pp
-The HashiCorp GPG key is not provided with the utility and you will be required
-to download it from
+The HashiCorp GPG key is required in order to perform the signature
+verification of the SHA256SUMS file.
+This GPG key will either be embedded within
+.Nm
+or provided as an external resource depending on how the tool was compiled.
+If the key is not embedded in the tool,  you will be required to download it
+from
 .Lk https://www.hashicorp.com/security
 and place it in a file named
 .Pa hashicorp.asc
