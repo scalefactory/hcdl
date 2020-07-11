@@ -130,7 +130,7 @@ fn get_gpg_key_path() -> Result<PathBuf> {
         // Ensure that the GPG key exists
         if !path.exists() || !path.is_file() {
             let msg = format!(
-                "GPG key file {} does not exist or it not a file.\
+                "GPG key file {} does not exist or it not a file.\n\
                  Check https://www.hashicorp.com/security to find the GPG key",
                 path.display(),
             );
