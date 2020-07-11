@@ -13,17 +13,19 @@ This can be done with the standard Cargo install command:
 $ cargo install hcdl
 ```
 
-By default, `hcdl` will require you to provide the HashiCorp GPG key material
-as detailed below. You may compile the HashiCorp GPG key into the tool with the
-following command:
-
-```shell
-$ cargo install --features=embed_gpg_key
-```
+By default, `hcdl` will embed the HashiCorp GPG key into the binary to
+facilitate ease of use when installing via Cargo.
 
 The GPG key that will be used can be found in the `gpg` directory of the source
 code in the `hashicorp.asc` file. You may verify this key against the details
 given at https://www.hashicorp.com/security as detailed below.
+
+If you do not trust the provided GPG key, you can disable the embedding when
+installing with the following command:
+
+```shell
+$ cargo install --no-default-features hcdl
+```
 
 ## Usage
 
@@ -36,7 +38,7 @@ $ hcdl terraform
 
 You'll see output like the following:
 
-```shell
+```
 Latest version: terraform v0.12.28 from Thu, 25 Jun 2020 16:21:37 +0000
 Downloading and verifying signature of terraform_0.12.28_SHA256SUMS...
 Verified against terraform_0.12.28_SHA256SUMS.sig.
@@ -74,6 +76,22 @@ and architecture you like by specifying the `--os` and `--arch` options.
 Due to the GPG signature checking, `hcdl` needs to know the HashiCorp GPG key.
 There are two ways to provide the GPG key material:
 
+### Compile the HashiCorp GPG Key into the Application
+
+This is the default way in which the GPG key is provided.
+
+`hcdl` provides the `embed_gpg_key` feature to compile the GPG key directly
+into the application. It will use the GPG key provided at `gpg/hashicorp.asc`
+in the source repository. You are encouraged to check the validity of this GPG
+key using the steps above before using this feature.
+
+Once you are happy that the GPG key is valid, you can compile `hcdl` as follows
+to enable the GPG key embedding:
+
+```shell
+$ cargo build --release
+```
+
 ### Provide `hashicorp.asc` via the Filesystem
 
 To enable this, place a file named `hashicorp.asc` containing the HashiCorp GPG
@@ -85,6 +103,14 @@ your operating system, according to the following table:
 | macOS            | `~/Library/Application Support/hcdl`          |
 | Windows          | `%APPDATA%/hcdl`                              |
 | Other            | `$XDG_DATA_DIR/hcdl` or `~/.local/share/hcdl` |
+
+To build `hcdl` with without the embedded GPG key, use the following command:
+
+```shell
+$ cargo build --release --no-default-features
+```
+
+### Verifying the GPG Key
 
 The key you place here should match the key ID and fingerprint shown on the
 security page, and they can be checked as follows:
@@ -118,20 +144,6 @@ required to explicitly disable the signature verification with the
 `--no-verify-signature` flag. Running `hcdl` by disabling the GPG signature
 verification is NOT recommended.
 
-### Compile the HashiCorp GPG Key into the Application
-
-`hcdl` provides the `embed_gpg_key` feature to compile the GPG key directly
-into the application. It will use the GPG key provided at `gpg/hashicorp.asc`
-in the source repository. You are encouraged to check the validity of this GPG
-key using the steps above before using this feature.
-
-Once you are happy that the GPG key is valid, you can compile `hcdl` as follows
-to enable the GPG key embedding:
-
-```shell
-$ cargo build --features=embed_gpg_key --release
-```
-
 ## Examples
 
 The following examples were gathered on an x86\_64 FreeBSD machine.
@@ -145,7 +157,7 @@ Latest version: terraform v0.12.26 from Wed, 27 May 2020 17:17:12 +0000
 
 ### Retaining Downloaded Zip File after Installation
 
-```shell
+```
 $ hcdl --keep terraform
 Latest version: terraform v0.12.28 from Thu, 25 Jun 2020 16:21:37 +0000
 Downloading and verifying signature of terraform_0.12.28_SHA256SUMS...
@@ -161,7 +173,7 @@ Keeping zipfile terraform_0.12.28_freebsd_amd64.zip in current directory.
 
 ### Download a Product for a Different OS
 
-```shell
+```
 $ hcdl --os linux terraform
 Latest version: terraform v0.12.28 from Thu, 25 Jun 2020 16:21:37 +0000
 Downloading and verifying signature of terraform_0.12.28_SHA256SUMS...
@@ -175,7 +187,7 @@ Skipping install and keeping zipfile 'terraform_0.12.28_linux_amd64.zip' in curr
 
 ### Download a Specific Version of a Product
 
-```shell
+```
 $ hcdl --build 0.12.25 terraform
 Downloading and verifying signature of terraform_0.12.25_SHA256SUMS...
 Verified against terraform_0.12.25_SHA256SUMS.sig.

@@ -1,5 +1,10 @@
 # `hcdl` Changelog
 
+## v0.9.4
+
+  - Default to embedding the GPG key in the application for ease of use when
+    installing via Cargo
+
 ## v0.9.3
 
   - Add CRC32 verification of files extracted from zip
