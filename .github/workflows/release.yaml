@@ -1,11 +1,9 @@
 ---
+name: 'Create Github Release'
 on:
   push:
     tags:
       - 'v*'
-
-name: 'Create Github Release'
-
 jobs:
   release:
     name: 'Create Github Release'
@@ -29,7 +27,7 @@ jobs:
       - name: 'Rename Crate to tar.gz'
         id: 'rename_crate'
         run: |
-          STRIPPED_VERSION="$(echo ${{ github.ref }} | tr -d v)"
+          STRIPPED_VERSION="$(basename ${{ github.ref }} | tr -d v)"
           RELEASE="hcdl-${STRIPPED_VERSION}"
           ASSET_DIR=target/package
           ASSET_NAME="${RELEASE}.tar.gz"
