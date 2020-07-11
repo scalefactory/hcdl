@@ -65,3 +65,13 @@ jobs:
         with:
           command: 'test'
           args: '--no-default-features'
+  mandoc:
+    name: 'Lint Man Page'
+    runs-on: 'ubuntu-latest'
+    steps:
+      - name: 'Install mandoc'
+        run: |
+          apt install mandoc
+      - name: 'Lint Man Page'
+        run: |
+          mandoc -T lint man/hcdl.1
