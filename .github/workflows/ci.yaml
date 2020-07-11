@@ -71,7 +71,7 @@ jobs:
     steps:
       - name: 'Install mandoc'
         run: |
-          apt install mandoc
+          sudo apt install mandoc
       - name: 'Lint Man Page'
         run: |
           mandoc -T lint man/hcdl.1
