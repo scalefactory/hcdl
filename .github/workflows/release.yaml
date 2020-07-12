@@ -42,17 +42,20 @@ jobs:
         id: 'generate_changelog'
         run: |
           VERSION="$(basename ${{ github.ref }})"
+          OUTPUT="release_changelog.md"
 
           sed -n "/## ${VERSION}/,/^##/p;" CHANGELOG.md \
             | sed '$ d' \
-            > release_changelog.md
+            > "${OUTPUT}"
+
+          echo "::set-output name=body_path::${OUTPUT}"
       - name: 'Create Release'
         id: 'create_release'
         uses: 'actions/create-release@v1'
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
         with:
-          body_path: 'release_changelog.md'
+          body_path: '${{ steps.generate_changelog.outputs.body_path }}'
           draft: false
           prerelease: false
           release_name: 'Release ${{ github.ref }}'
