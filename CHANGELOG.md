@@ -4,6 +4,9 @@
 
   - Default to embedding the GPG key in the application for ease of use when
     installing via Cargo
+    - Install with `cargo install --no-default-features hcdl` or compile with
+      `cargo build --no-default-features hcdl` to avoid this, as noted in the
+      `README.md`
 
 ## v0.9.3
 
