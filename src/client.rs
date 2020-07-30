@@ -43,6 +43,15 @@ const PROGRESS_TEMPLATE: &str = concat!(
     " {msg}",
 );
 
+const PROGRESS_TEMPLATE_NO_COLOR: &str = concat!(
+    "{spinner:green} ",
+    "[{elapsed_precise}] ",
+    "[{bar:40}] ",
+    "{bytes}/{total_bytes} ",
+    "({eta})",
+    " {msg}",
+);
+
 #[cfg(not(test))]
 const RELEASES_URL: &str = "https://releases.hashicorp.com";
 
@@ -61,21 +70,23 @@ const USER_AGENT: &str = concat!(
 );
 
 pub struct Client {
-    client: reqwest::Client,
-    quiet:  bool,
+    client:   reqwest::Client,
+    no_color: bool,
+    quiet:    bool,
 }
 
 impl Client {
     // Return a new reqwest client with our user-agent
-    pub fn new(quiet: bool) -> Result<Self> {
+    pub fn new(quiet: bool, no_color: bool) -> Result<Self> {
         let client = reqwest::ClientBuilder::new()
             .gzip(true)
             .user_agent(USER_AGENT)
             .build()?;
 
         let client = Self {
-            client: client,
-            quiet:  quiet,
+            client:   client,
+            no_color: no_color,
+            quiet:    quiet,
         };
 
         Ok(client)
@@ -107,8 +118,15 @@ impl Client {
 
         if let Some(size) = total_size {
             // If we know the total size, setup a nice bar
+            let template = if self.no_color {
+                PROGRESS_TEMPLATE_NO_COLOR
+            }
+            else {
+                PROGRESS_TEMPLATE
+            };
+
             let style = ProgressStyle::default_bar()
-                .template(PROGRESS_TEMPLATE)
+                .template(template)
                 .progress_chars(PROGRESS_CHARS);
 
             let pb = ProgressBar::new(size);

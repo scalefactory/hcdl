@@ -7,9 +7,11 @@ use clap::{
     crate_name,
     crate_version,
     App,
+    AppSettings,
     Arg,
     ArgMatches,
 };
+use std::env;
 use std::ffi::{
     OsStr,
     OsString,
@@ -59,6 +61,15 @@ const VALID_OS: &[&str] = &[
 ];
 
 const DEFAULT_VERSION: &str = "latest";
+const NO_COLOR: &str = "NO_COLOR";
+
+// Checks the environment to see if NO_COLOR is in use.
+pub fn no_color() -> bool {
+    match env::var_os(NO_COLOR) {
+        Some(_) => true,
+        None    => false,
+    }
+}
 
 // Ensure that the installation dir exists and is a directory.
 fn is_valid_install_dir(s: &OsStr) -> Result<(), OsString> {
@@ -76,7 +87,7 @@ fn is_valid_install_dir(s: &OsStr) -> Result<(), OsString> {
 }
 
 fn create_app<'a, 'b>() -> App<'a, 'b> {
-    App::new(crate_name!())
+    let mut app = App::new(crate_name!())
         .version(crate_version!())
         .about(crate_description!())
         // Flags
@@ -166,7 +177,13 @@ fn create_app<'a, 'b>() -> App<'a, 'b> {
                 .required_unless("LIST_PRODUCTS")
                 .takes_value(true)
                 .possible_values(PRODUCTS_LIST)
-        )
+        );
+
+    if no_color() {
+        app = app.setting(AppSettings::ColorNever);
+    }
+
+    app
 }
 
 pub fn parse_args<'a>() -> ArgMatches<'a> {

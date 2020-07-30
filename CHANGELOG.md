@@ -1,5 +1,9 @@
 # `hcdl` Changelog
 
+## v0.10.1
+
+  - Add support for [`NO_COLOR`] environment variable
+
 ## v0.10.0
 
   - Default to embedding the GPG key in the application for ease of use when
@@ -32,3 +36,6 @@
 ## v0.9.0
 
   - Initial release
+
+  <!-- links -->
+  [`NO_COLOR`]: https://no-color.org/

@@ -22,6 +22,7 @@ use tmpfile::TmpFile;
 async fn main() -> Result<()> {
     let matches  = cli::parse_args();
     let is_quiet = matches.is_present("QUIET");
+    let no_color = cli::no_color();
     let messages = Messages::new(is_quiet);
 
     // We don't need to do very much if we're listing products
@@ -37,7 +38,7 @@ async fn main() -> Result<()> {
     let build_version = matches.value_of("BUILD").unwrap();
     let product       = matches.value_of("PRODUCT").unwrap();
 
-    let client = client::Client::new(is_quiet)?;
+    let client = client::Client::new(is_quiet, no_color)?;
 
     let builds = if build_version == "latest" {
         let latest = client.check_version(product).await?;
