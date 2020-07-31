@@ -27,9 +27,10 @@ jobs:
       - name: 'Rename Crate to tar.gz'
         id: 'rename_crate'
         run: |
+          CRATE_NAME="hcdl"
           STRIPPED_VERSION="$(basename ${{ github.ref }} | tr -d v)"
-          RELEASE="hcdl-${STRIPPED_VERSION}"
-          ASSET_DIR=target/package
+          RELEASE="${CRATE_NAME}-${STRIPPED_VERSION}"
+          ASSET_DIR="target/package"
           ASSET_NAME="${RELEASE}.tar.gz"
           ASSET_PATH="${ASSET_DIR}/${ASSET_NAME}"
 
@@ -44,9 +45,14 @@ jobs:
           VERSION="$(basename ${{ github.ref }})"
           OUTPUT="release_changelog.md"
 
+          # Add changelog for version
           sed -n "/## ${VERSION}/,/^##/p;" CHANGELOG.md \
             | sed '$ d' \
             > "${OUTPUT}"
+
+          # Add all links
+          sed -n "/^<\!-- links -->/,//p;" CHANGELOG.md \
+            >> "${OUTPUT}"
 
           echo "::set-output name=body_path::${OUTPUT}"
       - name: 'Create Release'

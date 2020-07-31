@@ -37,5 +37,5 @@
 
   - Initial release
 
-  <!-- links -->
-  [`NO_COLOR`]: https://no-color.org/
+<!-- links -->
+[`NO_COLOR`]: https://no-color.org/
