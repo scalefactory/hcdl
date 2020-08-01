@@ -31,27 +31,23 @@ use std::os::unix::fs::PermissionsExt;
 
 // Find a suitable bindir for installing to.
 pub fn bin_dir() -> Result<PathBuf> {
-    let dir = match dirs::executable_dir() {
-        Some(dir) => {
-            // Attempt to create the directory if it doesn't exist
-            if !dir.exists() {
-                fs::create_dir_all(&dir)?;
-            }
+    if let Some(dir) = dirs::executable_dir() {
+        // Attempt to create the directory if it doesn't exist
+        if !dir.exists() {
+            fs::create_dir_all(&dir)?;
+        }
 
-            dir
-        },
-        None => {
-            // If we get None, we're likely on Windows.
-            let msg = concat!(
-                "Could not find suitable install-dir.\n",
-                "Consider passing --install-dir to manually specify",
-            );
+        Ok(dir)
+    }
+    else {
+        // If we get None, we're likely on Windows.
+        let msg = concat!(
+            "Could not find suitable install-dir.\n",
+            "Consider passing --install-dir to manually specify",
+        );
 
-            return Err(anyhow!(msg));
-        },
-    };
-
-    Ok(dir)
+        Err(anyhow!(msg))
+    }
 }
 
 // Extracts a given `zipfile` to a temporary file under `dir`. Also checks
