@@ -2,10 +2,7 @@
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
 use super::shasums::Shasums;
-use anyhow::{
-    anyhow,
-    Result,
-};
+use anyhow::Result;
 use bytes::{
     buf::BufExt,
     Bytes,
@@ -64,16 +61,14 @@ impl Signature {
         let gpg_key     = BufReader::new(self.gpg_key.as_bytes());
 
         // compat handles error returned by failure crate
-        if let Err(e) = keyring.append_keys_from_armoured(gpg_key) {
-            return Err(anyhow!(e));
-        }
+        keyring.append_keys_from_armoured(gpg_key)
+            .or_else(|e| Err(e.compat()))?;
 
         let shasums   = BufReader::new(shasums.content().as_bytes());
         let signature = self.signature.clone().reader();
 
-        if let Err(e) = gpgrv::verify_detached(signature, shasums, &keyring) {
-            return Err(anyhow!(e));
-        }
+        gpgrv::verify_detached(signature, shasums, &keyring)
+            .or_else(|e| Err(e.compat()))?;
 
         Ok(())
     }
@@ -178,7 +173,7 @@ mod tests {
     }
 
     #[test]
-    fn test_signature_check() {
+    fn test_signature_check_ok() {
         let gpg_path = concat!(
             env!("CARGO_MANIFEST_DIR"),
             "/gpg/",
@@ -220,5 +215,84 @@ mod tests {
         let res = signature.check(&shasums);
 
         assert!(res.is_ok())
+    }
+
+    #[test]
+    fn test_signature_check_bad_gpg_key() {
+        let test_data_path = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/test-data/",
+        );
+
+        let signature_file_path = Path::new(&format!(
+            "{}{}",
+            test_data_path,
+            "terraform_0.12.26_SHA256SUMS.sig",
+        )).to_path_buf();
+
+        let signature_content = read_file_bytes(&signature_file_path).unwrap();
+        let signature         = Signature::with_gpg_key(
+            Bytes::from(signature_content),
+            "bad".into(),
+        );
+
+        let shasums_file_path = Path::new(&format!(
+            "{}{}",
+            test_data_path,
+            "terraform_0.12.26_SHA256SUMS",
+        )).to_path_buf();
+
+        let shasums_content = read_file_content(&shasums_file_path).unwrap();
+        let shasums         = Shasums::new(shasums_content);
+
+        let res = signature.check(&shasums);
+
+        assert_eq!(res.unwrap_err().to_string(), "reading first line of key file")
+    }
+
+    #[test]
+    fn test_signature_check_bad_signature() {
+        let gpg_path = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/gpg/",
+        );
+
+        let test_data_path = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/test-data/",
+        );
+
+        let gpg_key_file_path = Path::new(&format!(
+            "{}{}",
+            gpg_path,
+            HASHICORP_GPG_KEY_FILENAME,
+        )).to_path_buf();
+
+        let signature_file_path = Path::new(&format!(
+            "{}{}",
+            test_data_path,
+            "terraform_0.12.26_SHA256SUMS.sig",
+        )).to_path_buf();
+
+        let gpg_key_content   = read_file_content(&gpg_key_file_path).unwrap();
+        let signature_content = read_file_bytes(&signature_file_path).unwrap();
+        let signature         = Signature::with_gpg_key(
+            Bytes::from(signature_content),
+            gpg_key_content,
+        );
+
+        let shasums_file_path = Path::new(&format!(
+            "{}{}",
+            test_data_path,
+            "test.txt",
+        )).to_path_buf();
+
+        let shasums_content = read_file_content(&shasums_file_path).unwrap();
+        let shasums         = Shasums::new(shasums_content);
+
+        let res = signature.check(&shasums);
+
+        //assert!(res.is_ok())
+        assert_eq!(res.unwrap_err().to_string(), "no valid signatures: [HintMismatch]")
     }
 }
