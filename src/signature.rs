@@ -2,7 +2,10 @@
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
 use super::shasums::Shasums;
-use anyhow::Result;
+use anyhow::{
+    anyhow,
+    Result,
+};
 use bytes::{
     buf::BufExt,
     Bytes,
@@ -61,18 +64,16 @@ impl Signature {
         let gpg_key     = BufReader::new(self.gpg_key.as_bytes());
 
         // compat handles error returned by failure crate
-        match keyring.append_keys_from_armoured(gpg_key) {
-            Ok(_)  => Ok(()),
-            Err(e) => Err(e.compat()),
-        }?;
+        if let Err(e) = keyring.append_keys_from_armoured(gpg_key) {
+            return Err(anyhow!(e));
+        }
 
         let shasums   = BufReader::new(shasums.content().as_bytes());
         let signature = self.signature.clone().reader();
 
-        match gpgrv::verify_detached(signature, shasums, &keyring) {
-            Ok(_)  => Ok(()),
-            Err(e) => Err(e.compat()),
-        }?;
+        if let Err(e) = gpgrv::verify_detached(signature, shasums, &keyring) {
+            return Err(anyhow!(e));
+        }
 
         Ok(())
     }
