@@ -18,6 +18,8 @@ mod tmpfile;
 use messages::Messages;
 use tmpfile::TmpFile;
 
+const LATEST: &str = "LATEST";
+
 #[tokio::main]
 async fn main() -> Result<()> {
     let matches  = cli::parse_args();
@@ -40,7 +42,7 @@ async fn main() -> Result<()> {
 
     let client = client::Client::new(is_quiet, no_color)?;
 
-    let builds = if build_version == "latest" {
+    let builds = if build_version == LATEST {
         let latest = client.check_version(product).await?;
 
         messages.latest_version(&latest.to_string());
