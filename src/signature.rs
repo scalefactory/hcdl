@@ -62,13 +62,13 @@ impl Signature {
 
         // compat handles error returned by failure crate
         keyring.append_keys_from_armoured(gpg_key)
-            .or_else(|e| Err(e.compat()))?;
+            .map_err(|e| e.compat())?;
 
         let shasums   = BufReader::new(shasums.content().as_bytes());
         let signature = self.signature.clone().reader();
 
         gpgrv::verify_detached(signature, shasums, &keyring)
-            .or_else(|e| Err(e.compat()))?;
+            .map_err(|e| e.compat())?;
 
         Ok(())
     }
