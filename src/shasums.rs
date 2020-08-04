@@ -33,12 +33,8 @@ impl Shasums {
     pub fn check(&self, tmpfile: &mut TmpFile) -> Result<Checksum> {
         let filename = &tmpfile.filename;
 
-        let shasum = match self.shasum(filename) {
-            Some(shasum) => Ok(shasum),
-            None         => {
-                Err(anyhow!("Couldn't find shasum for {}", filename))
-            },
-        }?;
+        let shasum = self.shasum(filename)
+            .ok_or_else(|| anyhow!("Couldn't find shasum for {}", filename))?;
 
         let mut file   = tmpfile.handle()?;
         let mut hasher = Sha256::new();
@@ -109,7 +105,7 @@ mod tests {
     }
 
     #[test]
-    fn test_check_bad() {
+    fn test_check_bad_checksum() {
         let test_data_path = concat!(
             env!("CARGO_MANIFEST_DIR"),
             "/test-data/",
@@ -118,7 +114,7 @@ mod tests {
 
         let shasums_content = format!(
             "{shasum} {filename}",
-            shasum = "badbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadb",
+            shasum = "bad",
             filename = test_data_path,
         );
 
@@ -128,6 +124,31 @@ mod tests {
         let res     = shasums.check(&mut tmpfile).unwrap();
 
         assert_eq!(Checksum::Bad, res);
+    }
+
+    #[test]
+    fn test_check_bad_no_such_filename() {
+        let test_data_path = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/test-data/",
+            "shasums-check.txt"
+        );
+
+        let shasums_content = format!(
+            "{shasum} {filename}",
+            shasum = "bad",
+            filename = "nope",
+        );
+
+        let mut tmpfile = tmpfile_from_file(&test_data_path);
+
+        let shasums = Shasums::new(shasums_content.into());
+        let res     = shasums.check(&mut tmpfile);
+
+        assert_eq!(
+            res.unwrap_err().to_string(),
+            format!("Couldn't find shasum for {}", test_data_path),
+        );
     }
 
     #[test]
