@@ -22,12 +22,14 @@ pub struct VersionCheck {
 
 impl fmt::Display for VersionCheck {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let timestamp = Utc.timestamp(self.current_release as i64, 0);
+
         write!(
             f,
             "{product} v{version} from {datetime}",
-            product=self.product,
-            version=self.current_version,
-            datetime=Utc.timestamp(self.current_release as i64, 0).to_rfc2822(),
+            product = self.product,
+            version = self.current_version,
+            datetime = timestamp.to_rfc2822(),
         )
     }
 }
