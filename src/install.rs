@@ -61,7 +61,7 @@ fn extract(mut zipfile: &mut ZipFile, dir: &PathBuf) -> Result<TempPath> {
     io::copy(&mut zipfile, &mut tmpfile)?;
 
     // Closes the file, keeping only the path.
-    let tmpfile  = tmpfile.into_temp_path();
+    let tmpfile = tmpfile.into_temp_path();
 
     // Get the file's expected CRC32 and check against what we wrote.
     let expected = zipfile.crc32();
