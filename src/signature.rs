@@ -292,7 +292,9 @@ mod tests {
 
         let res = signature.check(&shasums);
 
-        //assert!(res.is_ok())
-        assert_eq!(res.unwrap_err().to_string(), "no valid signatures: [HintMismatch]")
+        assert_eq!(
+            res.unwrap_err().to_string(),
+            "no valid signatures: [HintMismatch]",
+        )
     }
 }
