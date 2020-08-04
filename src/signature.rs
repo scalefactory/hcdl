@@ -103,12 +103,8 @@ fn get_gpg_key_path() -> Result<PathBuf> {
         path
     }
     else {
-        let mut path = match dirs::data_dir() {
-            Some(dir) => dir,
-            None      => {
-                return Err(anyhow!("Couldn't find shared data directory"));
-            },
-        };
+        let mut path = dirs::data_dir()
+            .ok_or_else(|| anyhow!("Couldn't find shared data directory"))?;
 
         // Ensure that the data dir exists
         if !path.exists() || !path.is_dir() {
