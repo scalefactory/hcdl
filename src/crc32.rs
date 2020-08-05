@@ -16,7 +16,10 @@ use std::path::Path;
 const BUFFER_SIZE: usize = 1_024 * 1_024;
 
 // Check the given `path`'s CRC32 against the `expected` CRC32.
-pub fn check<P: AsRef<Path>>(path: P, expected: u32) -> Result<()> {
+pub fn check<P>(path: P, expected: u32) -> Result<()>
+where
+    P: AsRef<Path>,
+{
     let file       = File::open(&path)?;
     let mut reader = BufReader::new(file);
     let mut buf    = [0; BUFFER_SIZE];
