@@ -7,10 +7,7 @@ use anyhow::{
     anyhow,
     Result,
 };
-use std::fs::{
-    self,
-    Permissions,
-};
+use std::fs;
 use std::io::{
     self,
     Read,
@@ -25,6 +22,9 @@ use zip::{
     read::ZipFile,
     ZipArchive,
 };
+
+#[cfg(target_family = "unix")]
+use std::fs::Permissions;
 
 #[cfg(target_family = "unix")]
 use std::os::unix::fs::PermissionsExt;
