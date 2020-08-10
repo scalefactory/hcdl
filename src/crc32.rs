@@ -55,7 +55,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_check_err() {
+    fn test_check_err_bad_checksum() {
         let test_data = concat!(
             env!("CARGO_MANIFEST_DIR"),
             "/test-data/test.txt",
@@ -65,6 +65,22 @@ mod tests {
         let result   = check(&test_data, expected);
 
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_check_err_non_existant_file() {
+        let test_data = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/test-data/doesntexist.txt",
+        );
+
+        let expected = 0x00000000;
+        let result   = check(&test_data, expected);
+
+        assert_eq!(
+            result.unwrap_err().to_string(),
+            "No such file or directory (os error 2)",
+        );
     }
 
     #[test]
