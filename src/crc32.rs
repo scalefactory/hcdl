@@ -28,10 +28,9 @@ where
     // crc32fast doesn't have a Write implementation, so we have to handle the
     // updates manually instead of using io::copy.
     loop {
-        match reader.read(&mut buf) {
-            Ok(0)  => break,
-            Ok(n)  => hasher.update(&buf[..n]),
-            Err(e) => return Err(anyhow!(e)),
+        match reader.read(&mut buf)? {
+            0 => break,
+            n => hasher.update(&buf[..n]),
         }
     }
 
