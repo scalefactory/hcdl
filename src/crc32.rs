@@ -39,7 +39,7 @@ where
 
     if result != expected {
         let msg = anyhow!(
-            "Error CRC32: Expected: {:#10x}, Got: {:#10x}",
+            "Error CRC32: Expected: {:#010x}, Got: {:#010x}",
             expected,
             result,
         );
@@ -64,7 +64,10 @@ mod tests {
         let expected = 0x00000000;
         let result   = check(&test_data, expected);
 
-        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err().to_string(),
+            "Error CRC32: Expected: 0x00000000, Got: 0x891bc0e8",
+        );
     }
 
     #[test]
