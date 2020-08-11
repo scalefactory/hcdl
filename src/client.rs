@@ -10,6 +10,7 @@ use indicatif::{
     ProgressBar,
     ProgressStyle,
 };
+use reqwest::Response;
 use std::io::prelude::*;
 
 mod build;
@@ -171,7 +172,7 @@ impl Client {
     }
 
     // Perform an HTTP GET on the given URL
-    pub async fn get(&self, url: &str) -> Result<reqwest::Response> {
+    pub async fn get(&self, url: &str) -> Result<Response> {
         let resp = self.client
             .get(url)
             .send()
