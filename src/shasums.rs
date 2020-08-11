@@ -67,14 +67,12 @@ impl Shasums {
             .collect();
 
         // Our list should only have a single thing in it now, try to take it
-        let shasum = match shasum.first() {
-            Some(sum) => sum,
-            None      => return None,
-        };
+        let shasum = shasum.first()?;
 
         // Split the shasum from the filename
         let shasum = shasum.split_whitespace()
-            .collect::<Vec<&str>>()[0]
+            .collect::<Vec<&str>>()
+            .first()?
             .to_string();
 
         // Return the shasum hex
