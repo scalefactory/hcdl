@@ -61,16 +61,15 @@ impl Shasums {
     // Return the shasum for the specified filename
     fn shasum(&self, filename: &str) -> Option<String> {
         // Filter the shasum list down to the filename we're interested in
-        let shasum: Vec<&str> = self.shasums
+        let shasum_entry: &str = self.shasums
             .lines()
             .filter(|l| l.ends_with(filename))
-            .collect();
-
-        // Our list should only have a single thing in it now, try to take it
-        let shasum = shasum.first()?;
+            .collect::<Vec<&str>>()
+            .first()?;
 
         // Split the shasum from the filename
-        let shasum = shasum.split_whitespace()
+        let shasum = shasum_entry
+            .split_whitespace()
             .collect::<Vec<&str>>()
             .first()?
             .to_string();
