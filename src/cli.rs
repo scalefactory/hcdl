@@ -18,6 +18,15 @@ use std::ffi::{
 };
 use std::path::Path;
 
+#[cfg(feature = "shell_completion")]
+use clap::Shell;
+
+#[cfg(feature = "shell_completion")]
+use std::io;
+
+#[cfg(feature = "shell_completion")]
+use std::str::FromStr;
+
 #[cfg(target_arch = "arm")]
 pub const DEFAULT_ARCH: &str = "arm";
 
@@ -174,18 +183,42 @@ fn create_app<'a, 'b>() -> App<'a, 'b> {
             Arg::with_name("PRODUCT")
                 .help("Name of the Hashicorp product to download.")
                 .index(1)
-                .required_unless("LIST_PRODUCTS")
                 .takes_value(true)
                 .possible_values(PRODUCTS_LIST)
+                .required_unless_one(&[
+                    "COMPLETIONS",
+                    "LIST_PRODUCTS",
+                ])
         );
 
     if no_color() {
         app = app.setting(AppSettings::ColorNever);
     }
 
+    #[cfg(feature = "shell_completion")]
+    {
+        app = app.arg(
+            Arg::with_name("COMPLETIONS")
+                .long("completions")
+                .help("Generate shell completions for the given shell")
+                .takes_value(true)
+                .value_name("SHELL")
+                .possible_values(&Shell::variants())
+        );
+    }
+
+
     app
 }
 
 pub fn parse_args<'a>() -> ArgMatches<'a> {
     create_app().get_matches()
+}
+
+#[cfg(feature = "shell_completion")]
+pub fn gen_completions(shell: &str) {
+    // Value of shell was checked during CLI parsing.
+    let shell = Shell::from_str(shell).unwrap();
+
+    create_app().gen_completions_to(crate_name!(), shell, &mut io::stdout());
 }

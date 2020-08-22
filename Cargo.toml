@@ -1,7 +1,7 @@
 [package]
 name = "hcdl"
 description = "Easily download and update HashiCorp tools"
-version = "0.10.1"
+version = "0.10.2"
 authors = ["David O'Rourke <david.orourke@gmail.com>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
@@ -21,8 +21,13 @@ exclude = [
 ]
 
 [features]
-default = ["embed_gpg_key"]
+default = [
+    "embed_gpg_key",
+    "shell_completion",
+]
+
 embed_gpg_key = []
+shell_completion = []
 
 [dependencies]
 anyhow = "1.0"

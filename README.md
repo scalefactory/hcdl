@@ -27,6 +27,26 @@ installing with the following command:
 $ cargo install --no-default-features hcdl
 ```
 
+## Crate Features
+
+`hcdl` includes two features:
+
+  - `embed_gpg_key`, which embeds the HashiCorp GPG key required to verify the
+    signature of downloaded files
+  - `shell_completion`, which adds the `--completions` CLI argument to generate
+    completions for your chosen shell
+
+Both of these features are enabled by default. If you wished to install `hcdl`
+without the embedded GPG key, but with shell completion generation support, you
+could install as follows:
+
+```shell
+$ cargo install \
+    --no-default-features \
+    --features shell_completion \
+    hcdl
+```
+
 ## Usage
 
 `hcdl` usage is very simple, for example, if we want to download and install

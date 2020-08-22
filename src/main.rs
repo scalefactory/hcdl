@@ -23,6 +23,17 @@ const LATEST: &str = "LATEST";
 #[tokio::main]
 async fn main() -> Result<()> {
     let matches  = cli::parse_args();
+
+    #[cfg(feature = "shell_completion")]
+    // Generate completions if requested
+    if matches.is_present("COMPLETIONS") {
+        // This was validated during CLI parse.
+        let shell = matches.value_of("COMPLETIONS").unwrap();
+        cli::gen_completions(&shell);
+
+        exit(0);
+    }
+
     let is_quiet = matches.is_present("QUIET");
     let no_color = cli::no_color();
     let messages = Messages::new(is_quiet);

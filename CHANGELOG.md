@@ -1,5 +1,12 @@
 # `hcdl` Changelog
 
+## v0.10.2
+
+  - Add support for generating shell tab completions
+    - Support included by default under the `shell_completion` feature
+    - Supported shells are currently: Bash, Elvish, Fish, PowerShell, and ZSH
+      as listed in the [Clap Shell enum]
+
 ## v0.10.1
 
   - Add support for [`NO_COLOR`] environment variable
@@ -39,3 +46,4 @@
 
 <!-- links -->
 [`NO_COLOR`]: https://no-color.org/
+[Clap Shell enum]: https://docs.rs/clap/2.33.3/clap/enum.Shell.html#variants
