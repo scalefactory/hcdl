@@ -45,7 +45,7 @@ const PROGRESS_TEMPLATE: &str = concat!(
 );
 
 const PROGRESS_TEMPLATE_NO_COLOR: &str = concat!(
-    "{spinner:green} ",
+    "{spinner} ",
     "[{elapsed_precise}] ",
     "[{bar:40}] ",
     "{bytes}/{total_bytes} ",
