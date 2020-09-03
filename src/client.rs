@@ -8,6 +8,7 @@ use anyhow::Result;
 use bytes::Bytes;
 use indicatif::{
     ProgressBar,
+    ProgressDrawTarget,
     ProgressStyle,
 };
 use reqwest::Response;
@@ -18,6 +19,9 @@ mod product_version;
 mod version_check;
 use product_version::ProductVersion;
 use version_check::VersionCheck;
+
+// How many times per second to redraw the progress bar.
+const PROGRESS_UPDATE_HZ: u64 = 4;
 
 #[cfg(not(test))]
 const CHECKPOINT_URL: &str = "https://checkpoint-api.hashicorp.com/v1/check";
@@ -117,6 +121,10 @@ impl Client {
             return ProgressBar::hidden();
         }
 
+        // We want to limit refreshes to once per second, so we have to make a
+        // new draw target.
+        let target = ProgressDrawTarget::stderr_with_hz(PROGRESS_UPDATE_HZ);
+
         if let Some(size) = total_size {
             // If we know the total size, setup a nice bar
             let template = if self.no_color {
@@ -130,14 +138,17 @@ impl Client {
                 .template(template)
                 .progress_chars(PROGRESS_CHARS);
 
-            let pb = ProgressBar::new(size);
+            let pb = ProgressBar::with_draw_target(size, target);
             pb.set_style(style);
 
             pb
         }
         else {
             // Otherwise, just a simple spinner
-            ProgressBar::new_spinner()
+            let pb = ProgressBar::new_spinner();
+            pb.set_draw_target(target);
+
+            pb
         }
     }
 

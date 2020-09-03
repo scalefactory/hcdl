@@ -6,6 +6,7 @@
     - Support included by default under the `shell_completion` feature
     - Supported shells are currently: Bash, Elvish, Fish, PowerShell, and ZSH
       as listed in the [Clap Shell enum]
+  - Reduced the frequency of progress bar updates to 4 times per second
 
 ## v0.10.1
 
