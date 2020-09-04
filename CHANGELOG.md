@@ -7,6 +7,8 @@
     - Supported shells are currently: Bash, Elvish, Fish, PowerShell, and ZSH
       as listed in the [Clap Shell enum]
   - Reduced the frequency of progress bar updates to 4 times per second
+  - Fixed the `NO_COLOR` progress template, which could have resulted in colour
+    in `NO_COLOR` mode
 
 ## v0.10.1
 
