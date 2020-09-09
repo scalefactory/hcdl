@@ -21,7 +21,7 @@ use product_version::ProductVersion;
 use version_check::VersionCheck;
 
 // How many times per second to redraw the progress bar.
-const PROGRESS_UPDATE_HZ: u64 = 4;
+const PROGRESS_UPDATE_HZ: u64 = 8;
 
 #[cfg(not(test))]
 const CHECKPOINT_URL: &str = "https://checkpoint-api.hashicorp.com/v1/check";
