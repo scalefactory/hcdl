@@ -60,15 +60,12 @@ impl Signature {
         let mut keyring = Keyring::new();
         let gpg_key     = BufReader::new(self.gpg_key.as_bytes());
 
-        // compat handles error returned by failure crate
-        keyring.append_keys_from_armoured(gpg_key)
-            .map_err(|e| e.compat())?;
+        keyring.append_keys_from_armoured(gpg_key)?;
 
         let shasums   = BufReader::new(shasums.content().as_bytes());
         let signature = self.signature.clone().reader();
 
-        gpgrv::verify_detached(signature, shasums, &keyring)
-            .map_err(|e| e.compat())?;
+        gpgrv::verify_detached(signature, shasums, &keyring)?;
 
         Ok(())
     }

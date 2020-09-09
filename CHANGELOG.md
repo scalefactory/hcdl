@@ -9,6 +9,11 @@
   - Reduced the frequency of progress bar updates to 4 times per second
   - Fixed the `NO_COLOR` progress template, which could have resulted in colour
     in `NO_COLOR` mode
+  - Updated to [gpgrv] `0.3.0` and simplified some error handling logic in
+    gpgrv related tasks
+    - The changelog for this version isn't in the gpgrv GitHub repository. A
+      manual comparison of the differences was performed between crates `0.2.3`
+      and `0.3.0`, which were obtained from [crates.io]
 
 ## v0.10.1
 
@@ -49,4 +54,6 @@
 
 <!-- links -->
 [`NO_COLOR`]: https://no-color.org/
+[crates.io]: https://crates.io/
+[gpgrv]: https://crates.io/crates/gpgrv
 [Clap Shell enum]: https://docs.rs/clap/2.33.3/clap/enum.Shell.html#variants
