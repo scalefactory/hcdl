@@ -13,7 +13,10 @@ use std::io::{
     Read,
     Seek,
 };
-use std::path::PathBuf;
+use std::path::{
+    Path,
+    PathBuf,
+};
 use tempfile::{
     NamedTempFile,
     TempPath,
@@ -88,7 +91,20 @@ where
 
     for i in 0..zip.len() {
         let mut file = zip.by_index(i)?;
-        let filename = file.sanitized_name();
+
+        // Perform some sanitization on the filename.
+        // We assume here that HashiCorp zips only ever have files at the root
+        // of the zip file, this allows us to not care about their paths.
+        let filename = file.name();
+
+        // Attempt to get the basename of the filename
+        let basename = Path::new(filename).file_name()
+            .ok_or_else(|| {
+                anyhow!("Couldn't get basename from: {}", filename)
+            })?;
+
+        // Finally get a pathbuf of the basename
+        let filename = Path::new(basename).to_path_buf();
 
         messages.extracting_file(&filename, &dir);
 
