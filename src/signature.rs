@@ -52,6 +52,20 @@ impl PartialEq for Signature {
     }
 }
 
+// Take a u64 key_id and turn it into a hex fingerprint in the format of
+// AA:BB:CC:DD:EE:FF.
+// Will panic if bytes aren't valid UTF-8, but they should be, since we got
+// them from format!()
+fn key_id_to_fingerprint(id: u64) -> String {
+    let hex = format!("{:X}", id);
+
+    hex.as_bytes()
+        .chunks(2)
+        .map(|chunk| String::from_utf8(chunk.to_vec()).expect("from_utf8"))
+        .collect::<Vec<String>>()
+        .join(":")
+}
+
 impl Signature {
     pub fn new(signature: Bytes) -> Result<Self> {
         let gpg_key = get_gpg_key()?;
@@ -64,6 +78,7 @@ impl Signature {
         Ok(signature)
     }
 
+    // This will fail if the GPG key we attempt to add to the keyring is bad.
     pub fn with_gpg_key(signature: Bytes, gpg_key: String) -> Result<Self> {
         let mut keyring = Keyring::new();
         let reader      = BufReader::new(gpg_key.as_bytes());
@@ -79,6 +94,8 @@ impl Signature {
         Ok(signature)
     }
 
+    // This will fail if we cannot verify the shasums signature against the
+    // keyring.
     pub fn check(&self, shasums: &Shasums) -> Result<()> {
         let shasums   = BufReader::new(shasums.content().as_bytes());
         let signature = self.signature.clone().reader();
@@ -86,6 +103,21 @@ impl Signature {
         gpgrv::verify_detached(signature, shasums, &self.keyring)?;
 
         Ok(())
+    }
+
+    pub fn fingerprints(&self) -> Vec<String> {
+        // Get a hex fingerprint from each key ID
+        let mut key_ids: Vec<String> = self.keyring
+            .key_ids()
+            .iter()
+            .map(|&&id| key_id_to_fingerprint(id))
+            .collect();
+
+        // The HashSet from keyring.key_ids() is randomly ordered, so sort our
+        // vec here for some consistency in output
+        key_ids.sort();
+
+        key_ids
     }
 }
 
