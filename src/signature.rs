@@ -28,13 +28,25 @@ const HASHICORP_GPG_KEY_FILENAME: &str = "hashicorp.asc";
 #[cfg(feature = "embed_gpg_key")]
 const HASHICORP_GPG_KEY: &str = include_str!("../gpg/hashicorp.asc");
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub struct Signature {
     // This is the signature of the shasums file.
     signature: Bytes,
 
     // The GPG key that the signature was signed with.
     gpg_key: String,
+
+    // The GPG keyring
+    keyring: Keyring,
+}
+
+impl PartialEq for Signature {
+    fn eq(&self, other: &Self) -> bool {
+        let sig_match = self.signature == other.signature;
+        let key_match = self.gpg_key == other.gpg_key;
+
+        sig_match && key_match
+    }
 }
 
 impl Signature {
@@ -44,28 +56,31 @@ impl Signature {
         let signature = Self::with_gpg_key(
             signature,
             gpg_key,
-        );
+        )?;
 
         Ok(signature)
     }
 
-    pub fn with_gpg_key(signature: Bytes, gpg_key: String) -> Self {
-        Self {
+    pub fn with_gpg_key(signature: Bytes, gpg_key: String) -> Result<Self> {
+        let mut keyring = Keyring::new();
+        let reader      = BufReader::new(gpg_key.as_bytes());
+
+        keyring.append_keys_from_armoured(reader)?;
+
+        let signature = Self {
             signature: signature,
             gpg_key:   gpg_key,
-        }
+            keyring:   keyring,
+        };
+
+        Ok(signature)
     }
 
     pub fn check(&self, shasums: &Shasums) -> Result<()> {
-        let mut keyring = Keyring::new();
-        let gpg_key     = BufReader::new(self.gpg_key.as_bytes());
-
-        keyring.append_keys_from_armoured(gpg_key)?;
-
         let shasums   = BufReader::new(shasums.content().as_bytes());
         let signature = self.signature.clone().reader();
 
-        gpgrv::verify_detached(signature, shasums, &keyring)?;
+        gpgrv::verify_detached(signature, shasums, &self.keyring)?;
 
         Ok(())
     }
@@ -194,7 +209,7 @@ mod tests {
         let signature         = Signature::with_gpg_key(
             Bytes::from(signature_content),
             gpg_key_content,
-        );
+        ).unwrap();
 
         let shasums_file_path = Path::new(&format!(
             "{}{}",
@@ -229,18 +244,7 @@ mod tests {
             "bad".into(),
         );
 
-        let shasums_file_path = Path::new(&format!(
-            "{}{}",
-            test_data_path,
-            "terraform_0.12.26_SHA256SUMS",
-        )).to_path_buf();
-
-        let shasums_content = read_file_content(&shasums_file_path).unwrap();
-        let shasums         = Shasums::new(shasums_content);
-
-        let res = signature.check(&shasums);
-
-        assert_eq!(res.unwrap_err().to_string(), "reading first line of key file")
+        assert_eq!(signature.unwrap_err().to_string(), "reading first line of key file")
     }
 
     #[test]
@@ -272,7 +276,7 @@ mod tests {
         let signature         = Signature::with_gpg_key(
             Bytes::from(signature_content),
             gpg_key_content,
-        );
+        ).unwrap();
 
         let shasums_file_path = Path::new(&format!(
             "{}{}",

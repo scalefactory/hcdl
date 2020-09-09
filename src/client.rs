@@ -379,7 +379,7 @@ mod tests {
         let expected = Signature::with_gpg_key(
             signature,
             ::std::str::from_utf8(&gpg_key).unwrap().to_string(),
-        );
+        ).unwrap();
 
         let client = Client::new(true, true).unwrap();
         let ret    = client.get_signature(&version).await.unwrap();
