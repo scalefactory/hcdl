@@ -10,6 +10,7 @@ use sha2::{
     Digest,
     Sha256,
 };
+use std::collections::HashMap;
 use std::io;
 
 #[derive(Debug, PartialEq)]
@@ -19,14 +20,37 @@ pub enum Checksum {
 }
 
 pub struct Shasums {
-    shasums: String,
+    content: String,
 }
 
 impl Shasums {
     pub fn new(shasums: String) -> Self {
         Self {
-            shasums: shasums,
+            content: shasums,
         }
+    }
+
+    // Parses the shasums text into an easy to use hash.
+    // Expects to find a whitespace separated file with two columns of
+    // "shasum filename".
+    // Panics if the shasums content can't be parsed.
+    fn parse(&self) -> HashMap<&str, &str> {
+        let mut hash = HashMap::new();
+
+        for line in self.content().lines() {
+            let split: Vec<&str> = line.split_whitespace().collect();
+
+            if split.len() != 2 {
+                panic!("malformed shasums file");
+            }
+
+            let shasum   = split[0];
+            let filename = split[1];
+
+            hash.insert(filename, shasum);
+        }
+
+        hash
     }
 
     // Check the shasum of the specified file
@@ -55,26 +79,14 @@ impl Shasums {
 
     // Return a reference to the shasums
     pub fn content(&self) -> &str {
-        &self.shasums
+        &self.content
     }
 
     // Return the shasum for the specified filename
-    fn shasum(&self, filename: &str) -> Option<String> {
-        // Filter the shasum list down to the filename we're interested in
-        let shasum_entry: &str = self.shasums
-            .lines()
-            .filter(|l| l.ends_with(filename))
-            .collect::<Vec<&str>>()
-            .first()?;
+    fn shasum(&self, filename: &str) -> Option<&str> {
+        let parsed = self.parse();
+        let shasum = parsed.get(filename)?;
 
-        // Split the shasum from the filename
-        let shasum = shasum_entry
-            .split_whitespace()
-            .collect::<Vec<&str>>()
-            .first()?
-            .to_string();
-
-        // Return the shasum hex
         Some(shasum)
     }
 }
@@ -181,6 +193,62 @@ mod tests {
         let shasums = Shasums::new(shasums_content.clone().into());
 
         assert_eq!(shasums_content, shasums.content())
+    }
+
+    #[test]
+    fn test_parse_ok() {
+        let shasums_content = format!(
+            "{shasum} {filename}",
+            shasum = "5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03",
+            filename = "test",
+        );
+
+        let shasums = Shasums::new(shasums_content.into());
+        let parsed  = shasums.parse();
+
+        let mut expected = HashMap::new();
+        expected.insert(
+            "test",
+            "5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03",
+        );
+
+        assert_eq!(expected, parsed)
+    }
+
+    #[test]
+    fn test_parse_empty_content() {
+        let shasums = Shasums::new("".into());
+        let parsed  = shasums.parse();
+
+        assert!(parsed.len() == 0)
+    }
+
+    #[test]
+    #[should_panic(expected = "malformed shasums file")]
+    fn test_parse_panic_single_column() {
+        let shasums_content = format!(
+            "{shasum}",
+            shasum = "5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03",
+        );
+
+        let shasums = Shasums::new(shasums_content.into());
+
+        shasums.parse();
+    }
+
+    #[test]
+    #[should_panic(expected = "malformed shasums file")]
+    fn test_parse_panic_extra_column() {
+        let shasums_content = format!(
+            "{shasum} {filename} {extra}",
+            shasum = "5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03",
+            filename = "test",
+            extra = "extra",
+        );
+
+        let shasums = Shasums::new(shasums_content.into());
+
+        shasums.parse();
     }
 
     #[test]
