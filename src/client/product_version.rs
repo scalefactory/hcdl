@@ -19,10 +19,9 @@ pub struct ProductVersion {
 impl ProductVersion {
     // Pull a specific build out of the product version builds.
     pub fn build(&self, arch: &str, os: &str) -> Option<Build> {
-        let filtered: Vec<Build> = self.builds
+        let filtered: Vec<&Build> = self.builds
             .iter()
             .filter(|b| b.arch == arch && b.os == os)
-            .cloned()
             .collect();
 
         if filtered.is_empty() {
