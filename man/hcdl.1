@@ -83,6 +83,18 @@ Specify
 build version to download.
 Defaults to
 .Ar latest .
+.It Fl Fl completions Ns = Ns Ar shell
+Generation shell completions for the given
+.Ar shell .
+Valid arguments for the command are:
+.Dq bash ,
+.Dq elvish ,
+.Dq fish ,
+.Dq powershell ,
+and
+.Dq zsh .
+Completions will be output to stdout and should be redirected to a location
+that your shell can load them from.
 .It Fl d , Fl Fl install-dir Ns = Ns Ar directory
 Specify a directory to install the
 .Ar product
