@@ -13,8 +13,8 @@ use tempfile::NamedTempFile;
 use std::os::unix::fs::OpenOptionsExt;
 
 pub struct TmpFile {
-    tmpfile:      NamedTempFile,
-    pub filename: String,
+    tmpfile:  NamedTempFile,
+    filename: String,
 }
 
 impl TmpFile {
@@ -26,6 +26,11 @@ impl TmpFile {
         };
 
         Ok(tmp)
+    }
+
+    // Return the tmpfile filename
+    pub fn filename(&self) -> &str {
+        &self.filename
     }
 
     // Return a handle that has been rewound to 0

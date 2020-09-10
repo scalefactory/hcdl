@@ -55,9 +55,8 @@ impl Shasums {
 
     // Check the shasum of the specified file
     pub fn check(&self, tmpfile: &mut TmpFile) -> Result<Checksum> {
-        let filename = &tmpfile.filename;
-
-        let shasum = self.shasum(filename)
+        let filename = tmpfile.filename();
+        let shasum   = self.shasum(filename)
             .ok_or_else(|| anyhow!("Couldn't find shasum for {}", filename))?;
 
         let mut file   = tmpfile.handle()?;
