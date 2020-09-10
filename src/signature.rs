@@ -44,11 +44,11 @@ pub struct Signature {
 // Hopefully matching Keyrings based on the KeyIDs they contain is good enough
 impl PartialEq for Signature {
     fn eq(&self, other: &Self) -> bool {
-        let sig_match     = self.signature == other.signature;
-        let key_match     = self.gpg_key == other.gpg_key;
-        let keyring_match = self.keyring.key_ids() == other.keyring.key_ids();
+        let gpg_key_match   = self.gpg_key == other.gpg_key;
+        let keyring_match   = self.keyring.key_ids() == other.keyring.key_ids();
+        let signature_match = self.signature == other.signature;
 
-        sig_match && key_match && keyring_match
+        gpg_key_match && keyring_match && signature_match
     }
 }
 
