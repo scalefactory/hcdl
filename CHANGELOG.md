@@ -6,7 +6,7 @@
     - Support included by default under the `shell_completion` feature
     - Supported shells are currently: Bash, Elvish, Fish, PowerShell, and ZSH
       as listed in the [Clap Shell enum]
-  - Reduced the frequency of progress bar updates to 4 times per second
+  - Reduced the frequency of progress bar updates
   - Fixed the `NO_COLOR` progress template, which could have resulted in colour
     in `NO_COLOR` mode
   - Updated to [gpgrv] `0.3.0` and simplified some error handling logic in
