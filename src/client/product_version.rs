@@ -18,7 +18,7 @@ pub struct ProductVersion {
 
 impl ProductVersion {
     // Pull a specific build out of the product version builds.
-    pub fn build(&self, arch: &str, os: &str) -> Option<Build> {
+    pub fn build(&self, arch: &str, os: &str) -> Option<&Build> {
         let filtered: Vec<&Build> = self.builds
             .iter()
             .filter(|b| b.arch == arch && b.os == os)
@@ -28,7 +28,7 @@ impl ProductVersion {
             None
         }
         else {
-            Some(filtered[0].to_owned())
+            Some(filtered[0])
         }
     }
 
@@ -98,7 +98,7 @@ mod tests {
 
         let build = version.build("amd64", "freebsd").unwrap();
 
-        assert_eq!(build, expected)
+        assert_eq!(build, &expected)
     }
 
     #[test]
