@@ -48,7 +48,7 @@ pub const DEFAULT_OS: &str = "freebsd";
 #[cfg(target_os = "linux")]
 pub const DEFAULT_OS: &str = "linux";
 
-#[cfg(target_os = "mac_os")]
+#[cfg(target_os = "macos")]
 pub const DEFAULT_OS: &str = "darwin";
 
 #[cfg(target_os = "openbsd")]

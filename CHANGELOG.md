@@ -1,5 +1,9 @@
 # `hcdl` Changelog
 
+## v0.10.3
+
+  - Fix macOS conditional compilation
+
 ## v0.10.2
 
   - Add support for generating shell tab completions
