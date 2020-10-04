@@ -74,10 +74,7 @@ const NO_COLOR: &str = "NO_COLOR";
 
 // Checks the environment to see if NO_COLOR is in use.
 pub fn no_color() -> bool {
-    match env::var_os(NO_COLOR) {
-        Some(_) => true,
-        None    => false,
-    }
+    env::var_os(NO_COLOR).is_some()
 }
 
 // Ensure that the installation dir exists and is a directory.

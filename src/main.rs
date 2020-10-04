@@ -1,6 +1,7 @@
 //! hcdl: Easily update Hashicorp tools
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
+#![allow(clippy::redundant_field_names)]
 use anyhow::Result;
 use std::path::Path;
 use std::process::exit;
