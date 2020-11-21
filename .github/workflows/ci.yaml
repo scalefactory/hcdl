@@ -10,22 +10,24 @@ jobs:
     runs-on: 'ubuntu-latest'
     strategy:
       matrix:
-        # 1.40.0 is the MSRV
         toolchain-version:
           - 'stable'
-          - '1.40.0'
+          - '1.40.0' # MSRV
     steps:
       - name: 'Checkout'
         uses: 'actions/checkout@v2'
         with:
           fetch-depth: 1
       - name: 'Target Cache'
-        uses: 'actions/cache@v1'
+        uses: 'actions/cache@v2'
         env:
-          cache-name: 'target-cache'
+          cache-name: 'cargo-cache'
         with:
-          path: 'target'
-          key: "${{ matrix.toolchain-version }}-${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('Cargo.lock') }}"
+          path: |
+            ~/.cargo/git
+            ~/.cargo/registry
+            target
+          key: "${{ env.cache-name }}-${{ matrix.toolchain-version }}-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}"
       - name: 'Install Toolchain'
         uses: 'actions-rs/toolchain@v1'
         with:
