@@ -4,7 +4,7 @@
 use super::shasums::Shasums;
 use anyhow::Result;
 use bytes::{
-    buf::BufExt,
+    Buf,
     Bytes,
 };
 use gpgrv::Keyring;

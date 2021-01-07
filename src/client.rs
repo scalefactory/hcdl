@@ -194,7 +194,7 @@ impl Client {
 
     // Perform an HTTP GET on the given URL and return the result as Bytes
     pub async fn get_bytes(&self, url: &str) -> Result<Bytes> {
-        let resp: Bytes = self.get(url)
+        let resp = self.get(url)
             .await?
             .bytes()
             .await?;
