@@ -1,8 +1,11 @@
 # `hcdl` Changelog
 
-## v0.10.3
+## v0.11.0
 
   - Fix macOS conditional compilation
+  - Update to reqwest 0.11.0
+  - Update to tokio 1.0
+  - Bump MSRV to 1.44.0
 
 ## v0.10.2
 
