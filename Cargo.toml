@@ -81,5 +81,5 @@ features = [
 
 [dev-dependencies]
 lazy_static = "1.4"
-mockito = "0.28"
+mockito = "0.29"
 pretty_assertions = "0.6"
