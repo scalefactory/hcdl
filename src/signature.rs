@@ -160,7 +160,10 @@ fn get_gpg_key() -> Result<String> {
     Ok(contents)
 }
 
+// Allow the wrap here, since this is for simplicity when toggling the
+// embed_gpg_key feature.
 #[cfg(feature = "embed_gpg_key")]
+#[allow(clippy::unnecessary_wraps)]
 fn get_gpg_key() -> Result<String> {
     let gpg_key = HASHICORP_GPG_KEY.to_string();
 
