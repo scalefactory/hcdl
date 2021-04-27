@@ -5,7 +5,8 @@
   - Fix macOS conditional compilation
   - Update to reqwest 0.11.0
   - Update to tokio 1.0
-  - Bump MSRV to 1.44.0
+  - Bump MSRV to 1.46.0
+  - Update signature after [HCSEC-2021-12]
 
 ## v0.10.2
 
@@ -64,3 +65,4 @@
 [crates.io]: https://crates.io/
 [gpgrv]: https://crates.io/crates/gpgrv
 [Clap Shell enum]: https://docs.rs/clap/2.33.3/clap/enum.Shell.html#variants
+[HCSEC-2021-12]: https://discuss.hashicorp.com/t/hcsec-2021-12-codecov-security-event-and-hashicorp-gpg-key-exposure/23512
