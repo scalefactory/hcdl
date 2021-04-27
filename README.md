@@ -59,13 +59,13 @@ $ hcdl terraform
 You'll see output like the following:
 
 ```
-Latest version: terraform v0.12.28 from Thu, 25 Jun 2020 16:21:37 +0000
-Downloading and verifying signature of terraform_0.12.28_SHA256SUMS...
-Verified against terraform_0.12.28_SHA256SUMS.sig.
-Downloading terraform_0.12.28_freebsd_amd64.zip...
-  [00:00:04] [########################################] 27.07MB/27.07MB (0s) done.
-SHA256 of terraform_0.12.28_freebsd_amd64.zip OK.
-Unzipping contents of 'terraform_0.12.28_freebsd_amd64.zip' to '/home/user/.local/bin'
+Latest version: terraform v0.15.1 from Mon, 26 Apr 2021 22:02:28 +0000
+Downloading and verifying signature of terraform_0.15.1_SHA256SUMS...
+Verified against terraform_0.15.1_SHA256SUMS.sig.
+Downloading terraform_0.15.1_freebsd_amd64.zip...
+  [00:00:04] [########################################] 31.06MB/31.06MB (0s) done.
+SHA256 of terraform_0.15.1_freebsd_amd64.zip OK.
+Unzipping contents of 'terraform_0.15.1_freebsd_amd64.zip' to '/home/user/.local/bin'
 -> Extracting 'terraform' to '/home/user/.local/bin'...
 Installation successful.
 ```
@@ -103,7 +103,7 @@ This is the default way in which the GPG key is provided.
 `hcdl` provides the `embed_gpg_key` feature to compile the GPG key directly
 into the application. It will use the GPG key provided at `gpg/hashicorp.asc`
 in the source repository. You are encouraged to check the validity of this GPG
-key using the steps above before using this feature.
+key using the steps below before using this feature.
 
 Once you are happy that the GPG key is valid, you can compile `hcdl` as follows
 to enable the GPG key embedding:
@@ -146,17 +146,19 @@ $ gpg \
 Which should result in the following output:
 
 ```
-pub   rsa2048 2014-02-26 [SC]
-      91A6E7F85D05C65630BEF18951852D87348FFC4C
-uid                      HashiCorp Security <security@hashicorp.com>
-sub   rsa2048 2014-02-26 [E] [expires: 2024-03-25]
+pub   rsa4096 2021-04-19 [SC] [expires: 2026-04-18]
+      C874011F0AB405110D02105534365D9472D7468F
+uid                      HashiCorp Security (hashicorp.com/security) <security@hashicorp.com>
+sub   rsa4096 2021-04-19 [E] [expires: 2026-04-18]
+sub   rsa4096 2021-04-19 [S] [expires: 2022-04-20]
+sub   rsa4096 2021-04-21 [S] [expires: 2026-04-20]
 
 gpg: Total number processed: 1
 ```
 
 At the time of writing, the GPG key stored within this repository is GPG key
-ID `51852D87348FFC4C` with fingerprint
-`91A6 E7F8 5D05 C656 30BE F189 5185 2D87 348F FC4C`, which should match the GPG
+ID `72D7468F` with fingerprint
+`C874 011F 0AB4 0511 0D02 1055 3436 5D94 72D7 468F`, which should match the GPG
 key published by HashiCorp.
 
 If a GPG key isn't present and you still wish to use the tool, you will be
