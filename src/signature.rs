@@ -207,7 +207,7 @@ mod tests {
         let signature_file_path = Path::new(&format!(
             "{}{}",
             test_data_path,
-            "terraform_0.12.26_SHA256SUMS.sig",
+            "terraform_0.15.1_SHA256SUMS.sig",
         )).to_path_buf();
 
         let gpg_key_content   = read_file_content(&gpg_key_file_path).unwrap();
@@ -220,7 +220,7 @@ mod tests {
         let shasums_file_path = Path::new(&format!(
             "{}{}",
             test_data_path,
-            "terraform_0.12.26_SHA256SUMS",
+            "terraform_0.15.1_SHA256SUMS",
         )).to_path_buf();
 
         let shasums_content = read_file_content(&shasums_file_path).unwrap();
@@ -241,7 +241,7 @@ mod tests {
         let signature_file_path = Path::new(&format!(
             "{}{}",
             test_data_path,
-            "terraform_0.12.26_SHA256SUMS.sig",
+            "terraform_0.15.1_SHA256SUMS.sig",
         )).to_path_buf();
 
         let signature_content = read_file_bytes(&signature_file_path).unwrap();
@@ -274,7 +274,7 @@ mod tests {
         let signature_file_path = Path::new(&format!(
             "{}{}",
             test_data_path,
-            "terraform_0.12.26_SHA256SUMS.sig",
+            "terraform_0.15.1_SHA256SUMS.sig",
         )).to_path_buf();
 
         let gpg_key_content   = read_file_content(&gpg_key_file_path).unwrap();
@@ -298,6 +298,57 @@ mod tests {
         assert_eq!(
             res.unwrap_err().to_string(),
             "no valid signatures: [HintMismatch]",
+        )
+    }
+
+    // This tests newer signatures against a known bad (compromised)
+    // signature after HCSEC-2021-12.
+    // https://discuss.hashicorp.com/t/hcsec-2021-12-codecov-security-event-and-hashicorp-gpg-key-exposure/23512
+    #[test]
+    fn test_signature_check_known_bad_signature() {
+        let gpg_path = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/gpg/",
+        );
+
+        let test_data_path = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/test-data/",
+        );
+
+        let gpg_key_file_path = Path::new(&format!(
+            "{}{}",
+            gpg_path,
+            HASHICORP_GPG_KEY_FILENAME,
+        )).to_path_buf();
+
+        let signature_file_path = Path::new(&format!(
+            "{}{}",
+            test_data_path,
+            "terraform_0.12.26_SHA256SUMS.sig",
+        )).to_path_buf();
+
+        let gpg_key_content   = read_file_content(&gpg_key_file_path).unwrap();
+        let signature_content = read_file_bytes(&signature_file_path).unwrap();
+        let signature         = Signature::with_gpg_key(
+            Bytes::from(signature_content),
+            gpg_key_content,
+        ).unwrap();
+
+        let shasums_file_path = Path::new(&format!(
+            "{}{}",
+            test_data_path,
+            "terraform_0.12.26_SHA256SUMS",
+        )).to_path_buf();
+
+        let shasums_content = read_file_content(&shasums_file_path).unwrap();
+        let shasums         = Shasums::new(shasums_content);
+
+        let res = signature.check(&shasums);
+
+        assert_eq!(
+            res.unwrap_err().to_string(),
+            "no valid signatures: [NoKey]",
         )
     }
 }
