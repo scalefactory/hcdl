@@ -2,7 +2,7 @@
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
 use anyhow::Error;
-use std::path::PathBuf;
+use std::path::Path;
 
 pub struct Messages {
     quiet: bool,
@@ -55,7 +55,7 @@ impl Messages {
         self.stdout(&msg);
     }
 
-    pub fn extracting_file(&self, filename: &PathBuf, dest: &PathBuf) {
+    pub fn extracting_file(&self, filename: &Path, dest: &Path) {
         let msg = format!(
             "-> Extracting '{filename}' to '{dest}'...",
             filename = filename.display(),
@@ -150,7 +150,7 @@ impl Messages {
         self.stdout(&msg);
     }
 
-    pub fn unzipping(&self, zipfile: &str, dest: &PathBuf) {
+    pub fn unzipping(&self, zipfile: &str, dest: &Path) {
         let msg = format!(
             "Unzipping contents of '{zipfile}' to '{dest}'",
             zipfile = zipfile,
