@@ -1,5 +1,10 @@
 # `hcdl` Changelog
 
+## v0.12.0
+
+  - Bump MSRV to 1.50.0
+  - Bump dependencies
+
 ## v0.11.0
 
   - Fix macOS conditional compilation
