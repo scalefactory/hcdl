@@ -157,7 +157,7 @@ impl Client {
         let file = tmpfile.handle()?;
 
         // Start the GET and attempt to get a content-length
-        let mut resp   = self.get(&url).await?;
+        let mut resp   = self.get(url).await?;
         let total_size = resp.content_length();
 
         // Setup the progress display

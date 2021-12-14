@@ -106,10 +106,10 @@ where
         // Finally get a pathbuf of the basename
         let filename = Path::new(basename).to_path_buf();
 
-        messages.extracting_file(&filename, &dir);
+        messages.extracting_file(&filename, dir);
 
         // Extract the file
-        let tmpfile = extract(&mut file, &dir)?;
+        let tmpfile = extract(&mut file, dir)?;
 
         // Persist the tmpfile to the real dest.
         let dest = dir.join(&filename);

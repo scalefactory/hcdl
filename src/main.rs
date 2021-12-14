@@ -31,7 +31,7 @@ async fn main() -> Result<()> {
         if matches.is_present("COMPLETIONS") {
             // This was validated during CLI parse.
             let shell = matches.value_of("COMPLETIONS").unwrap();
-            cli::gen_completions(&shell);
+            cli::gen_completions(shell);
 
             exit(0);
         }
@@ -113,16 +113,16 @@ async fn main() -> Result<()> {
     let filename     = &build.filename;
 
     // Get a new tmpfile for the download.
-    let mut tmpfile = TmpFile::new(&filename)?;
+    let mut tmpfile = TmpFile::new(filename)?;
 
-    messages.downloading(&filename);
-    client.download(&download_url, &mut tmpfile).await?;
+    messages.downloading(filename);
+    client.download(download_url, &mut tmpfile).await?;
 
     // Ensure the SHASUM is correct
     match shasums.check(&mut tmpfile)? {
-        shasums::Checksum::OK  => messages.checksum_ok(&filename),
+        shasums::Checksum::OK  => messages.checksum_ok(filename),
         shasums::Checksum::Bad => {
-            messages.checksum_bad(&filename);
+            messages.checksum_bad(filename);
 
             exit(1);
         },
@@ -131,7 +131,7 @@ async fn main() -> Result<()> {
     // If we're DOWNLOAD_ONLY (implies KEEP), just persist the file and
     // we're done.
     if matches.is_present("DOWNLOAD_ONLY") {
-        messages.download_only(&filename);
+        messages.download_only(filename);
 
         tmpfile.persist()?;
 
@@ -143,7 +143,7 @@ async fn main() -> Result<()> {
     let installable = os == cli::DEFAULT_OS;
     if !installable {
         messages.os_mismatch(cli::DEFAULT_OS, os);
-        messages.skipped_install(&filename);
+        messages.skipped_install(filename);
 
         tmpfile.persist()?;
 
@@ -161,7 +161,7 @@ async fn main() -> Result<()> {
         install::bin_dir()?
     };
 
-    messages.unzipping(&filename, &bin_dir);
+    messages.unzipping(filename, &bin_dir);
 
     let mut zip_handle = tmpfile.handle()?;
     match install::install(&messages, &mut zip_handle, &bin_dir) {
@@ -174,7 +174,7 @@ async fn main() -> Result<()> {
     }
 
     if matches.is_present("KEEP") {
-        messages.keep_zipfile(&filename);
+        messages.keep_zipfile(filename);
 
         tmpfile.persist()?;
     }
