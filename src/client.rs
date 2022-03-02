@@ -161,21 +161,14 @@ impl Client {
         let mut resp   = self.get(url).await?;
         let total_size = resp.content_length();
 
-        // Setup the progress display
+        // Setup the progress display and wrap the file writer.
         let pb = self.progress_bar(total_size);
+        let mut writer = pb.wrap_write(file);
 
         // Start downloading chunks.
         while let Some(chunk) = resp.chunk().await? {
             // Write the chunk to the output file.
-            file.write_all(&chunk)?;
-
-            // Poke the progress indicator
-            if total_size.is_some() {
-                pb.inc(chunk.len() as u64);
-            }
-            else {
-                pb.tick();
-            }
+            writer.write_all(&chunk)?;
         }
 
         pb.finish_with_message(PROGRESS_FINISHED_MSG);
