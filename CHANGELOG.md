@@ -6,6 +6,7 @@
   - Bump dependencies
   - Updated to [clap] 3.1.x
   - Replaced uses of [lazy-static] with [once_cell]
+  - Split progress bar code out into its own file
 
 ## v0.11.0
 
