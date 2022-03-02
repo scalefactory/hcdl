@@ -115,15 +115,10 @@ where
         let dest = dir.join(&filename);
         tmpfile.persist(&dest)?;
 
-        // We can't put the attribute directly on the `if` here until
-        // Rust 1.43.0.
-        // To avoid raising the MSRV from 1.40.0, we use a new scope here.
         // Set the permissions on the installed file.
         #[cfg(target_family = "unix")]
-        {
-            if let Some(mode) = file.unix_mode() {
-                fs::set_permissions(&dest, Permissions::from_mode(mode))?;
-            }
+        if let Some(mode) = file.unix_mode() {
+            fs::set_permissions(&dest, Permissions::from_mode(mode))?;
         }
     }
 
