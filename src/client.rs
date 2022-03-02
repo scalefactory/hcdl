@@ -100,6 +100,7 @@ impl Client {
     // Version check the given product via the checkpoint API
     pub async fn check_version(&self, product: &str) -> Result<VersionCheck> {
         // We to_string here for the test scenario.
+        #![allow(clippy::to_string_in_format_args)]
         let url = format!(
             "{checkpoint}/{product}",
             checkpoint = CHECKPOINT_URL.to_string(),
@@ -243,6 +244,8 @@ impl Client {
         product: &str,
         version: &str,
     ) -> Result<ProductVersion> {
+        // We to_string here for the test scenario.
+        #![allow(clippy::to_string_in_format_args)]
         let url = format!(
             "{releases_url}/{product}/{version}/index.json",
             releases_url = RELEASES_URL.to_string(),

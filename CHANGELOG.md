@@ -2,8 +2,9 @@
 
 ## v0.12.0
 
-  - Bump MSRV to 1.50.0
+  - Bump MSRV to 1.54.0
   - Bump dependencies
+  - Updated to [clap] 3.1.x
 
 ## v0.11.0
 
@@ -67,6 +68,7 @@
 
 <!-- links -->
 [`NO_COLOR`]: https://no-color.org/
+[clap]: https://crates.io/crates/clap
 [crates.io]: https://crates.io/
 [gpgrv]: https://crates.io/crates/gpgrv
 [Clap Shell enum]: https://docs.rs/clap/2.33.3/clap/enum.Shell.html#variants

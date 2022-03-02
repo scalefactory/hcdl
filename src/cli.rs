@@ -6,20 +6,20 @@ use clap::{
     crate_description,
     crate_name,
     crate_version,
-    App,
-    AppSettings,
     Arg,
     ArgMatches,
+    ColorChoice,
+    Command,
 };
 use std::env;
-use std::ffi::{
-    OsStr,
-    OsString,
-};
+use std::ffi::OsStr;
 use std::path::Path;
 
 #[cfg(feature = "shell_completion")]
-use clap::Shell;
+use clap_complete::generate;
+
+#[cfg(feature = "shell_completion")]
+use clap_complete::Shell;
 
 #[cfg(feature = "shell_completion")]
 use std::io;
@@ -78,7 +78,7 @@ pub fn no_color() -> bool {
 }
 
 // Ensure that the installation dir exists and is a directory.
-fn is_valid_install_dir(s: &OsStr) -> Result<(), OsString> {
+fn is_valid_install_dir(s: &OsStr) -> Result<(), String> {
     let path = Path::new(&s);
 
     if !path.exists() {
@@ -92,13 +92,13 @@ fn is_valid_install_dir(s: &OsStr) -> Result<(), OsString> {
     Ok(())
 }
 
-fn create_app<'a, 'b>() -> App<'a, 'b> {
-    let mut app = App::new(crate_name!())
+fn create_app<'a>() -> Command<'a> {
+    let mut app = Command::new(crate_name!())
         .version(crate_version!())
         .about(crate_description!())
         // Flags
         .arg(
-            Arg::with_name("CHECK")
+            Arg::new("CHECK")
                 .long("check")
                 .help("Check for the latest version and exit without downloading.")
                 .takes_value(false)
@@ -108,99 +108,103 @@ fn create_app<'a, 'b>() -> App<'a, 'b> {
                 ])
         )
         .arg(
-            Arg::with_name("DOWNLOAD_ONLY")
+            Arg::new("DOWNLOAD_ONLY")
                 .long("download-only")
-                .short("D")
+                .short('D')
                 .help("Only download the product, do not install it. Implies --keep.")
                 .takes_value(false)
         )
         .arg(
-            Arg::with_name("KEEP")
+            Arg::new("KEEP")
                 .long("keep")
-                .short("k")
+                .short('k')
                 .help("Keep downloaded zipfile after install.")
                 .takes_value(false)
         )
         .arg(
-            Arg::with_name("LIST_PRODUCTS")
+            Arg::new("LIST_PRODUCTS")
                 .long("list-products")
-                .short("l")
+                .short('l')
                 .help("List all available HashiCorp products.")
                 .takes_value(false)
         )
         .arg(
-            Arg::with_name("NO_VERIFY_SIGNATURE")
+            Arg::new("NO_VERIFY_SIGNATURE")
                 .long("no-verify-signature")
                 .help("Disable GPG signature verification.")
                 .takes_value(false)
         )
         .arg(
-            Arg::with_name("QUIET")
+            Arg::new("QUIET")
                 .long("quiet")
-                .short("q")
+                .short('q')
                 .help("Silence all non-error output")
                 .takes_value(false)
         )
         // Options
         .arg(
-            Arg::with_name("ARCH")
+            Arg::new("ARCH")
                 .long("arch")
-                .short("a")
+                .short('a')
                 .help("Specify product architecture to download.")
                 .default_value(DEFAULT_ARCH)
                 .possible_values(VALID_ARCH)
         )
         .arg(
-            Arg::with_name("BUILD")
+            Arg::new("BUILD")
                 .long("build")
-                .short("b")
+                .short('b')
                 .help("Specify product build version to download.")
                 .default_value(DEFAULT_VERSION)
                 .value_name("VERSION")
         )
         .arg(
-            Arg::with_name("INSTALL_DIR")
+            Arg::new("INSTALL_DIR")
                 .long("install-dir")
-                .short("d")
+                .short('d')
                 .help("Specify directory to install product to.")
                 .takes_value(true)
                 .value_name("DIR")
                 .validator_os(is_valid_install_dir)
         )
         .arg(
-            Arg::with_name("OS")
+            Arg::new("OS")
                 .long("os")
-                .short("o")
+                .short('o')
                 .help("Specify product OS family to download.")
                 .default_value(DEFAULT_OS)
                 .possible_values(VALID_OS)
         )
         // Positional
         .arg(
-            Arg::with_name("PRODUCT")
+            Arg::new("PRODUCT")
                 .help("Name of the Hashicorp product to download.")
                 .index(1)
                 .takes_value(true)
                 .possible_values(PRODUCTS_LIST)
-                .required_unless_one(&[
+                .required_unless_present_any(&[
                     "COMPLETIONS",
                     "LIST_PRODUCTS",
                 ])
         );
 
     if no_color() {
-        app = app.setting(AppSettings::ColorNever);
+        app = app.color(ColorChoice::Never);
     }
 
     #[cfg(feature = "shell_completion")]
     {
+        let shells: Vec<&str> = Shell::possible_values()
+            .map(|shell| shell.get_name())
+            .collect();
+
         app = app.arg(
-            Arg::with_name("COMPLETIONS")
+            Arg::new("COMPLETIONS")
                 .long("completions")
                 .help("Generate shell completions for the given shell")
                 .takes_value(true)
                 .value_name("SHELL")
-                .possible_values(&Shell::variants())
+                .possible_values(shells)
         );
     }
 
@@ -208,7 +212,7 @@ fn create_app<'a, 'b>() -> App<'a, 'b> {
     app
 }
 
-pub fn parse_args<'a>() -> ArgMatches<'a> {
+pub fn parse_args() -> ArgMatches {
     create_app().get_matches()
 }
 
@@ -216,6 +220,7 @@ pub fn parse_args<'a>() -> ArgMatches<'a> {
 pub fn gen_completions(shell: &str) {
     // Value of shell was checked during CLI parsing.
     let shell = Shell::from_str(shell).unwrap();
+    let mut app = create_app();
 
-    create_app().gen_completions_to(crate_name!(), shell, &mut io::stdout());
+    generate(shell, &mut app, crate_name!(), &mut io::stdout());
 }
