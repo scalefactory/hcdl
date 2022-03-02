@@ -12,6 +12,7 @@ mod crc32;
 mod install;
 mod messages;
 mod products;
+mod progressbar;
 mod shasums;
 mod signature;
 mod tmpfile;

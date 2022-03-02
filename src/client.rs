@@ -1,16 +1,12 @@
 // client: HTTP client and associated methods
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
-use super::shasums::Shasums;
-use super::signature::Signature;
-use super::tmpfile::TmpFile;
+use crate::progressbar::ProgressBarBuilder;
+use crate::shasums::Shasums;
+use crate::signature::Signature;
+use crate::tmpfile::TmpFile;
 use anyhow::Result;
 use bytes::Bytes;
-use indicatif::{
-    ProgressBar,
-    ProgressDrawTarget,
-    ProgressStyle,
-};
 use reqwest::Response;
 use std::io::prelude::*;
 
@@ -40,28 +36,6 @@ static RELEASES_URL: Lazy<String> = Lazy::new(|| {
     let url = mockito::server_url();
     url
 });
-
-// How many times per second to redraw the progress bar.
-const PROGRESS_UPDATE_HZ: u64 = 8;
-const PROGRESS_CHARS: &str = "#>-";
-const PROGRESS_FINISHED_MSG: &str = "done.";
-const PROGRESS_TEMPLATE: &str = concat!(
-    "{spinner:green} ",
-    "[{elapsed_precise}] ",
-    "[{bar:40.cyan/blue}] ",
-    "{bytes}/{total_bytes} ",
-    "({eta})",
-    " {msg}",
-);
-
-const PROGRESS_TEMPLATE_NO_COLOR: &str = concat!(
-    "{spinner} ",
-    "[{elapsed_precise}] ",
-    "[{bar:40}] ",
-    "{bytes}/{total_bytes} ",
-    "({eta})",
-    " {msg}",
-);
 
 const USER_AGENT: &str = concat!(
     env!("CARGO_PKG_NAME"),
@@ -110,44 +84,6 @@ impl Client {
         Ok(resp)
     }
 
-    // Handle creation of an appropriate progress bar
-    fn progress_bar(&self, total_size: Option<u64>) -> ProgressBar {
-        // No progress bar for quiet mode.
-        if self.quiet {
-            return ProgressBar::hidden();
-        }
-
-        // We want to limit refreshes to once per second, so we have to make a
-        // new draw target.
-        let target = ProgressDrawTarget::stderr_with_hz(PROGRESS_UPDATE_HZ);
-
-        if let Some(size) = total_size {
-            // If we know the total size, setup a nice bar
-            let template = if self.no_color {
-                PROGRESS_TEMPLATE_NO_COLOR
-            }
-            else {
-                PROGRESS_TEMPLATE
-            };
-
-            let style = ProgressStyle::default_bar()
-                .template(template)
-                .progress_chars(PROGRESS_CHARS);
-
-            let pb = ProgressBar::with_draw_target(size, target);
-            pb.set_style(style);
-
-            pb
-        }
-        else {
-            // Otherwise, just a simple spinner
-            let pb = ProgressBar::new_spinner();
-            pb.set_draw_target(target);
-
-            pb
-        }
-    }
-
     // Download from the given URL to the output file.
     pub async fn download(&self, url: &str, tmpfile: &mut TmpFile) -> Result<()> {
         let file = tmpfile.handle()?;
@@ -157,7 +93,13 @@ impl Client {
         let total_size = resp.content_length();
 
         // Setup the progress display and wrap the file writer.
-        let pb = self.progress_bar(total_size);
+        //let pb = self.progress_bar(total_size);
+        let pb = ProgressBarBuilder::new()
+            .no_color(self.no_color)
+            .quiet(self.quiet)
+            .size(total_size)
+            .build();
+
         let mut writer = pb.wrap_write(file);
 
         // Start downloading chunks.
@@ -166,7 +108,7 @@ impl Client {
             writer.write_all(&chunk)?;
         }
 
-        pb.finish_with_message(PROGRESS_FINISHED_MSG);
+        pb.finished();
 
         Ok(())
     }
