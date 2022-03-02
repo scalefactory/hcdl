@@ -5,6 +5,7 @@
   - Bump MSRV to 1.54.0
   - Bump dependencies
   - Updated to [clap] 3.1.x
+  - Replaced uses of [lazy-static] with [once_cell]
 
 ## v0.11.0
 
@@ -71,5 +72,7 @@
 [clap]: https://crates.io/crates/clap
 [crates.io]: https://crates.io/
 [gpgrv]: https://crates.io/crates/gpgrv
+[lazy-static]: https://crates.io/crates/lazy-static
+[once_cell]: https://crates.io/crates/once_cell
 [Clap Shell enum]: https://docs.rs/clap/2.33.3/clap/enum.Shell.html#variants
 [HCSEC-2021-12]: https://discuss.hashicorp.com/t/hcsec-2021-12-codecov-security-event-and-hashicorp-gpg-key-exposure/23512

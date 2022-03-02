@@ -14,29 +14,35 @@ use indicatif::{
 use reqwest::Response;
 use std::io::prelude::*;
 
+#[cfg(test)]
+use once_cell::sync::Lazy;
+
 mod build;
 mod product_version;
 mod version_check;
 use product_version::ProductVersion;
 use version_check::VersionCheck;
 
-// How many times per second to redraw the progress bar.
-const PROGRESS_UPDATE_HZ: u64 = 8;
-
 #[cfg(not(test))]
 const CHECKPOINT_URL: &str = "https://checkpoint-api.hashicorp.com/v1/check";
 
 #[cfg(test)]
-use lazy_static::lazy_static;
+static CHECKPOINT_URL: Lazy<String> = Lazy::new(|| {
+    let url = mockito::server_url();
+    url
+});
+
+#[cfg(not(test))]
+const RELEASES_URL: &str = "https://releases.hashicorp.com";
 
 #[cfg(test)]
-lazy_static! {
-    static ref CHECKPOINT_URL: Box<String> = {
-        let url = mockito::server_url();
-        Box::new(url)
-    };
-}
+static RELEASES_URL: Lazy<String> = Lazy::new(|| {
+    let url = mockito::server_url();
+    url
+});
 
+// How many times per second to redraw the progress bar.
+const PROGRESS_UPDATE_HZ: u64 = 8;
 const PROGRESS_CHARS: &str = "#>-";
 const PROGRESS_FINISHED_MSG: &str = "done.";
 const PROGRESS_TEMPLATE: &str = concat!(
@@ -56,17 +62,6 @@ const PROGRESS_TEMPLATE_NO_COLOR: &str = concat!(
     "({eta})",
     " {msg}",
 );
-
-#[cfg(not(test))]
-const RELEASES_URL: &str = "https://releases.hashicorp.com";
-
-#[cfg(test)]
-lazy_static! {
-    static ref RELEASES_URL: Box<String> = {
-        let url = mockito::server_url();
-        Box::new(url)
-    };
-}
 
 const USER_AGENT: &str = concat!(
     env!("CARGO_PKG_NAME"),
