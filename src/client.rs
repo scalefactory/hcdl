@@ -9,6 +9,7 @@ use anyhow::Result;
 use bytes::Bytes;
 use reqwest::Response;
 use std::io::prelude::*;
+use url::Url;
 
 #[cfg(test)]
 use once_cell::sync::Lazy;
@@ -17,22 +18,12 @@ mod build;
 mod product_version;
 mod version_check;
 use product_version::ProductVersion;
-use version_check::VersionCheck;
 
 #[cfg(not(test))]
-const CHECKPOINT_URL: &str = "https://checkpoint-api.hashicorp.com/v1/check";
+const RELEASES_API: &str = "https://api.releases.hashicorp.com/v1/releases";
 
 #[cfg(test)]
-static CHECKPOINT_URL: Lazy<String> = Lazy::new(|| {
-    let url = mockito::server_url();
-    url
-});
-
-#[cfg(not(test))]
-const RELEASES_URL: &str = "https://releases.hashicorp.com";
-
-#[cfg(test)]
-static RELEASES_URL: Lazy<String> = Lazy::new(|| {
+static RELEASES_API: Lazy<String> = Lazy::new(|| {
     let url = mockito::server_url();
     url
 });
@@ -67,25 +58,27 @@ impl Client {
     }
 
     // Version check the given product via the checkpoint API
-    pub async fn check_version(&self, product: &str) -> Result<VersionCheck> {
+    pub async fn check_version(&self, product: &str) -> Result<ProductVersion> {
         // We to_string here for the test scenario.
         #![allow(clippy::to_string_in_format_args)]
         let url = format!(
-            "{checkpoint}/{product}",
-            checkpoint = CHECKPOINT_URL.to_string(),
+            "{api}/{product}/latest",
+            api = RELEASES_API.to_string(),
             product = product,
         );
 
-        let resp = self.get(&url)
+        let url = Url::parse(&url)?;
+
+        let resp = self.get(url)
             .await?
-            .json::<VersionCheck>()
+            .json::<ProductVersion>()
             .await?;
 
         Ok(resp)
     }
 
     // Download from the given URL to the output file.
-    pub async fn download(&self, url: &str, tmpfile: &mut TmpFile) -> Result<()> {
+    pub async fn download(&self, url: Url, tmpfile: &mut TmpFile) -> Result<()> {
         let file = tmpfile.handle()?;
 
         // Start the GET and attempt to get a content-length
@@ -114,7 +107,7 @@ impl Client {
     }
 
     // Perform an HTTP GET on the given URL
-    pub async fn get(&self, url: &str) -> Result<Response> {
+    pub async fn get(&self, url: Url) -> Result<Response> {
         let resp = self.client
             .get(url)
             .send()
@@ -124,7 +117,7 @@ impl Client {
     }
 
     // Perform an HTTP GET on the given URL and return the result as Bytes
-    pub async fn get_bytes(&self, url: &str) -> Result<Bytes> {
+    pub async fn get_bytes(&self, url: Url) -> Result<Bytes> {
         let resp = self.get(url)
             .await?
             .bytes()
@@ -134,7 +127,7 @@ impl Client {
     }
 
     // Perform an HTTP GET on the given URL and return the result as a String
-    pub async fn get_text(&self, url: &str) -> Result<String> {
+    pub async fn get_text(&self, url: Url) -> Result<String> {
         let resp = self.get(url)
             .await?
             .text()
@@ -149,7 +142,7 @@ impl Client {
         version: &ProductVersion,
     ) -> Result<Shasums> {
         let url     = version.shasums_url();
-        let shasums = self.get_text(&url).await?;
+        let shasums = self.get_text(url).await?;
         let shasums = Shasums::new(shasums);
 
         Ok(shasums)
@@ -162,7 +155,7 @@ impl Client {
         version: &ProductVersion,
     ) -> Result<Signature> {
         let url       = version.shasums_signature_url();
-        let signature = self.get_bytes(&url).await?;
+        let signature = self.get_bytes(url).await?;
         let signature = Signature::new(signature)?;
 
         Ok(signature)
@@ -177,13 +170,15 @@ impl Client {
         // We to_string here for the test scenario.
         #![allow(clippy::to_string_in_format_args)]
         let url = format!(
-            "{releases_url}/{product}/{version}/index.json",
-            releases_url = RELEASES_URL.to_string(),
+            "{api}/{product}/{version}",
+            api = RELEASES_API.to_string(),
             product = product,
             version = version,
         );
 
-        let resp = self.get(&url)
+        let url = Url::parse(&url)?;
+
+        let resp = self.get(url)
             .await?
             .json::<ProductVersion>()
             .await?;

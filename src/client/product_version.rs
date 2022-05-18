@@ -1,19 +1,47 @@
 // client: HTTP client and associated methods
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
+use chrono::{
+    DateTime,
+    Utc,
+};
+use serde::{
+    de,
+    Deserialize,
+    Deserializer,
+};
+use std::fmt;
+use std::str::FromStr;
 use super::build::Build;
-use serde::Deserialize;
-
-static RELEASES_URL: &str = "https://releases.hashicorp.com/";
+use url::Url;
 
 // Represents a single version of a HashiCorp product
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 pub struct ProductVersion {
-    pub builds:            Vec<Build>,
-    pub name:              String,
-    pub shasums:           String,
-    pub shasums_signature: String,
-    pub version:           String,
+    pub builds:                 Vec<Build>,
+    pub license_class:          String,
+    pub name:                   String,
+    //pub status:                 Status,
+    pub url_shasums:            Url,
+    pub url_shasums_signatures: Vec<Url>,
+    pub url_source_repository:  Url,
+    pub version:                String,
+
+    #[serde(deserialize_with = "deserialize_from_str")]
+    pub timestamp_created: DateTime<Utc>,
+
+    #[serde(deserialize_with = "deserialize_from_str")]
+    pub timestamp_updated: DateTime<Utc>,
+}
+
+fn deserialize_from_str<'de, S, D>(deserializer: D) -> Result<S, D::Error>
+where
+    S: FromStr,
+    S::Err: fmt::Display,
+    D: Deserializer<'de>,
+{
+    let s: String = Deserialize::deserialize(deserializer)?;
+    S::from_str(&s).map_err(de::Error::custom)
 }
 
 impl ProductVersion {
@@ -33,24 +61,24 @@ impl ProductVersion {
     }
 
     // Create and return the shasums signature URL.
-    pub fn shasums_signature_url(&self) -> String {
-        format!(
-            "{releases_url}{product}/{version}/{filename}",
-            releases_url = RELEASES_URL,
-            product = self.name,
-            version = self.version,
-            filename = self.shasums_signature,
-        )
+    pub fn shasums_signature_url(&self) -> Url {
+        self.url_shasums_signatures.first().unwrap().to_owned()
     }
 
     // Create and return the shasums URL.
-    pub fn shasums_url(&self) -> String {
-        format!(
-            "{releases_url}{product}/{version}/{filename}",
-            releases_url = RELEASES_URL,
+    pub fn shasums_url(&self) -> Url {
+        self.url_shasums.clone()
+    }
+}
+
+impl fmt::Display for ProductVersion {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "${product} v{version} from {datetime}",
             product = self.name,
             version = self.version,
-            filename = self.shasums,
+            datetime = self.timestamp_updated,
         )
     }
 }

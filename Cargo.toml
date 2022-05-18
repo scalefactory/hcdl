@@ -78,6 +78,12 @@ features = [
     "rt-multi-thread",
 ]
 
+[dependencies.url]
+version = "2.2"
+features = [
+    "serde",
+]
+
 # Force this due to flate2 forcing us to lower zip versions, this is due to
 # restrictions on flate2 versions in the zip-rs Cargo.toml
 [dependencies.zip]

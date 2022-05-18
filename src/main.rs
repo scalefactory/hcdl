@@ -67,7 +67,7 @@ async fn main() -> Result<()> {
             exit(0);
         }
 
-        client.get_version(product, &latest.current_version).await?
+        client.get_version(product, &latest.version).await?
     }
     else {
         client.get_version(product, build_version).await?
@@ -90,16 +90,26 @@ async fn main() -> Result<()> {
     // Verify the SHASUMS file against its signature
     let no_sig = matches.is_present("NO_VERIFY_SIGNATURE");
     if !no_sig {
-        messages.verifying_signature(&builds.shasums);
+        let shasums_filename = builds.url_shasums
+            .path_segments()
+            .unwrap()
+            .last()
+            .unwrap();
+        messages.verifying_signature(shasums_filename);
 
         // Download signature file
         let signature = client.get_signature(&builds).await?;
 
         match signature.check(&shasums) {
             Ok(_) => {
-                messages.signature_verification_success(
-                    &builds.shasums_signature,
-                );
+                let url = builds.shasums_signature_url();
+                let signature_filename = url
+                    .path_segments()
+                    .unwrap()
+                    .last()
+                    .unwrap();
+
+                messages.signature_verification_success(signature_filename);
             },
             Err(e) => {
                 messages.signature_verification_failed(&e);
@@ -111,13 +121,17 @@ async fn main() -> Result<()> {
 
     // Download the product
     let download_url = &build.url;
-    let filename     = &build.filename;
+    let filename     = download_url
+        .path_segments()
+        .unwrap()
+        .last()
+        .unwrap();
 
     // Get a new tmpfile for the download.
     let mut tmpfile = TmpFile::new(filename)?;
 
     messages.downloading(filename);
-    client.download(download_url, &mut tmpfile).await?;
+    client.download(download_url.to_owned(), &mut tmpfile).await?;
 
     // Ensure the SHASUM is correct
     match shasums.check(&mut tmpfile)? {
