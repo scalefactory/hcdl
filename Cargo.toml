@@ -81,7 +81,7 @@ features = [
 # Force this due to flate2 forcing us to lower zip versions, this is due to
 # restrictions on flate2 versions in the zip-rs Cargo.toml
 [dependencies.zip]
-version = "0.5"
+version = "0.6"
 default-features = false
 features = [
     "deflate",
