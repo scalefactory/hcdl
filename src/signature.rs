@@ -2,13 +2,22 @@
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
 use super::shasums::Shasums;
-use anyhow::Result;
+use anyhow::{
+    anyhow,
+    Result,
+};
 use bytes::{
     Buf,
     Bytes,
 };
-use gpgrv::Keyring;
+use pgp::composed::{
+    Deserializable,
+    StandaloneSignature,
+};
+use pgp::composed::signed_key::public::SignedPublicKey;
+use pgp::types::KeyTrait;
 use std::io::BufReader;
+use std::io::Cursor;
 
 #[cfg(not(feature = "embed_gpg_key"))]
 use anyhow::anyhow;
@@ -30,62 +39,69 @@ const HASHICORP_GPG_KEY: &str = include_str!("../gpg/hashicorp.asc");
 
 #[derive(Debug)]
 pub struct Signature {
+    // The public key
+    public_key: SignedPublicKey,
+
     // This is the signature of the shasums file.
-    signature: Bytes,
-
-    // The GPG key that the signature was signed with.
-    gpg_key: String,
-
-    // The GPG keyring
-    keyring: Keyring,
+    signature: StandaloneSignature,
 }
 
 // We implement this ourselves since Keyring doesn't implement PartialEq
 // Hopefully matching Keyrings based on the KeyIDs they contain is good enough
 impl PartialEq for Signature {
     fn eq(&self, other: &Self) -> bool {
-        let gpg_key_match   = self.gpg_key == other.gpg_key;
-        let keyring_match   = self.keyring.key_ids() == other.keyring.key_ids();
-        let signature_match = self.signature == other.signature;
+        let public_key_match = self.public_key == other.public_key;
+        let signature_match  = true; //self.signature == other.signature;
 
-        gpg_key_match && keyring_match && signature_match
+        public_key_match && signature_match
     }
 }
 
 impl Signature {
     pub fn new(signature: Bytes) -> Result<Self> {
-        let gpg_key = get_gpg_key()?;
+        let public_key = get_public_key()?;
 
-        let signature = Self::with_gpg_key(
+        let signature = Self::with_public_key(
             signature,
-            gpg_key,
+            public_key,
         )?;
 
         Ok(signature)
     }
 
-    pub fn with_gpg_key(signature: Bytes, gpg_key: String) -> Result<Self> {
-        let mut keyring = Keyring::new();
-        let reader      = BufReader::new(gpg_key.as_bytes());
+    pub fn with_public_key(signature: Bytes, public_key: String) -> Result<Self> {
+        let mut cursor = Cursor::new(public_key.as_bytes());
+        let public_key = SignedPublicKey::from_armor_single(&mut cursor)?;
+        let public_key = public_key.0;
 
-        keyring.append_keys_from_armoured(reader)?;
+        let reader = BufReader::new(signature.reader());
+        let signature = StandaloneSignature::from_bytes(reader)?;
 
         let signature = Self {
-            signature: signature,
-            gpg_key:   gpg_key,
-            keyring:   keyring,
+            signature:  signature,
+            public_key: public_key,
         };
 
         Ok(signature)
     }
 
+    // We have to check the signature against all public subkeys and the
+    // overall public key.
     pub fn check(&self, shasums: &Shasums) -> Result<()> {
-        let shasums   = BufReader::new(shasums.content().as_bytes());
-        let signature = self.signature.clone().reader();
+        let shasums = shasums.content().as_bytes();
 
-        gpgrv::verify_detached(signature, shasums, &self.keyring)?;
+        for subkey in &self.public_key.public_subkeys {
+            match self.signature.verify(&subkey, &shasums) {
+                Err(_) => continue,
+                Ok(()) => return Ok(()),
+            }
+        }
 
-        Ok(())
+        // One last attempt, check against the main public key.
+        match self.signature.verify(&self.public_key, &shasums) {
+            Err(_) => Err(anyhow!("Couldn't verify signature")),
+            Ok(()) => Ok(()),
+        }
     }
 }
 
@@ -103,7 +119,7 @@ fn read_file_content(path: &PathBuf) -> Result<String> {
 
 // Find the path where the GPG key should be stored.
 #[cfg(not(feature = "embed_gpg_key"))]
-fn get_gpg_key_path() -> Result<PathBuf> {
+fn get_public_key_path() -> Result<PathBuf> {
     // During tests we short circuit the path discovery to just take the
     // GPG key from the test-data directory.
     let path = if cfg!(test) {
@@ -153,21 +169,21 @@ fn get_gpg_key_path() -> Result<PathBuf> {
 
 // Locate and read the GPG key.
 #[cfg(not(feature = "embed_gpg_key"))]
-fn get_gpg_key() -> Result<String> {
-    let path     = get_gpg_key_path()?;
-    let contents = read_file_content(&path)?;
+fn get_public_key() -> Result<String> {
+    let path       = get_public_key_path()?;
+    let public_key = read_file_content(&path)?;
 
-    Ok(contents)
+    Ok(public_key)
 }
 
 // Allow the wrap here, since this is for simplicity when toggling the
 // embed_gpg_key feature.
 #[cfg(feature = "embed_gpg_key")]
 #[allow(clippy::unnecessary_wraps)]
-fn get_gpg_key() -> Result<String> {
-    let gpg_key = HASHICORP_GPG_KEY.to_string();
+fn get_public_key() -> Result<String> {
+    let public_key = HASHICORP_GPG_KEY.to_string();
 
-    Ok(gpg_key)
+    Ok(public_key)
 }
 
 #[cfg(test)]
@@ -212,7 +228,7 @@ mod tests {
 
         let gpg_key_content   = read_file_content(&gpg_key_file_path).unwrap();
         let signature_content = read_file_bytes(&signature_file_path).unwrap();
-        let signature         = Signature::with_gpg_key(
+        let signature         = Signature::with_public_key(
             Bytes::from(signature_content),
             gpg_key_content,
         ).unwrap();
@@ -245,7 +261,7 @@ mod tests {
         )).to_path_buf();
 
         let signature_content = read_file_bytes(&signature_file_path).unwrap();
-        let signature         = Signature::with_gpg_key(
+        let signature         = Signature::with_public_key(
             Bytes::from(signature_content),
             "bad".into(),
         );
@@ -279,7 +295,7 @@ mod tests {
 
         let gpg_key_content   = read_file_content(&gpg_key_file_path).unwrap();
         let signature_content = read_file_bytes(&signature_file_path).unwrap();
-        let signature         = Signature::with_gpg_key(
+        let signature         = Signature::with_public_key(
             Bytes::from(signature_content),
             gpg_key_content,
         ).unwrap();
@@ -330,7 +346,7 @@ mod tests {
 
         let gpg_key_content   = read_file_content(&gpg_key_file_path).unwrap();
         let signature_content = read_file_bytes(&signature_file_path).unwrap();
-        let signature         = Signature::with_gpg_key(
+        let signature         = Signature::with_public_key(
             Bytes::from(signature_content),
             gpg_key_content,
         ).unwrap();
