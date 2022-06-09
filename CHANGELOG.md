@@ -8,6 +8,7 @@
   - Replaced uses of [lazy-static] with [once_cell]
   - Split progress bar code out into its own file
   - Move from [gpgrv] crate to [pgp] crate to fix signature validation
+  - Update to use the new [Hashicorp Releases API]
 
 ## v0.11.0
 
@@ -78,4 +79,5 @@
 [once_cell]: https://crates.io/crates/once_cell
 [pgp]: https://crates.io/crates/pgp
 [Clap Shell enum]: https://docs.rs/clap/2.33.3/clap/enum.Shell.html#variants
+[Hashicorp Releases API]: https://www.hashicorp.com/blog/announcing-the-hashicorp-releases-api
 [HCSEC-2021-12]: https://discuss.hashicorp.com/t/hcsec-2021-12-codecov-security-event-and-hashicorp-gpg-key-exposure/23512
