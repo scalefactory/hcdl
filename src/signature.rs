@@ -247,7 +247,7 @@ mod tests {
     }
 
     #[test]
-    fn test_signature_check_bad_gpg_key() {
+    fn test_signature_check_bad_public_key() {
         let test_data_path = concat!(
             env!("CARGO_MANIFEST_DIR"),
             "/test-data/",
@@ -265,7 +265,10 @@ mod tests {
             "bad".into(),
         );
 
-        assert_eq!(signature.unwrap_err().to_string(), "reading first line of key file")
+        assert_eq!(
+            signature.unwrap_err().to_string(),
+            "io error: Custom { kind: Interrupted, error: \"incomplete parse\" }",
+        )
     }
 
     #[test]
@@ -312,7 +315,7 @@ mod tests {
 
         assert_eq!(
             res.unwrap_err().to_string(),
-            "no valid signatures: [HintMismatch]",
+            "Couldn't verify signature",
         )
     }
 
@@ -363,7 +366,7 @@ mod tests {
 
         assert_eq!(
             res.unwrap_err().to_string(),
-            "no valid signatures: [NoKey]",
+            "Couldn't verify signature",
         )
     }
 }

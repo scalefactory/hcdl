@@ -16,7 +16,6 @@ use once_cell::sync::Lazy;
 
 mod build;
 mod product_version;
-mod version_check;
 use product_version::ProductVersion;
 
 #[cfg(not(test))]
@@ -191,6 +190,10 @@ impl Client {
 mod tests {
     use super::*;
     use crate::client::build::Build;
+    use chrono::{
+        DateTime,
+        Utc,
+    };
     use mockito::mock;
     use pretty_assertions::assert_eq;
     use std::fs::File;
@@ -199,6 +202,7 @@ mod tests {
         Path,
         PathBuf,
     };
+    use std::str::FromStr;
 
     const GPG_DIR: &str = concat!(
         env!("CARGO_MANIFEST_DIR"),
@@ -227,18 +231,33 @@ mod tests {
 
     #[tokio::test]
     async fn test_check_version_ok() {
-        let expected = VersionCheck {
-            alerts:                Vec::new(),
-            current_changelog_url: "https://github.com/hashicorp/terraform/blob/v0.12.26/CHANGELOG.md".into(),
-            current_download_url:  "https://releases.hashicorp.com/terraform/0.12.26/".into(),
-            current_release:       1590599832,
-            current_version:       "0.12.26".into(),
-            product:               "terraform".into(),
-            project_website:       "https://www.terraform.io".into(),
+        let expected = ProductVersion {
+            name:        "terraform".into(),
+            timestamp_created: DateTime::<Utc>::from_str("2020-05-27T16:55:35.000Z").unwrap(),
+            timestamp_updated: DateTime::<Utc>::from_str("2020-05-27T16:55:35.000Z").unwrap(),
+            url_shasums: Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS").unwrap(),
+            version:     "0.12.26".into(),
+            builds:      vec![
+                Build {
+                    arch: "amd64".into(),
+                    os:   "freebsd".into(),
+                    url:  Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_freebsd_amd64.zip").unwrap(),
+                },
+                Build {
+                    arch: "amd64".into(),
+                    os:   "linux".into(),
+                    url:  Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_linux_amd64.zip").unwrap(),
+                },
+            ],
+            url_shasums_signatures: vec![
+                Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.sig").unwrap(),
+                Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.348FFC4C.sig").unwrap(),
+                Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.72D7468F.sig").unwrap(),
+            ],
         };
 
         let data = data_path("check_terraform.json");
-        let _m   = mock("GET", "/terraform")
+        let _m   = mock("GET", "/terraform/latest")
             .with_status(200)
             .with_header("content-type", "application/json")
             .with_body_from_file(&data)
@@ -253,7 +272,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_bytes() {
         let server_url = mockito::server_url();
-        let url        = format!("{}/test.txt", server_url);
+        let url        = Url::parse(&format!("{}/test.txt", server_url)).unwrap();
         let expected   = "Test text\n";
         let data       = data_path("test.txt");
         let _m         = mock("GET", "/test.txt")
@@ -262,7 +281,7 @@ mod tests {
             .create();
 
         let client = Client::new(true, true).unwrap();
-        let ret    = client.get_bytes(&url).await.unwrap();
+        let ret    = client.get_bytes(url).await.unwrap();
 
         assert_eq!(expected, ret)
     }
@@ -277,26 +296,24 @@ mod tests {
 
         let version = ProductVersion {
             name:              "terraform".into(),
-            shasums:           "terraform_0.12.26_SHA256SUMS".into(),
-            shasums_signature: "terraform_0.12.26_SHA256SUMS.sig".into(),
+            timestamp_created: DateTime::<Utc>::from_str("2020-05-27T16:55:35.000Z").unwrap(),
+            timestamp_updated: DateTime::<Utc>::from_str("2020-05-27T16:55:35.000Z").unwrap(),
+            url_shasums:       Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS").unwrap(),
             version:           "0.12.26".into(),
             builds:            vec![
                 Build {
-                    arch:     "amd64".into(),
-                    filename: "terraform_0.12.26_freebsd_amd64.zip".into(),
-                    name:     "terraform".into(),
-                    os:       "freebsd".into(),
-                    url:      "https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_freebsd_amd64.zip".into(),
-                    version:  "0.12.26".into(),
+                    arch: "amd64".into(),
+                    os:   "freebsd".into(),
+                    url:  Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_freebsd_amd64.zip").unwrap(),
                 },
                 Build {
-                    arch:     "amd64".into(),
-                    filename: "terraform_0.12.26_linux_amd64.zip".into(),
-                    name:     "terraform".into(),
-                    os:       "linux".into(),
-                    url:      "https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_linux_amd64.zip".into(),
-                    version:  "0.12.26".into(),
+                    arch: "amd64".into(),
+                    os:   "linux".into(),
+                    url:  Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_linux_amd64.zip").unwrap(),
                 },
+            ],
+            url_shasums_signatures: vec![
+                Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.sig").unwrap(),
             ],
         };
 
@@ -304,7 +321,7 @@ mod tests {
         let gpg_key      = read_file_bytes(&Path::new(&gpg_key_path).to_path_buf());
         let signature    = read_file_bytes(&Path::new(&data).to_path_buf());
 
-        let expected = Signature::with_gpg_key(
+        let expected = Signature::with_public_key(
             signature,
             ::std::str::from_utf8(&gpg_key).unwrap().to_string(),
         ).unwrap();
@@ -318,7 +335,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_text() {
         let server_url = mockito::server_url();
-        let url        = format!("{}/test.txt", server_url);
+        let url        = Url::parse(&format!("{}/test.txt", server_url)).unwrap();
         let expected   = Bytes::from("Test text\n");
         let data       = data_path("test.txt");
         let _m         = mock("GET", "/test.txt")
@@ -327,7 +344,7 @@ mod tests {
             .create();
 
         let client = Client::new(true, true).unwrap();
-        let ret    = client.get_text(&url).await.unwrap();
+        let ret    = client.get_text(url).await.unwrap();
 
         assert_eq!(expected, ret)
     }
@@ -336,33 +353,34 @@ mod tests {
     async fn test_get_version() {
         let expected = ProductVersion {
             name:              "terraform".into(),
-            shasums:           "terraform_0.12.26_SHA256SUMS".into(),
-            shasums_signature: "terraform_0.12.26_SHA256SUMS.sig".into(),
+            timestamp_created: DateTime::<Utc>::from_str("2020-05-27T16:55:35.000Z").unwrap(),
+            timestamp_updated: DateTime::<Utc>::from_str("2020-05-27T16:55:35.000Z").unwrap(),
+            url_shasums:       Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS").unwrap(),
             version:           "0.12.26".into(),
             builds:            vec![
                 Build {
-                    arch:     "amd64".into(),
-                    filename: "terraform_0.12.26_freebsd_amd64.zip".into(),
-                    name:     "terraform".into(),
-                    os:       "freebsd".into(),
-                    url:      "https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_freebsd_amd64.zip".into(),
-                    version:  "0.12.26".into(),
+                    arch: "amd64".into(),
+                    os:   "freebsd".into(),
+                    url:  Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_freebsd_amd64.zip").unwrap(),
                 },
                 Build {
-                    arch:     "amd64".into(),
-                    filename: "terraform_0.12.26_linux_amd64.zip".into(),
-                    name:     "terraform".into(),
-                    os:       "linux".into(),
-                    url:      "https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_linux_amd64.zip".into(),
-                    version:  "0.12.26".into(),
+                    arch: "amd64".into(),
+                    os:   "linux".into(),
+                    url:  Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_linux_amd64.zip").unwrap(),
                 },
+            ],
+            url_shasums_signatures: vec![
+                Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.sig").unwrap(),
+                Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.348FFC4C.sig").unwrap(),
+                Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.72D7468F.sig").unwrap(),
             ],
         };
 
-        let data = data_path("get_version.json");
-        let _m   = mock("GET", "/terraform/0.12.26/index.json")
-            .with_status(200)
+        let data = data_path("check_terraform.json");
+        let _m   = mock("GET", "/terraform/0.12.26")
             .with_body_from_file(&data)
+            .with_header("content-type", "application/json")
+            .with_status(200)
             .create();
 
         let client = Client::new(true, true).unwrap();
