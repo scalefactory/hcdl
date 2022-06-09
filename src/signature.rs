@@ -15,7 +15,6 @@ use pgp::composed::{
     StandaloneSignature,
 };
 use pgp::composed::signed_key::public::SignedPublicKey;
-use pgp::types::KeyTrait;
 use std::io::BufReader;
 use std::io::Cursor;
 
@@ -91,14 +90,14 @@ impl Signature {
         let shasums = shasums.content().as_bytes();
 
         for subkey in &self.public_key.public_subkeys {
-            match self.signature.verify(&subkey, &shasums) {
+            match self.signature.verify(&subkey, shasums) {
                 Err(_) => continue,
                 Ok(()) => return Ok(()),
             }
         }
 
         // One last attempt, check against the main public key.
-        match self.signature.verify(&self.public_key, &shasums) {
+        match self.signature.verify(&self.public_key, shasums) {
             Err(_) => Err(anyhow!("Couldn't verify signature")),
             Ok(()) => Ok(()),
         }
