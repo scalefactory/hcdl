@@ -45,12 +45,12 @@ pub struct Signature {
     signature: StandaloneSignature,
 }
 
-// We implement this ourselves since Keyring doesn't implement PartialEq
-// Hopefully matching Keyrings based on the KeyIDs they contain is good enough
+// Only used by client::test_get_signature.
+#[cfg(test)]
 impl PartialEq for Signature {
     fn eq(&self, other: &Self) -> bool {
         let public_key_match = self.public_key == other.public_key;
-        let signature_match  = true; //self.signature == other.signature;
+        let signature_match = self.signature.signature == other.signature.signature;
 
         public_key_match && signature_match
     }
