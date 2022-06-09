@@ -65,9 +65,6 @@ features = [
     "rustls-tls",
 ]
 
-[dependencies.sequoia-openpgp]
-version = "1.8"
-
 [dependencies.serde]
 version = "1.0"
 features = [
