@@ -18,9 +18,6 @@ use pgp::composed::signed_key::public::SignedPublicKey;
 use std::io::BufReader;
 use std::io::Cursor;
 
-#[cfg(not(feature = "embed_gpg_key"))]
-use anyhow::anyhow;
-
 #[cfg(any(test, not(feature = "embed_gpg_key")))]
 use std::io::prelude::*;
 
