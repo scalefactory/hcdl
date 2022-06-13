@@ -9,30 +9,20 @@ use anyhow::Result;
 use bytes::Bytes;
 use reqwest::Response;
 use std::io::prelude::*;
+use url::Url;
 
 #[cfg(test)]
 use once_cell::sync::Lazy;
 
 mod build;
 mod product_version;
-mod version_check;
 use product_version::ProductVersion;
-use version_check::VersionCheck;
 
 #[cfg(not(test))]
-const CHECKPOINT_URL: &str = "https://checkpoint-api.hashicorp.com/v1/check";
+const RELEASES_API: &str = "https://api.releases.hashicorp.com/v1/releases";
 
 #[cfg(test)]
-static CHECKPOINT_URL: Lazy<String> = Lazy::new(|| {
-    let url = mockito::server_url();
-    url
-});
-
-#[cfg(not(test))]
-const RELEASES_URL: &str = "https://releases.hashicorp.com";
-
-#[cfg(test)]
-static RELEASES_URL: Lazy<String> = Lazy::new(|| {
+static RELEASES_API: Lazy<String> = Lazy::new(|| {
     let url = mockito::server_url();
     url
 });
@@ -67,25 +57,27 @@ impl Client {
     }
 
     // Version check the given product via the checkpoint API
-    pub async fn check_version(&self, product: &str) -> Result<VersionCheck> {
+    pub async fn check_version(&self, product: &str) -> Result<ProductVersion> {
         // We to_string here for the test scenario.
         #![allow(clippy::to_string_in_format_args)]
         let url = format!(
-            "{checkpoint}/{product}",
-            checkpoint = CHECKPOINT_URL.to_string(),
+            "{api}/{product}/latest",
+            api = RELEASES_API.to_string(),
             product = product,
         );
 
-        let resp = self.get(&url)
+        let url = Url::parse(&url)?;
+
+        let resp = self.get(url)
             .await?
-            .json::<VersionCheck>()
+            .json::<ProductVersion>()
             .await?;
 
         Ok(resp)
     }
 
     // Download from the given URL to the output file.
-    pub async fn download(&self, url: &str, tmpfile: &mut TmpFile) -> Result<()> {
+    pub async fn download(&self, url: Url, tmpfile: &mut TmpFile) -> Result<()> {
         let file = tmpfile.handle()?;
 
         // Start the GET and attempt to get a content-length
@@ -114,7 +106,7 @@ impl Client {
     }
 
     // Perform an HTTP GET on the given URL
-    pub async fn get(&self, url: &str) -> Result<Response> {
+    pub async fn get(&self, url: Url) -> Result<Response> {
         let resp = self.client
             .get(url)
             .send()
@@ -124,7 +116,7 @@ impl Client {
     }
 
     // Perform an HTTP GET on the given URL and return the result as Bytes
-    pub async fn get_bytes(&self, url: &str) -> Result<Bytes> {
+    pub async fn get_bytes(&self, url: Url) -> Result<Bytes> {
         let resp = self.get(url)
             .await?
             .bytes()
@@ -134,7 +126,7 @@ impl Client {
     }
 
     // Perform an HTTP GET on the given URL and return the result as a String
-    pub async fn get_text(&self, url: &str) -> Result<String> {
+    pub async fn get_text(&self, url: Url) -> Result<String> {
         let resp = self.get(url)
             .await?
             .text()
@@ -149,7 +141,7 @@ impl Client {
         version: &ProductVersion,
     ) -> Result<Shasums> {
         let url     = version.shasums_url();
-        let shasums = self.get_text(&url).await?;
+        let shasums = self.get_text(url).await?;
         let shasums = Shasums::new(shasums);
 
         Ok(shasums)
@@ -162,7 +154,7 @@ impl Client {
         version: &ProductVersion,
     ) -> Result<Signature> {
         let url       = version.shasums_signature_url();
-        let signature = self.get_bytes(&url).await?;
+        let signature = self.get_bytes(url).await?;
         let signature = Signature::new(signature)?;
 
         Ok(signature)
@@ -177,13 +169,15 @@ impl Client {
         // We to_string here for the test scenario.
         #![allow(clippy::to_string_in_format_args)]
         let url = format!(
-            "{releases_url}/{product}/{version}/index.json",
-            releases_url = RELEASES_URL.to_string(),
+            "{api}/{product}/{version}",
+            api = RELEASES_API.to_string(),
             product = product,
             version = version,
         );
 
-        let resp = self.get(&url)
+        let url = Url::parse(&url)?;
+
+        let resp = self.get(url)
             .await?
             .json::<ProductVersion>()
             .await?;
@@ -196,6 +190,10 @@ impl Client {
 mod tests {
     use super::*;
     use crate::client::build::Build;
+    use chrono::{
+        DateTime,
+        Utc,
+    };
     use mockito::mock;
     use pretty_assertions::assert_eq;
     use std::fs::File;
@@ -204,6 +202,7 @@ mod tests {
         Path,
         PathBuf,
     };
+    use std::str::FromStr;
 
     const GPG_DIR: &str = concat!(
         env!("CARGO_MANIFEST_DIR"),
@@ -232,18 +231,33 @@ mod tests {
 
     #[tokio::test]
     async fn test_check_version_ok() {
-        let expected = VersionCheck {
-            alerts:                Vec::new(),
-            current_changelog_url: "https://github.com/hashicorp/terraform/blob/v0.12.26/CHANGELOG.md".into(),
-            current_download_url:  "https://releases.hashicorp.com/terraform/0.12.26/".into(),
-            current_release:       1590599832,
-            current_version:       "0.12.26".into(),
-            product:               "terraform".into(),
-            project_website:       "https://www.terraform.io".into(),
+        let expected = ProductVersion {
+            name:        "terraform".into(),
+            timestamp_created: DateTime::<Utc>::from_str("2020-05-27T16:55:35.000Z").unwrap(),
+            timestamp_updated: DateTime::<Utc>::from_str("2020-05-27T16:55:35.000Z").unwrap(),
+            url_shasums: Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS").unwrap(),
+            version:     "0.12.26".into(),
+            builds:      vec![
+                Build {
+                    arch: "amd64".into(),
+                    os:   "freebsd".into(),
+                    url:  Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_freebsd_amd64.zip").unwrap(),
+                },
+                Build {
+                    arch: "amd64".into(),
+                    os:   "linux".into(),
+                    url:  Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_linux_amd64.zip").unwrap(),
+                },
+            ],
+            url_shasums_signatures: vec![
+                Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.sig").unwrap(),
+                Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.348FFC4C.sig").unwrap(),
+                Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.72D7468F.sig").unwrap(),
+            ],
         };
 
         let data = data_path("check_terraform.json");
-        let _m   = mock("GET", "/terraform")
+        let _m   = mock("GET", "/terraform/latest")
             .with_status(200)
             .with_header("content-type", "application/json")
             .with_body_from_file(&data)
@@ -258,7 +272,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_bytes() {
         let server_url = mockito::server_url();
-        let url        = format!("{}/test.txt", server_url);
+        let url        = Url::parse(&format!("{}/test.txt", server_url)).unwrap();
         let expected   = "Test text\n";
         let data       = data_path("test.txt");
         let _m         = mock("GET", "/test.txt")
@@ -267,7 +281,7 @@ mod tests {
             .create();
 
         let client = Client::new(true, true).unwrap();
-        let ret    = client.get_bytes(&url).await.unwrap();
+        let ret    = client.get_bytes(url).await.unwrap();
 
         assert_eq!(expected, ret)
     }
@@ -282,26 +296,24 @@ mod tests {
 
         let version = ProductVersion {
             name:              "terraform".into(),
-            shasums:           "terraform_0.12.26_SHA256SUMS".into(),
-            shasums_signature: "terraform_0.12.26_SHA256SUMS.sig".into(),
+            timestamp_created: DateTime::<Utc>::from_str("2020-05-27T16:55:35.000Z").unwrap(),
+            timestamp_updated: DateTime::<Utc>::from_str("2020-05-27T16:55:35.000Z").unwrap(),
+            url_shasums:       Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS").unwrap(),
             version:           "0.12.26".into(),
             builds:            vec![
                 Build {
-                    arch:     "amd64".into(),
-                    filename: "terraform_0.12.26_freebsd_amd64.zip".into(),
-                    name:     "terraform".into(),
-                    os:       "freebsd".into(),
-                    url:      "https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_freebsd_amd64.zip".into(),
-                    version:  "0.12.26".into(),
+                    arch: "amd64".into(),
+                    os:   "freebsd".into(),
+                    url:  Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_freebsd_amd64.zip").unwrap(),
                 },
                 Build {
-                    arch:     "amd64".into(),
-                    filename: "terraform_0.12.26_linux_amd64.zip".into(),
-                    name:     "terraform".into(),
-                    os:       "linux".into(),
-                    url:      "https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_linux_amd64.zip".into(),
-                    version:  "0.12.26".into(),
+                    arch: "amd64".into(),
+                    os:   "linux".into(),
+                    url:  Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_linux_amd64.zip").unwrap(),
                 },
+            ],
+            url_shasums_signatures: vec![
+                Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.sig").unwrap(),
             ],
         };
 
@@ -309,7 +321,7 @@ mod tests {
         let gpg_key      = read_file_bytes(&Path::new(&gpg_key_path).to_path_buf());
         let signature    = read_file_bytes(&Path::new(&data).to_path_buf());
 
-        let expected = Signature::with_gpg_key(
+        let expected = Signature::with_public_key(
             signature,
             ::std::str::from_utf8(&gpg_key).unwrap().to_string(),
         ).unwrap();
@@ -323,7 +335,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_text() {
         let server_url = mockito::server_url();
-        let url        = format!("{}/test.txt", server_url);
+        let url        = Url::parse(&format!("{}/test.txt", server_url)).unwrap();
         let expected   = Bytes::from("Test text\n");
         let data       = data_path("test.txt");
         let _m         = mock("GET", "/test.txt")
@@ -332,7 +344,7 @@ mod tests {
             .create();
 
         let client = Client::new(true, true).unwrap();
-        let ret    = client.get_text(&url).await.unwrap();
+        let ret    = client.get_text(url).await.unwrap();
 
         assert_eq!(expected, ret)
     }
@@ -341,33 +353,34 @@ mod tests {
     async fn test_get_version() {
         let expected = ProductVersion {
             name:              "terraform".into(),
-            shasums:           "terraform_0.12.26_SHA256SUMS".into(),
-            shasums_signature: "terraform_0.12.26_SHA256SUMS.sig".into(),
+            timestamp_created: DateTime::<Utc>::from_str("2020-05-27T16:55:35.000Z").unwrap(),
+            timestamp_updated: DateTime::<Utc>::from_str("2020-05-27T16:55:35.000Z").unwrap(),
+            url_shasums:       Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS").unwrap(),
             version:           "0.12.26".into(),
             builds:            vec![
                 Build {
-                    arch:     "amd64".into(),
-                    filename: "terraform_0.12.26_freebsd_amd64.zip".into(),
-                    name:     "terraform".into(),
-                    os:       "freebsd".into(),
-                    url:      "https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_freebsd_amd64.zip".into(),
-                    version:  "0.12.26".into(),
+                    arch: "amd64".into(),
+                    os:   "freebsd".into(),
+                    url:  Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_freebsd_amd64.zip").unwrap(),
                 },
                 Build {
-                    arch:     "amd64".into(),
-                    filename: "terraform_0.12.26_linux_amd64.zip".into(),
-                    name:     "terraform".into(),
-                    os:       "linux".into(),
-                    url:      "https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_linux_amd64.zip".into(),
-                    version:  "0.12.26".into(),
+                    arch: "amd64".into(),
+                    os:   "linux".into(),
+                    url:  Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_linux_amd64.zip").unwrap(),
                 },
+            ],
+            url_shasums_signatures: vec![
+                Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.sig").unwrap(),
+                Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.348FFC4C.sig").unwrap(),
+                Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.72D7468F.sig").unwrap(),
             ],
         };
 
-        let data = data_path("get_version.json");
-        let _m   = mock("GET", "/terraform/0.12.26/index.json")
-            .with_status(200)
+        let data = data_path("check_terraform.json");
+        let _m   = mock("GET", "/terraform/0.12.26")
             .with_body_from_file(&data)
+            .with_header("content-type", "application/json")
+            .with_status(200)
             .create();
 
         let client = Client::new(true, true).unwrap();

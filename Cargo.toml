@@ -3,11 +3,13 @@ name = "hcdl"
 description = "Easily download and update HashiCorp tools"
 version = "0.12.0"
 authors = ["David O'Rourke <david.orourke@gmail.com>"]
-edition = "2018"
+edition = "2021"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 homepage = "https://github.com/phyber/hcdl"
 repository = "https://github.com/phyber/hcdl"
+rust-version = "1.56.1"
+resolver = "2"
 categories = [
     "command-line-utilities",
 ]
@@ -37,9 +39,9 @@ bytes = "1.0"
 chrono = "0.4"
 crc32fast = "1.2"
 dirs = "4.0"
-gpgrv = "0.3"
 hex = "0.4"
 indicatif = "0.16"
+pgp = "0.7"
 serde_json = "1.0"
 sha2 = "0.10"
 tempfile = "3.1"
@@ -78,10 +80,16 @@ features = [
     "rt-multi-thread",
 ]
 
+[dependencies.url]
+version = "2.2"
+features = [
+    "serde",
+]
+
 # Force this due to flate2 forcing us to lower zip versions, this is due to
 # restrictions on flate2 versions in the zip-rs Cargo.toml
 [dependencies.zip]
-version = "0.5"
+version = "0.6"
 default-features = false
 features = [
     "deflate",

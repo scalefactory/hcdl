@@ -1,19 +1,44 @@
 // client: HTTP client and associated methods
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
+use chrono::{
+    DateTime,
+    Utc,
+};
+use serde::{
+    de,
+    Deserialize,
+    Deserializer,
+};
+use std::fmt;
+use std::str::FromStr;
 use super::build::Build;
-use serde::Deserialize;
-
-static RELEASES_URL: &str = "https://releases.hashicorp.com/";
+use url::Url;
 
 // Represents a single version of a HashiCorp product
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 pub struct ProductVersion {
-    pub builds:            Vec<Build>,
-    pub name:              String,
-    pub shasums:           String,
-    pub shasums_signature: String,
-    pub version:           String,
+    pub builds:                 Vec<Build>,
+    pub name:                   String,
+    pub url_shasums:            Url,
+    pub url_shasums_signatures: Vec<Url>,
+    pub version:                String,
+
+    #[serde(deserialize_with = "deserialize_from_str")]
+    pub timestamp_created: DateTime<Utc>,
+
+    #[serde(deserialize_with = "deserialize_from_str")]
+    pub timestamp_updated: DateTime<Utc>,
+}
+
+fn deserialize_from_str<'de, S, D>(deserializer: D) -> Result<S, D::Error>
+where
+    S: FromStr,
+    S::Err: fmt::Display,
+    D: Deserializer<'de>,
+{
+    let s: String = Deserialize::deserialize(deserializer)?;
+    S::from_str(&s).map_err(de::Error::custom)
 }
 
 impl ProductVersion {
@@ -33,24 +58,24 @@ impl ProductVersion {
     }
 
     // Create and return the shasums signature URL.
-    pub fn shasums_signature_url(&self) -> String {
-        format!(
-            "{releases_url}{product}/{version}/{filename}",
-            releases_url = RELEASES_URL,
-            product = self.name,
-            version = self.version,
-            filename = self.shasums_signature,
-        )
+    pub fn shasums_signature_url(&self) -> Url {
+        self.url_shasums_signatures.first().unwrap().to_owned()
     }
 
     // Create and return the shasums URL.
-    pub fn shasums_url(&self) -> String {
-        format!(
-            "{releases_url}{product}/{version}/{filename}",
-            releases_url = RELEASES_URL,
+    pub fn shasums_url(&self) -> Url {
+        self.url_shasums.clone()
+    }
+}
+
+impl fmt::Display for ProductVersion {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{product} v{version} from {datetime}",
             product = self.name,
             version = self.version,
-            filename = self.shasums,
+            datetime = self.timestamp_updated,
         )
     }
 }
@@ -64,36 +89,31 @@ mod tests {
     fn test_build() {
         let version = ProductVersion {
             name:              "terraform".into(),
-            shasums:           "terraform_0.12.26_SHA256SUMS".into(),
-            shasums_signature: "terraform_0.12.26_SHA256SUMS.sig".into(),
+            timestamp_created: DateTime::<Utc>::from_str("2020-05-27T16:55:35.000Z").unwrap(),
+            timestamp_updated: DateTime::<Utc>::from_str("2020-05-27T16:55:35.000Z").unwrap(),
+            url_shasums:       Url::parse("https://test.example.org/terraform_0.12.26_SHA256SUMS").unwrap(),
             version:           "0.12.26".into(),
             builds:            vec![
                 Build {
-                    arch:     "amd64".into(),
-                    filename: "terraform_0.12.26_freebsd_amd64.zip".into(),
-                    name:     "terraform".into(),
-                    os:       "freebsd".into(),
-                    url:      "".into(),
-                    version:  "0.12.26".into(),
+                    arch: "amd64".into(),
+                    os:   "freebsd".into(),
+                    url:  Url::parse("https://test.example.org/terraform_0.12.26_freebsd_amd64.zip").unwrap(),
                 },
                 Build {
-                    arch:     "amd64".into(),
-                    filename: "terraform_0.12.26_linux_amd64.zip".into(),
-                    name:     "terraform".into(),
-                    os:       "linux".into(),
-                    url:      "".into(),
-                    version:  "0.12.26".into(),
+                    arch: "amd64".into(),
+                    os:   "linux".into(),
+                    url:  Url::parse("https://test.example.org/terraform_0.12.26_linux_amd64.zip").unwrap(),
                 },
+            ],
+            url_shasums_signatures: vec![
+                Url::parse("https://test.example.org/terraform_0.12.26_SHA256SUMS.sig").unwrap(),
             ],
         };
 
         let expected = Build {
-            arch:     "amd64".into(),
-            filename: "terraform_0.12.26_freebsd_amd64.zip".into(),
-            name:     "terraform".into(),
-            os:       "freebsd".into(),
-            url:      "".into(),
-            version:  "0.12.26".into(),
+            arch: "amd64".into(),
+            os:   "freebsd".into(),
+            url:  Url::parse("https://test.example.org/terraform_0.12.26_freebsd_amd64.zip").unwrap(),
         };
 
         let build = version.build("amd64", "freebsd").unwrap();
@@ -106,12 +126,16 @@ mod tests {
         let version = ProductVersion {
             builds:            vec![],
             name:              "terraform".into(),
-            shasums:           "terraform_0.12.26_SHA256SUMS".into(),
-            shasums_signature: "terraform_0.12.26_SHA256SUMS.sig".into(),
+            timestamp_created: DateTime::<Utc>::from_str("2020-05-27T16:55:35.000Z").unwrap(),
+            timestamp_updated: DateTime::<Utc>::from_str("2020-05-27T16:55:35.000Z").unwrap(),
+            url_shasums:       Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS").unwrap(),
             version:           "0.12.26".into(),
+            url_shasums_signatures: vec![
+                Url::parse("https://test.example.org/terraform_0.12.26_SHA256SUMS.sig").unwrap(),
+            ],
         };
 
-        let expected = "https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS";
+        let expected = Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS").unwrap();
         let url      = version.shasums_url();
 
         assert_eq!(url, expected)
@@ -122,12 +146,16 @@ mod tests {
         let version = ProductVersion {
             builds:            vec![],
             name:              "terraform".into(),
-            shasums:           "terraform_0.12.26_SHA256SUMS".into(),
-            shasums_signature: "terraform_0.12.26_SHA256SUMS.sig".into(),
+            timestamp_created: DateTime::<Utc>::from_str("2020-05-27T16:55:35.000Z").unwrap(),
+            timestamp_updated: DateTime::<Utc>::from_str("2020-05-27T16:55:35.000Z").unwrap(),
+            url_shasums:       Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.  ↪ 12.26_SHA256SUMS").unwrap(),
             version:           "0.12.26".into(),
+            url_shasums_signatures: vec![
+                Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.sig").unwrap(),
+            ],
         };
 
-        let expected = "https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.sig";
+        let expected = Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.sig").unwrap();
         let url      = version.shasums_signature_url();
 
         assert_eq!(url, expected)
