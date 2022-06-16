@@ -20,6 +20,9 @@ mod tmpfile;
 use messages::Messages;
 use tmpfile::TmpFile;
 
+#[cfg(feature = "shell_completion")]
+use clap_complete::Shell;
+
 const LATEST: &str = "latest";
 
 #[tokio::main]
@@ -29,21 +32,21 @@ async fn main() -> Result<()> {
     #[cfg(feature = "shell_completion")]
     // Generate completions if requested
     {
-        if matches.is_present("COMPLETIONS") {
+        if matches.contains_id("COMPLETIONS") {
             // This was validated during CLI parse.
-            let shell = matches.value_of("COMPLETIONS").unwrap();
+            let shell = matches.get_one::<Shell>("COMPLETIONS").unwrap();
             cli::gen_completions(shell);
 
             exit(0);
         }
     }
 
-    let is_quiet = matches.is_present("QUIET");
+    let is_quiet = matches.contains_id("QUIET");
     let no_color = cli::no_color();
     let messages = Messages::new(is_quiet);
 
     // We don't need to do very much if we're listing products
-    if matches.is_present("LIST_PRODUCTS") {
+    if matches.contains_id("LIST_PRODUCTS") {
         messages.list_products(products::PRODUCTS_LIST);
 
         exit(0);
@@ -52,8 +55,8 @@ async fn main() -> Result<()> {
     // Pull options from matches
     // Unwraps here should be fine as these are checked and have default
     // values.
-    let build_version = matches.value_of("BUILD").unwrap();
-    let product       = matches.value_of("PRODUCT").unwrap();
+    let build_version = matches.get_one::<String>("BUILD").unwrap();
+    let product       = matches.get_one::<String>("PRODUCT").unwrap();
 
     let client = client::Client::new(is_quiet, no_color)?;
 
@@ -63,7 +66,7 @@ async fn main() -> Result<()> {
         messages.latest_version(&latest.to_string());
 
         // Check only, no download.
-        if matches.is_present("CHECK") {
+        if matches.contains_id("CHECK") {
             exit(0);
         }
 
@@ -73,8 +76,8 @@ async fn main() -> Result<()> {
         client.get_version(product, build_version).await?
     };
 
-    let arch  = matches.value_of("ARCH").unwrap();
-    let os    = matches.value_of("OS").unwrap();
+    let arch  = matches.get_one::<String>("ARCH").unwrap();
+    let os    = matches.get_one::<String>("OS").unwrap();
     let build = match builds.build(arch, os) {
         Some(build) => build,
         None        => {
@@ -88,7 +91,7 @@ async fn main() -> Result<()> {
     let shasums = client.get_shasums(&builds).await?;
 
     // Verify the SHASUMS file against its signature
-    let no_sig = matches.is_present("NO_VERIFY_SIGNATURE");
+    let no_sig = matches.contains_id("NO_VERIFY_SIGNATURE");
     if !no_sig {
         let shasums_filename = builds.url_shasums
             .path_segments()
@@ -145,7 +148,7 @@ async fn main() -> Result<()> {
 
     // If we're DOWNLOAD_ONLY (implies KEEP), just persist the file and
     // we're done.
-    if matches.is_present("DOWNLOAD_ONLY") {
+    if matches.contains_id("DOWNLOAD_ONLY") {
         messages.download_only(filename);
 
         tmpfile.persist()?;
@@ -167,7 +170,7 @@ async fn main() -> Result<()> {
 
     // Continue to attempt installation
     // Try to get an install_dir
-    let bin_dir = if let Some(dir) = matches.value_of("INSTALL_DIR") {
+    let bin_dir = if let Some(dir) = matches.get_one::<String>("INSTALL_DIR") {
         // If a --install-dir was given, use that. We validated this in the
         // CLI so we know this is good.
         Path::new(dir).to_path_buf()
@@ -188,7 +191,7 @@ async fn main() -> Result<()> {
         }
     }
 
-    if matches.is_present("KEEP") {
+    if matches.contains_id("KEEP") {
         messages.keep_zipfile(filename);
 
         tmpfile.persist()?;

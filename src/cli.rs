@@ -11,9 +11,15 @@ use clap::{
     ColorChoice,
     Command,
 };
+use clap::builder::PossibleValuesParser;
 use std::env;
-use std::ffi::OsStr;
-use std::path::Path;
+use std::path::{
+    Path,
+    PathBuf,
+};
+
+#[cfg(feature = "shell_completion")]
+use clap::builder::EnumValueParser;
 
 #[cfg(feature = "shell_completion")]
 use clap_complete::generate;
@@ -23,9 +29,6 @@ use clap_complete::Shell;
 
 #[cfg(feature = "shell_completion")]
 use std::io;
-
-#[cfg(feature = "shell_completion")]
-use std::str::FromStr;
 
 #[cfg(target_arch = "arm")]
 pub const DEFAULT_ARCH: &str = "arm";
@@ -78,7 +81,7 @@ pub fn no_color() -> bool {
 }
 
 // Ensure that the installation dir exists and is a directory.
-fn is_valid_install_dir(s: &OsStr) -> Result<(), String> {
+fn is_valid_install_dir(s: &str) -> Result<PathBuf, String> {
     let path = Path::new(&s);
 
     if !path.exists() {
@@ -89,7 +92,7 @@ fn is_valid_install_dir(s: &OsStr) -> Result<(), String> {
         return Err("install-dir is not a directory".into());
     }
 
-    Ok(())
+    Ok(path.to_path_buf())
 }
 
 fn create_app<'a>() -> Command<'a> {
@@ -148,7 +151,7 @@ fn create_app<'a>() -> Command<'a> {
                 .short('a')
                 .help("Specify product architecture to download.")
                 .default_value(DEFAULT_ARCH)
-                .possible_values(VALID_ARCH)
+                .value_parser(PossibleValuesParser::new(VALID_ARCH))
         )
         .arg(
             Arg::new("BUILD")
@@ -165,7 +168,7 @@ fn create_app<'a>() -> Command<'a> {
                 .help("Specify directory to install product to.")
                 .takes_value(true)
                 .value_name("DIR")
-                .validator_os(is_valid_install_dir)
+                .value_parser(is_valid_install_dir)
         )
         .arg(
             Arg::new("OS")
@@ -173,7 +176,7 @@ fn create_app<'a>() -> Command<'a> {
                 .short('o')
                 .help("Specify product OS family to download.")
                 .default_value(DEFAULT_OS)
-                .possible_values(VALID_OS)
+                .value_parser(PossibleValuesParser::new(VALID_OS))
         )
         // Positional
         .arg(
@@ -181,7 +184,7 @@ fn create_app<'a>() -> Command<'a> {
                 .help("Name of the Hashicorp product to download.")
                 .index(1)
                 .takes_value(true)
-                .possible_values(PRODUCTS_LIST)
+                .value_parser(PossibleValuesParser::new(PRODUCTS_LIST))
                 .required_unless_present_any(&[
                     "COMPLETIONS",
                     "LIST_PRODUCTS",
@@ -194,17 +197,13 @@ fn create_app<'a>() -> Command<'a> {
 
     #[cfg(feature = "shell_completion")]
     {
-        let shells: Vec<&str> = Shell::possible_values()
-            .map(|shell| shell.get_name())
-            .collect();
-
         app = app.arg(
             Arg::new("COMPLETIONS")
                 .long("completions")
                 .help("Generate shell completions for the given shell")
                 .takes_value(true)
                 .value_name("SHELL")
-                .possible_values(shells)
+                .value_parser(EnumValueParser::<Shell>::new())
         );
     }
 
@@ -217,10 +216,8 @@ pub fn parse_args() -> ArgMatches {
 }
 
 #[cfg(feature = "shell_completion")]
-pub fn gen_completions(shell: &str) {
-    // Value of shell was checked during CLI parsing.
-    let shell = Shell::from_str(shell).unwrap();
+pub fn gen_completions(shell: &Shell) {
     let mut app = create_app();
 
-    generate(shell, &mut app, crate_name!(), &mut io::stdout());
+    generate(shell.to_owned(), &mut app, crate_name!(), &mut io::stdout());
 }
