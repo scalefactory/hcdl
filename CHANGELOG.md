@@ -2,7 +2,7 @@
 
 ## v0.12.0
 
-  - Bump MSRV to 1.54.0
+  - Bump MSRV to 1.56.1
   - Bump dependencies
   - Updated to [clap] 3.1.x
   - Replaced uses of [lazy-static] with [once_cell]
