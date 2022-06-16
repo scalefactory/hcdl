@@ -3,7 +3,7 @@
 #![forbid(missing_docs)]
 #![allow(clippy::redundant_field_names)]
 use anyhow::Result;
-use std::path::Path;
+use std::path::PathBuf;
 use std::process::exit;
 
 mod cli;
@@ -170,10 +170,10 @@ async fn main() -> Result<()> {
 
     // Continue to attempt installation
     // Try to get an install_dir
-    let bin_dir = if let Some(dir) = matches.get_one::<String>("INSTALL_DIR") {
+    let bin_dir = if let Some(dir) = matches.get_one::<PathBuf>("INSTALL_DIR") {
         // If a --install-dir was given, use that. We validated this in the
         // CLI so we know this is good.
-        Path::new(dir).to_path_buf()
+        dir.to_owned()
     }
     else {
         install::bin_dir()?
