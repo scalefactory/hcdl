@@ -9,12 +9,12 @@ use indicatif::{
 use std::io::Write;
 
 // How many times per second to redraw the progress bar.
-const PROGRESS_UPDATE_HZ: u64 = 8;
+const PROGRESS_UPDATE_HZ: u8 = 8;
 
 const PROGRESS_CHARS: &str = "#>-";
 const PROGRESS_FINISHED_MSG: &str = "done.";
 const PROGRESS_TEMPLATE: &str = concat!(
-    "{spinner:green} ",
+    "{spinner:.green} ",
     "[{elapsed_precise}] ",
     "[{bar:40.cyan/blue}] ",
     "{bytes}/{total_bytes} ",
@@ -70,7 +70,7 @@ impl ProgressBarBuilder {
         // new draw target.
         let target = ProgressDrawTarget::stderr_with_hz(PROGRESS_UPDATE_HZ);
 
-        let bar = if let Some(size) = self.size {
+        let bar = if self.size.is_some() {
             // If we know the total size, setup a nice bar
             let template = if self.no_color {
                 PROGRESS_TEMPLATE_NO_COLOR
@@ -81,9 +81,14 @@ impl ProgressBarBuilder {
 
             let style = ProgressStyle::default_bar()
                 .template(template)
+                .unwrap()
                 .progress_chars(PROGRESS_CHARS);
 
-            let pb = indicatif::ProgressBar::with_draw_target(size, target);
+            let pb = indicatif::ProgressBar::with_draw_target(
+                self.size,
+                target,
+            );
+
             pb.set_style(style);
 
             pb

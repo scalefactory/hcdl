@@ -16,7 +16,7 @@ use super::build::Build;
 use url::Url;
 
 // Represents a single version of a HashiCorp product
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct ProductVersion {
     pub builds:                 Vec<Build>,
     pub name:                   String,

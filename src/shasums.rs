@@ -13,7 +13,7 @@ use sha2::{
 use std::collections::HashMap;
 use std::io;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum Checksum {
     OK,
     Bad,
