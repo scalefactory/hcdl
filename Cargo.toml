@@ -8,7 +8,7 @@ license = "MIT OR Apache-2.0"
 readme = "README.md"
 homepage = "https://github.com/phyber/hcdl"
 repository = "https://github.com/phyber/hcdl"
-rust-version = "1.56.1"
+rust-version = "1.57.0"
 resolver = "2"
 categories = [
     "command-line-utilities",
