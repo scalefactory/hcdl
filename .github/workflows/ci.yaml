@@ -15,11 +15,11 @@ jobs:
           - '1.56.1' # MSRV
     steps:
       - name: 'Checkout'
-        uses: 'actions/checkout@v2'
+        uses: 'actions/checkout@v3'
         with:
           fetch-depth: 1
       - name: 'Target Cache'
-        uses: 'actions/cache@v2'
+        uses: 'actions/cache@v3'
         env:
           cache-name: 'cargo-cache'
         with:
@@ -48,7 +48,7 @@ jobs:
     runs-on: 'ubuntu-latest'
     steps:
       - name: 'Checkout'
-        uses: 'actions/checkout@v2'
+        uses: 'actions/checkout@v3'
         with:
           fetch-depth: 1
       - name: 'Install mandoc'
