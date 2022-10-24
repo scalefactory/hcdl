@@ -41,17 +41,18 @@ async fn main() -> Result<()> {
         }
     }
 
-    let is_quiet = matches.contains_id("QUIET");
+    let is_quiet = matches.get_flag("QUIET");
     let no_color = cli::no_color();
     let messages = Messages::new(is_quiet);
 
     // We don't need to do very much if we're listing products
-    if matches.contains_id("LIST_PRODUCTS") {
+    if matches.get_flag("LIST_PRODUCTS") {
         messages.list_products(products::PRODUCTS_LIST);
 
         exit(0);
     };
 
+    println!("before client");
     // Pull options from matches
     // Unwraps here should be fine as these are checked and have default
     // values.
@@ -66,7 +67,7 @@ async fn main() -> Result<()> {
         messages.latest_version(&latest.to_string());
 
         // Check only, no download.
-        if matches.contains_id("CHECK") {
+        if matches.get_flag("CHECK") {
             exit(0);
         }
 
@@ -91,7 +92,7 @@ async fn main() -> Result<()> {
     let shasums = client.get_shasums(&builds).await?;
 
     // Verify the SHASUMS file against its signature
-    let no_sig = matches.contains_id("NO_VERIFY_SIGNATURE");
+    let no_sig = matches.get_flag("NO_VERIFY_SIGNATURE");
     if !no_sig {
         let shasums_filename = builds.url_shasums
             .path_segments()
@@ -148,7 +149,7 @@ async fn main() -> Result<()> {
 
     // If we're DOWNLOAD_ONLY (implies KEEP), just persist the file and
     // we're done.
-    if matches.contains_id("DOWNLOAD_ONLY") {
+    if matches.get_flag("DOWNLOAD_ONLY") {
         messages.download_only(filename);
 
         tmpfile.persist()?;
@@ -191,7 +192,7 @@ async fn main() -> Result<()> {
         }
     }
 
-    if matches.contains_id("KEEP") {
+    if matches.get_flag("KEEP") {
         messages.keep_zipfile(filename);
 
         tmpfile.persist()?;

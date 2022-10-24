@@ -7,6 +7,7 @@ use clap::{
     crate_name,
     crate_version,
     Arg,
+    ArgAction,
     ArgMatches,
     ColorChoice,
     Command,
@@ -95,95 +96,108 @@ fn is_valid_install_dir(s: &str) -> Result<PathBuf, String> {
     Ok(path.to_path_buf())
 }
 
-fn create_app<'a>() -> Command<'a> {
-    let mut app = Command::new(crate_name!())
+fn create_app() -> Command {
+    let app = Command::new(crate_name!())
         .version(crate_version!())
         .about(crate_description!())
-        // Flags
-        .arg(
-            Arg::new("CHECK")
-                .long("check")
-                .help("Check for the latest version and exit without downloading.")
-                .takes_value(false)
-                .conflicts_with_all(&[
-                    "BUILD",
-                    "QUIET",
-                ])
-        )
-        .arg(
-            Arg::new("DOWNLOAD_ONLY")
-                .long("download-only")
-                .short('D')
-                .help("Only download the product, do not install it. Implies --keep.")
-                .takes_value(false)
-        )
-        .arg(
-            Arg::new("KEEP")
-                .long("keep")
-                .short('k')
-                .help("Keep downloaded zipfile after install.")
-                .takes_value(false)
-        )
-        .arg(
-            Arg::new("LIST_PRODUCTS")
-                .long("list-products")
-                .short('l')
-                .help("List all available HashiCorp products.")
-                .takes_value(false)
-        )
-        .arg(
-            Arg::new("NO_VERIFY_SIGNATURE")
-                .long("no-verify-signature")
-                .help("Disable GPG signature verification.")
-                .takes_value(false)
-        )
-        .arg(
-            Arg::new("QUIET")
-                .long("quiet")
-                .short('q')
-                .help("Silence all non-error output")
-                .takes_value(false)
-        )
-        // Options
         .arg(
             Arg::new("ARCH")
+                .action(ArgAction::Set)
+                .default_value(DEFAULT_ARCH)
+                .help("Specify product architecture to download.")
                 .long("arch")
                 .short('a')
-                .help("Specify product architecture to download.")
-                .default_value(DEFAULT_ARCH)
                 .value_parser(PossibleValuesParser::new(VALID_ARCH))
         )
         .arg(
             Arg::new("BUILD")
+                .action(ArgAction::Set)
+                .default_value(DEFAULT_VERSION)
+                .help("Specify product build version to download.")
                 .long("build")
                 .short('b')
-                .help("Specify product build version to download.")
-                .default_value(DEFAULT_VERSION)
                 .value_name("VERSION")
         )
         .arg(
+            Arg::new("CHECK")
+                .action(ArgAction::SetTrue)
+                .help("Check for the latest version and exit without downloading.")
+                .long("check")
+                .conflicts_with_all(&[
+                    "BUILD",
+                    "QUIET",
+                ])
+        );
+
+    #[cfg(feature = "shell_completion")]
+    let app = app.arg(
+            Arg::new("COMPLETIONS")
+                .action(ArgAction::Set)
+                .help("Generate shell completions for the given shell")
+                .long("completions")
+                .value_name("SHELL")
+                .value_parser(EnumValueParser::<Shell>::new())
+        );
+
+    let app = app
+        .arg(
+            Arg::new("DOWNLOAD_ONLY")
+                .action(ArgAction::SetTrue)
+                .help("Only download the product, do not install it. Implies --keep.")
+                .long("download-only")
+                .short('D')
+        )
+        .arg(
             Arg::new("INSTALL_DIR")
+                .action(ArgAction::Set)
+                .help("Specify directory to install product to.")
                 .long("install-dir")
                 .short('d')
-                .help("Specify directory to install product to.")
-                .takes_value(true)
                 .value_name("DIR")
                 .value_parser(is_valid_install_dir)
         )
         .arg(
+            Arg::new("KEEP")
+                .action(ArgAction::SetTrue)
+                .help("Keep downloaded zipfile after install.")
+                .long("keep")
+                .short('k')
+        )
+        .arg(
+            Arg::new("LIST_PRODUCTS")
+                .action(ArgAction::SetTrue)
+                .help("List all available HashiCorp products.")
+                .long("list-products")
+                .short('l')
+        )
+        .arg(
+            Arg::new("NO_VERIFY_SIGNATURE")
+                .action(ArgAction::SetTrue)
+                .help("Disable GPG signature verification.")
+                .long("no-verify-signature")
+        )
+        .arg(
             Arg::new("OS")
+                .action(ArgAction::Set)
+                .default_value(DEFAULT_OS)
+                .help("Specify product OS family to download.")
                 .long("os")
                 .short('o')
-                .help("Specify product OS family to download.")
-                .default_value(DEFAULT_OS)
                 .value_parser(PossibleValuesParser::new(VALID_OS))
+        )
+        .arg(
+            Arg::new("QUIET")
+                .action(ArgAction::SetTrue)
+                .help("Silence all non-error output")
+                .long("quiet")
+                .short('q')
         )
         // Positional
         .arg(
             Arg::new("PRODUCT")
+                .action(ArgAction::Set)
                 .help("Name of the Hashicorp product to download.")
                 .index(1)
-                .takes_value(true)
                 .value_parser(PossibleValuesParser::new(PRODUCTS_LIST))
                 .required_unless_present_any(&[
                     "COMPLETIONS",
@@ -192,23 +206,11 @@ fn create_app<'a>() -> Command<'a> {
         );
 
     if no_color() {
-        app = app.color(ColorChoice::Never);
+        app.color(ColorChoice::Never)
     }
-
-    #[cfg(feature = "shell_completion")]
-    {
-        app = app.arg(
-            Arg::new("COMPLETIONS")
-                .long("completions")
-                .help("Generate shell completions for the given shell")
-                .takes_value(true)
-                .value_name("SHELL")
-                .value_parser(EnumValueParser::<Shell>::new())
-        );
+    else {
+        app
     }
-
-
-    app
 }
 
 pub fn parse_args() -> ArgMatches {
