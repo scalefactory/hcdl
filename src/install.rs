@@ -58,7 +58,7 @@ pub fn bin_dir() -> Result<PathBuf> {
 // Returns a TempPath which the caller is responsible for persisting.
 fn extract(mut zipfile: &mut ZipFile, dir: &Path) -> Result<TempPath> {
     // Get a tempfile to extract to under the dest path
-    let mut tmpfile = NamedTempFile::new_in(&dir)?;
+    let mut tmpfile = NamedTempFile::new_in(dir)?;
 
     // Extract our file
     io::copy(&mut zipfile, &mut tmpfile)?;

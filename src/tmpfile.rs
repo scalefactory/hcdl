@@ -53,7 +53,7 @@ impl TmpFile {
             .create(true)
             .write(true)
             .truncate(true)
-            .open(&dest)?;
+            .open(dest)?;
 
         let mut handle = self.handle()?;
 

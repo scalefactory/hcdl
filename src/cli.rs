@@ -123,7 +123,7 @@ fn create_app() -> Command {
                 .action(ArgAction::SetTrue)
                 .help("Check for the latest version and exit without downloading.")
                 .long("check")
-                .conflicts_with_all(&[
+                .conflicts_with_all([
                     "BUILD",
                     "QUIET",
                 ])
@@ -199,7 +199,7 @@ fn create_app() -> Command {
                 .help("Name of the Hashicorp product to download.")
                 .index(1)
                 .value_parser(PossibleValuesParser::new(PRODUCTS_LIST))
-                .required_unless_present_any(&[
+                .required_unless_present_any([
                     "COMPLETIONS",
                     "LIST_PRODUCTS",
                 ])
