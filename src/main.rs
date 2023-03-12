@@ -58,7 +58,11 @@ async fn main() -> Result<()> {
     let build_version = matches.get_one::<String>("BUILD").unwrap();
     let product       = matches.get_one::<String>("PRODUCT").unwrap();
 
-    let client = client::Client::new(is_quiet, no_color)?;
+    let client_config = client::ClientConfig::new()
+        .no_color(no_color)
+        .quiet(is_quiet);
+
+    let client = client::Client::new(client_config)?;
 
     let builds = if build_version.to_lowercase() == LATEST {
         let latest = client.check_version(product).await?;

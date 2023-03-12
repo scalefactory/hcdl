@@ -12,7 +12,9 @@ use std::io::prelude::*;
 use url::Url;
 
 mod build;
+mod config;
 mod product_version;
+pub use config::ClientConfig;
 use product_version::ProductVersion;
 
 const RELEASES_API: &str = "https://api.releases.hashicorp.com/v1/releases";
@@ -24,25 +26,23 @@ const USER_AGENT: &str = concat!(
 );
 
 pub struct Client {
-    api_url:  String,
-    client:   reqwest::Client,
-    no_color: bool,
-    quiet:    bool,
+    api_url: String,
+    client:  reqwest::Client,
+    config:  ClientConfig,
 }
 
 impl Client {
     // Return a new reqwest client with our user-agent
-    pub fn new(quiet: bool, no_color: bool) -> Result<Self> {
+    pub fn new(config: ClientConfig) -> Result<Self> {
         let client = reqwest::ClientBuilder::new()
             .gzip(true)
             .user_agent(USER_AGENT)
             .build()?;
 
         let client = Self {
-            api_url:  RELEASES_API.to_string(),
-            client:   client,
-            no_color: no_color,
-            quiet:    quiet,
+            api_url: RELEASES_API.to_string(),
+            client:  client,
+            config:  config,
         };
 
         Ok(client)
@@ -77,10 +77,9 @@ impl Client {
         let total_size = resp.content_length();
 
         // Setup the progress display and wrap the file writer.
-        //let pb = self.progress_bar(total_size);
         let pb = ProgressBarBuilder::new()
-            .no_color(self.no_color)
-            .quiet(self.quiet)
+            .no_color(self.config.no_color)
+            .quiet(self.config.quiet)
             .size(total_size)
             .build();
 
@@ -257,7 +256,7 @@ mod tests {
             .create_async()
             .await;
 
-        let mut client = Client::new(true, true).unwrap();
+        let mut client = Client::new(ClientConfig::default()).unwrap();
         client.api_url = server.url();
 
         let ret    = client.check_version("terraform").await.unwrap();
@@ -279,7 +278,7 @@ mod tests {
             .create_async()
             .await;
 
-        let mut client = Client::new(true, true).unwrap();
+        let mut client = Client::new(ClientConfig::default()).unwrap();
         client.api_url = server.url();
 
         let ret = client.get_bytes(url).await.unwrap();
@@ -331,7 +330,7 @@ mod tests {
             ::std::str::from_utf8(&gpg_key).unwrap().to_string(),
         ).unwrap();
 
-        let mut client = Client::new(true, true).unwrap();
+        let mut client = Client::new(ClientConfig::default()).unwrap();
         client.api_url = server.url();
 
         let ret = client.get_signature(&version).await.unwrap();
@@ -353,7 +352,7 @@ mod tests {
             .create_async()
             .await;
 
-        let mut client = Client::new(true, true).unwrap();
+        let mut client = Client::new(ClientConfig::default()).unwrap();
         client.api_url = server.url();
 
         let ret = client.get_text(url).await.unwrap();
@@ -399,7 +398,7 @@ mod tests {
             .create_async()
             .await;
 
-        let mut client = Client::new(true, true).unwrap();
+        let mut client = Client::new(ClientConfig::default()).unwrap();
         client.api_url = server.url();
 
         let ret = client.get_version("terraform", "0.12.26").await.unwrap();
