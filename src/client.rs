@@ -9,6 +9,7 @@ use anyhow::Result;
 use bytes::Bytes;
 use reqwest::Response;
 use std::io::prelude::*;
+use std::io::BufWriter;
 use url::Url;
 
 mod build;
@@ -83,7 +84,8 @@ impl Client {
             .size(total_size)
             .build();
 
-        let mut writer = pb.wrap_write(file);
+        let writer = BufWriter::new(file);
+        let mut writer = pb.wrap_write(writer);
 
         // Start downloading chunks.
         while let Some(chunk) = resp.chunk().await? {

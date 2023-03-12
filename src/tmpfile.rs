@@ -3,6 +3,7 @@ use anyhow::Result;
 use std::fs::OpenOptions;
 use std::io::{
     self,
+    BufWriter,
     Seek,
     SeekFrom,
 };
@@ -49,12 +50,13 @@ impl TmpFile {
         #[cfg(target_family = "unix")]
         options.mode(0o644);
 
-        let mut writer = options
+        let writer = options
             .create(true)
             .write(true)
             .truncate(true)
             .open(dest)?;
 
+        let mut writer = BufWriter::new(writer);
         let mut handle = self.handle()?;
 
         io::copy(&mut handle, &mut writer)?;
