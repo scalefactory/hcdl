@@ -52,7 +52,6 @@ async fn main() -> Result<()> {
         exit(0);
     };
 
-    println!("before client");
     // Pull options from matches
     // Unwraps here should be fine as these are checked and have default
     // values.
