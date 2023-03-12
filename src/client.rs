@@ -288,8 +288,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_signature() {
-        let data = data_path("terraform_0.12.26_SHA256SUMS.sig");
-        let _m   = mock("GET", "/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.sig")
+        let server_url = mockito::server_url();
+        let data       = data_path("terraform_0.12.26_SHA256SUMS.sig");
+
+        let _m = mock("GET", "/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.sig")
             .with_status(200)
             .with_body_from_file(&data)
             .create();
@@ -298,22 +300,22 @@ mod tests {
             name:              "terraform".into(),
             timestamp_created: DateTime::<Utc>::from_str("2020-05-27T16:55:35.000Z").unwrap(),
             timestamp_updated: DateTime::<Utc>::from_str("2020-05-27T16:55:35.000Z").unwrap(),
-            url_shasums:       Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS").unwrap(),
+            url_shasums:       Url::parse(&format!("{}/terraform/0.12.26/terraform_0.12.26_SHA256SUMS", server_url)).unwrap(),
             version:           "0.12.26".into(),
             builds:            vec![
                 Build {
                     arch: "amd64".into(),
                     os:   "freebsd".into(),
-                    url:  Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_freebsd_amd64.zip").unwrap(),
+                    url:  Url::parse(&format!("{}/terraform/0.12.26/terraform_0.12.26_freebsd_amd64.zip", server_url)).unwrap(),
                 },
                 Build {
                     arch: "amd64".into(),
                     os:   "linux".into(),
-                    url:  Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_linux_amd64.zip").unwrap(),
+                    url:  Url::parse(&format!("{}/terraform/0.12.26/terraform_0.12.26_linux_amd64.zip", server_url)).unwrap(),
                 },
             ],
             url_shasums_signatures: vec![
-                Url::parse("https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.sig").unwrap(),
+                Url::parse(&format!("{}/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.sig", server_url)).unwrap(),
             ],
         };
 
