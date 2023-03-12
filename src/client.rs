@@ -11,21 +11,11 @@ use reqwest::Response;
 use std::io::prelude::*;
 use url::Url;
 
-#[cfg(test)]
-use once_cell::sync::Lazy;
-
 mod build;
 mod product_version;
 use product_version::ProductVersion;
 
-#[cfg(not(test))]
 const RELEASES_API: &str = "https://api.releases.hashicorp.com/v1/releases";
-
-#[cfg(test)]
-static RELEASES_API: Lazy<String> = Lazy::new(|| {
-    let url = mockito::server_url();
-    url
-});
 
 const USER_AGENT: &str = concat!(
     env!("CARGO_PKG_NAME"),
@@ -34,6 +24,7 @@ const USER_AGENT: &str = concat!(
 );
 
 pub struct Client {
+    api_url:  String,
     client:   reqwest::Client,
     no_color: bool,
     quiet:    bool,
@@ -48,6 +39,7 @@ impl Client {
             .build()?;
 
         let client = Self {
+            api_url:  RELEASES_API.to_string(),
             client:   client,
             no_color: no_color,
             quiet:    quiet,
@@ -62,7 +54,7 @@ impl Client {
         #![allow(clippy::to_string_in_format_args)]
         let url = format!(
             "{api}/{product}/latest",
-            api = RELEASES_API.to_string(),
+            api = self.api_url,
             product = product,
         );
 
@@ -170,7 +162,7 @@ impl Client {
         #![allow(clippy::to_string_in_format_args)]
         let url = format!(
             "{api}/{product}/{version}",
-            api = RELEASES_API.to_string(),
+            api = self.api_url,
             product = product,
             version = version,
         );
@@ -194,7 +186,6 @@ mod tests {
         DateTime,
         Utc,
     };
-    use mockito::mock;
     use pretty_assertions::assert_eq;
     use std::fs::File;
     use std::io::BufReader;
@@ -256,14 +247,19 @@ mod tests {
             ],
         };
 
-        let data = data_path("check_terraform.json");
-        let _m   = mock("GET", "/terraform/latest")
+        let mut server = mockito::Server::new_async().await;
+        let data       = data_path("check_terraform.json");
+
+        let _m = server.mock("GET", "/terraform/latest")
             .with_status(200)
             .with_header("content-type", "application/json")
             .with_body_from_file(&data)
-            .create();
+            .create_async()
+            .await;
 
-        let client = Client::new(true, true).unwrap();
+        let mut client = Client::new(true, true).unwrap();
+        client.api_url = server.url();
+
         let ret    = client.check_version("terraform").await.unwrap();
 
         assert_eq!(expected, ret)
@@ -271,30 +267,37 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_bytes() {
-        let server_url = mockito::server_url();
+        let mut server = mockito::Server::new_async().await;
+        let server_url = server.url();
         let url        = Url::parse(&format!("{}/test.txt", server_url)).unwrap();
         let expected   = "Test text\n";
         let data       = data_path("test.txt");
-        let _m         = mock("GET", "/test.txt")
+
+        let _m = server.mock("GET", "/test.txt")
             .with_status(200)
             .with_body_from_file(&data)
-            .create();
+            .create_async()
+            .await;
 
-        let client = Client::new(true, true).unwrap();
-        let ret    = client.get_bytes(url).await.unwrap();
+        let mut client = Client::new(true, true).unwrap();
+        client.api_url = server.url();
+
+        let ret = client.get_bytes(url).await.unwrap();
 
         assert_eq!(expected, ret)
     }
 
     #[tokio::test]
     async fn test_get_signature() {
-        let server_url = mockito::server_url();
+        let mut server = mockito::Server::new_async().await;
+        let server_url = server.url();
         let data       = data_path("terraform_0.12.26_SHA256SUMS.sig");
 
-        let _m = mock("GET", "/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.sig")
+        let _m = server.mock("GET", "/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.sig")
             .with_status(200)
             .with_body_from_file(&data)
-            .create();
+            .create_async()
+            .await;
 
         let version = ProductVersion {
             name:              "terraform".into(),
@@ -328,25 +331,32 @@ mod tests {
             ::std::str::from_utf8(&gpg_key).unwrap().to_string(),
         ).unwrap();
 
-        let client = Client::new(true, true).unwrap();
-        let ret    = client.get_signature(&version).await.unwrap();
+        let mut client = Client::new(true, true).unwrap();
+        client.api_url = server.url();
+
+        let ret = client.get_signature(&version).await.unwrap();
 
         assert_eq!(expected, ret)
     }
 
     #[tokio::test]
     async fn test_get_text() {
-        let server_url = mockito::server_url();
+        let mut server = mockito::Server::new_async().await;
+        let server_url = server.url();
         let url        = Url::parse(&format!("{}/test.txt", server_url)).unwrap();
         let expected   = Bytes::from("Test text\n");
         let data       = data_path("test.txt");
-        let _m         = mock("GET", "/test.txt")
+
+        let _m = server.mock("GET", "/test.txt")
             .with_status(200)
             .with_body_from_file(&data)
-            .create();
+            .create_async()
+            .await;
 
-        let client = Client::new(true, true).unwrap();
-        let ret    = client.get_text(url).await.unwrap();
+        let mut client = Client::new(true, true).unwrap();
+        client.api_url = server.url();
+
+        let ret = client.get_text(url).await.unwrap();
 
         assert_eq!(expected, ret)
     }
@@ -378,15 +388,21 @@ mod tests {
             ],
         };
 
-        let data = data_path("check_terraform.json");
-        let _m   = mock("GET", "/terraform/0.12.26")
+        let mut server = mockito::Server::new_async().await;
+        let data       = data_path("check_terraform.json");
+
+        let _m = server.mock("GET", "/terraform/0.12.26")
             .with_body_from_file(&data)
+            .with_body_from_file("test-data/check_terraform.json")
             .with_header("content-type", "application/json")
             .with_status(200)
-            .create();
+            .create_async()
+            .await;
 
-        let client = Client::new(true, true).unwrap();
-        let ret    = client.get_version("terraform", "0.12.26").await.unwrap();
+        let mut client = Client::new(true, true).unwrap();
+        client.api_url = server.url();
+
+        let ret = client.get_version("terraform", "0.12.26").await.unwrap();
 
         assert_eq!(expected, ret)
     }

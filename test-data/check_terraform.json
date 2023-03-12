@@ -1,1 +1,30 @@
-{"builds":[{"arch":"amd64","os":"freebsd","url":"https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_freebsd_amd64.zip"},{"arch":"amd64","os":"linux","url":"https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_linux_amd64.zip"}],"license_class":"oss","name":"terraform","status":{"state":"supported","timestamp_updated":"2020-05-27T16:55:35.000Z"},"timestamp_created":"2020-05-27T16:55:35.000Z","timestamp_updated":"2020-05-27T16:55:35.000Z","url_shasums":"https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS","url_shasums_signatures":["https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.sig","https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.348FFC4C.sig","https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.72D7468F.sig"],"url_source_repository":"https://github.com/hashicorp/terraform","version":"0.12.26"}
+{
+    "builds": [
+        {
+            "arch": "amd64",
+            "os": "freebsd",
+            "url": "https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_freebsd_amd64.zip"
+        },
+        {
+            "arch": "amd64",
+            "os": "linux",
+            "url": "https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_linux_amd64.zip"
+        }
+    ],
+    "license_class": "oss",
+    "name": "terraform",
+    "status": {
+        "state": "supported",
+        "timestamp_updated": "2020-05-27T16:55:35.000Z"
+    },
+    "timestamp_created": "2020-05-27T16:55:35.000Z",
+    "timestamp_updated": "2020-05-27T16:55:35.000Z",
+    "url_shasums": "https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS",
+    "url_shasums_signatures": [
+        "https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.sig",
+        "https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.348FFC4C.sig",
+        "https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.72D7468F.sig"
+    ],
+    "url_source_repository": "https://github.com/hashicorp/terraform",
+    "version": "0.12.26"
+}
