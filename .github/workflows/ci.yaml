@@ -23,11 +23,11 @@ jobs:
         env:
           cache-name: 'cargo-cache'
         with:
+          key: "${{ env.cache-name }}-${{ matrix.toolchain-version }}-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}"
           path: |
             ~/.cargo/git
             ~/.cargo/registry
             target
-          key: "${{ env.cache-name }}-${{ matrix.toolchain-version }}-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}"
       - name: 'Install Toolchain'
         uses: 'actions-rs/toolchain@v1'
         with:
