@@ -2,7 +2,7 @@
 
 ## v0.13.0
 
-  - Bump MSRV to 1.60.0
+  - Bump MSRV to 1.64.0
   - Bump dependencies
 
 ## v0.12.0
