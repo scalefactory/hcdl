@@ -1,6 +1,7 @@
 //! hcdl: Easily update Hashicorp tools
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
+#![allow(clippy::module_name_repetitions)]
 #![allow(clippy::redundant_field_names)]
 use anyhow::Result;
 use std::path::PathBuf;
@@ -35,7 +36,7 @@ async fn main() -> Result<()> {
         if matches.contains_id("COMPLETIONS") {
             // This was validated during CLI parse.
             let shell = matches.get_one::<Shell>("COMPLETIONS").unwrap();
-            cli::gen_completions(shell);
+            cli::gen_completions(*shell);
 
             exit(0);
         }
@@ -80,15 +81,13 @@ async fn main() -> Result<()> {
         client.get_version(product, build_version).await?
     };
 
-    let arch  = matches.get_one::<String>("ARCH").unwrap();
-    let os    = matches.get_one::<String>("OS").unwrap();
-    let build = match builds.build(arch, os) {
-        Some(build) => build,
-        None        => {
-            messages.find_build_failed(os, arch);
+    let arch = matches.get_one::<String>("ARCH").unwrap();
+    let os   = matches.get_one::<String>("OS").unwrap();
 
-            exit(1);
-        },
+    let Some(build) = builds.build(arch, os) else {
+        messages.find_build_failed(os, arch);
+
+        exit(1);
     };
 
     // Download SHASUMS file
@@ -138,7 +137,7 @@ async fn main() -> Result<()> {
     let mut tmpfile = TmpFile::new(filename)?;
 
     messages.downloading(filename);
-    client.download(download_url.to_owned(), &mut tmpfile).await?;
+    client.download(download_url.clone(), &mut tmpfile).await?;
 
     // Ensure the SHASUM is correct
     match shasums.check(&mut tmpfile)? {
@@ -177,7 +176,7 @@ async fn main() -> Result<()> {
     let bin_dir = if let Some(dir) = matches.get_one::<PathBuf>("INSTALL_DIR") {
         // If a --install-dir was given, use that. We validated this in the
         // CLI so we know this is good.
-        dir.to_owned()
+        dir.clone()
     }
     else {
         install::bin_dir()?

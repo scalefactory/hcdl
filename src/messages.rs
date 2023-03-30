@@ -17,40 +17,34 @@ impl Messages {
 
     fn stdout(&self, msg: &str) {
         if !self.quiet {
-            println!("{}", msg);
+            println!("{msg}");
         }
     }
 
     fn stderr(&self, msg: &str) {
-        eprintln!("{}", msg);
+        eprintln!("{msg}");
     }
 
     pub fn checksum_bad(&self, filename: &str) {
-        let msg = format!(
-            "SHA256 of {filename} did not match.",
-            filename = filename,
-        );
+        let msg = format!("SHA256 of {filename} did not match.");
 
         self.stderr(&msg);
     }
 
     pub fn checksum_ok(&self, filename: &str) {
-        let msg = format!("SHA256 of {filename} OK.", filename = filename);
+        let msg = format!("SHA256 of {filename} OK.");
 
         self.stdout(&msg);
     }
 
     pub fn downloading(&self, filename: &str) {
-        let msg = format!("Downloading {filename}...", filename = filename);
+        let msg = format!("Downloading {filename}...");
 
         self.stdout(&msg);
     }
 
     pub fn download_only(&self, filename: &str) {
-        let msg = format!(
-            "Download only mode, keeping {filename}.",
-            filename = filename,
-        );
+        let msg = format!("Download only mode, keeping {filename}.");
 
         self.stdout(&msg);
     }
@@ -66,20 +60,13 @@ impl Messages {
     }
 
     pub fn find_build_failed(&self, os: &str, arch: &str) {
-        let msg = format!(
-            "Could not find build for {os}-{arch}",
-            os = os,
-            arch = arch,
-        );
+        let msg = format!("Could not find build for {os}-{arch}");
 
         self.stderr(&msg);
     }
 
     pub fn installation_failed(&self, error: &Error) {
-        let msg = format!(
-            "Installation failed with error: {error}",
-            error = error,
-        );
+        let msg = format!("Installation failed with error: {error}");
 
         self.stderr(&msg);
     }
@@ -89,16 +76,13 @@ impl Messages {
     }
 
     pub fn keep_zipfile(&self, filename: &str) {
-        let msg = format!(
-            "Keeping zipfile {filename} in current directory.",
-            filename = filename,
-        );
+        let msg = format!("Keeping zipfile {filename} in current directory.");
 
         self.stdout(&msg);
     }
 
     pub fn latest_version(&self, latest: &str) {
-        let msg = format!("Latest version: {latest}", latest = latest);
+        let msg = format!("Latest version: {latest}");
 
         self.stdout(&msg);
     }
@@ -115,27 +99,19 @@ impl Messages {
     pub fn os_mismatch(&self, os: &str, requested: &str) {
         let msg = format!(
             "Product downloaded for different OS, {os} != {requested}",
-            os = os,
-            requested = requested,
         );
 
         self.stdout(&msg);
     }
 
     pub fn signature_verification_failed(&self, error: &Error) {
-        let msg = format!(
-            "Verification failed, error: {error}",
-            error = error,
-        );
+        let msg = format!("Verification failed, error: {error}");
 
         self.stderr(&msg);
     }
 
     pub fn signature_verification_success(&self, signature: &str) {
-        let msg = format!(
-            "Verified against {signature}.",
-            signature = signature,
-        );
+        let msg = format!("Verified against {signature}.");
 
         self.stdout(&msg);
     }
@@ -144,7 +120,6 @@ impl Messages {
         let msg = format!(
             "Skipping install and keeping zipfile '{filename}' in current \
              directory.",
-            filename = filename,
         );
 
         self.stdout(&msg);
@@ -153,7 +128,6 @@ impl Messages {
     pub fn unzipping(&self, zipfile: &str, dest: &Path) {
         let msg = format!(
             "Unzipping contents of '{zipfile}' to '{dest}'",
-            zipfile = zipfile,
             dest = dest.display(),
         );
 
@@ -163,7 +137,6 @@ impl Messages {
     pub fn verifying_signature(&self, shasums: &str) {
         let msg = format!(
             "Downloading and verifying signature of {shasums}...",
-            shasums = shasums,
         );
 
         self.stdout(&msg);

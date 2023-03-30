@@ -329,7 +329,7 @@ mod tests {
 
         let expected = Signature::with_public_key(
             signature,
-            ::std::str::from_utf8(&gpg_key).unwrap().to_string(),
+            ::std::str::from_utf8(&gpg_key).unwrap(),
         ).unwrap();
 
         let mut client = Client::new(ClientConfig::default()).unwrap();

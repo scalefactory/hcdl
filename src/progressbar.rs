@@ -117,6 +117,6 @@ impl ProgressBar {
     }
 
     pub fn finished(&self) {
-        self.bar.finish_with_message(PROGRESS_FINISHED_MSG)
+        self.bar.finish_with_message(PROGRESS_FINISHED_MSG);
     }
 }

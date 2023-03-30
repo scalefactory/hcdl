@@ -12,8 +12,8 @@ use std::io::{
 };
 use std::path::Path;
 
-// Buffer size, 1MiB
-const BUFFER_SIZE: usize = 1_024 * 1_024;
+// Buffer size, 256KiB
+const BUFFER_SIZE: usize = 256 * 1_024;
 
 // Check the given `path`'s CRC32 against the `expected` CRC32.
 pub fn check<P>(path: P, expected: u32) -> Result<()>

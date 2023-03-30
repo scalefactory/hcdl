@@ -59,7 +59,7 @@ impl ProductVersion {
 
     // Create and return the shasums signature URL.
     pub fn shasums_signature_url(&self) -> Url {
-        self.url_shasums_signatures.first().unwrap().to_owned()
+        self.url_shasums_signatures.first().unwrap().clone()
     }
 
     // Create and return the shasums URL.

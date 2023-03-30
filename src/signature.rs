@@ -59,13 +59,13 @@ impl Signature {
 
         let signature = Self::with_public_key(
             signature,
-            public_key,
+            &public_key,
         )?;
 
         Ok(signature)
     }
 
-    pub fn with_public_key(signature: Bytes, public_key: String) -> Result<Self> {
+    pub fn with_public_key(signature: Bytes, public_key: &str) -> Result<Self> {
         let mut cursor = Cursor::new(public_key.as_bytes());
         let public_key = SignedPublicKey::from_armor_single(&mut cursor)?;
         let public_key = public_key.0;
@@ -226,7 +226,7 @@ mod tests {
         let signature_content = read_file_bytes(&signature_file_path).unwrap();
         let signature         = Signature::with_public_key(
             Bytes::from(signature_content),
-            gpg_key_content,
+            &gpg_key_content,
         ).unwrap();
 
         let shasums_file_path = Path::new(&format!(
@@ -296,7 +296,7 @@ mod tests {
         let signature_content = read_file_bytes(&signature_file_path).unwrap();
         let signature         = Signature::with_public_key(
             Bytes::from(signature_content),
-            gpg_key_content,
+            &gpg_key_content,
         ).unwrap();
 
         let shasums_file_path = Path::new(&format!(
@@ -347,7 +347,7 @@ mod tests {
         let signature_content = read_file_bytes(&signature_file_path).unwrap();
         let signature         = Signature::with_public_key(
             Bytes::from(signature_content),
-            gpg_key_content,
+            &gpg_key_content,
         ).unwrap();
 
         let shasums_file_path = Path::new(&format!(

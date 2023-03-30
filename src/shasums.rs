@@ -40,9 +40,7 @@ impl Shasums {
         for line in self.content().lines() {
             let split: Vec<&str> = line.split_whitespace().collect();
 
-            if split.len() != 2 {
-                panic!("malformed shasums file");
-            }
+            assert!(split.len() == 2, "malformed shasums file");
 
             let shasum   = split[0];
             let filename = split[1];

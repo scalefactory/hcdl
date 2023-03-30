@@ -218,8 +218,8 @@ pub fn parse_args() -> ArgMatches {
 }
 
 #[cfg(feature = "shell_completion")]
-pub fn gen_completions(shell: &Shell) {
+pub fn gen_completions(shell: Shell) {
     let mut app = create_app();
 
-    generate(shell.to_owned(), &mut app, crate_name!(), &mut io::stdout());
+    generate(shell, &mut app, crate_name!(), &mut io::stdout());
 }
