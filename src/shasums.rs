@@ -70,7 +70,7 @@ impl Shasums {
     pub fn check(&self, tmpfile: &mut TmpFile) -> Result<Checksum> {
         let filename = tmpfile.filename();
         let shasum   = self.shasum(filename)
-            .ok_or_else(|| anyhow!("Couldn't find shasum for {}", filename))?;
+            .ok_or_else(|| anyhow!("Couldn't find shasum for {filename}"))?;
 
         let mut file   = tmpfile.handle()?;
         let mut hasher = Sha256::new();
@@ -169,7 +169,7 @@ mod tests {
 
         assert_eq!(
             res.unwrap_err().to_string(),
-            format!("Couldn't find shasum for {}", test_data_path),
+            format!("Couldn't find shasum for {test_data_path}"),
         );
     }
 

@@ -1,8 +1,6 @@
 //! hcdl: Easily update Hashicorp tools
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
-#![allow(clippy::module_name_repetitions)]
-#![allow(clippy::redundant_field_names)]
 use anyhow::Result;
 use hcdl::{
     client,

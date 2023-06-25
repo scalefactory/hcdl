@@ -67,12 +67,9 @@ impl Client {
     ///   - Failing to get the product version
     ///   - Failing to create a [`ProductVersion`]
     pub async fn check_version(&self, product: &str) -> Result<ProductVersion> {
-        // We to_string here for the test scenario.
-        #![allow(clippy::to_string_in_format_args)]
         let url = format!(
             "{api}/{product}/latest",
             api = self.api_url,
-            product = product,
         );
 
         let url = Url::parse(&url)?;
@@ -206,13 +203,9 @@ impl Client {
         product: &str,
         version: &str,
     ) -> Result<ProductVersion> {
-        // We to_string here for the test scenario.
-        #![allow(clippy::to_string_in_format_args)]
         let url = format!(
             "{api}/{product}/{version}",
             api = self.api_url,
-            product = product,
-            version = version,
         );
 
         let url = Url::parse(&url)?;
@@ -255,7 +248,7 @@ mod tests {
 
     // Builds up the path to the test file
     fn data_path(filename: &str) -> String {
-        format!("{}{}", TEST_DATA_DIR, filename)
+        format!("{TEST_DATA_DIR}{filename}")
     }
 
     fn read_file_bytes(path: &PathBuf) -> Bytes {
@@ -317,7 +310,7 @@ mod tests {
     async fn test_get_bytes() {
         let mut server = mockito::Server::new_async().await;
         let server_url = server.url();
-        let url        = Url::parse(&format!("{}/test.txt", server_url)).unwrap();
+        let url        = Url::parse(&format!("{server_url}/test.txt")).unwrap();
         let expected   = "Test text\n";
         let data       = data_path("test.txt");
 
@@ -351,22 +344,22 @@ mod tests {
             name:              "terraform".into(),
             timestamp_created: DateTime::<Utc>::from_str("2020-05-27T16:55:35.000Z").unwrap(),
             timestamp_updated: DateTime::<Utc>::from_str("2020-05-27T16:55:35.000Z").unwrap(),
-            url_shasums:       Url::parse(&format!("{}/terraform/0.12.26/terraform_0.12.26_SHA256SUMS", server_url)).unwrap(),
+            url_shasums:       Url::parse(&format!("{server_url}/terraform/0.12.26/terraform_0.12.26_SHA256SUMS")).unwrap(),
             version:           "0.12.26".into(),
             builds:            vec![
                 Build {
                     arch: "amd64".into(),
                     os:   "freebsd".into(),
-                    url:  Url::parse(&format!("{}/terraform/0.12.26/terraform_0.12.26_freebsd_amd64.zip", server_url)).unwrap(),
+                    url:  Url::parse(&format!("{server_url}/terraform/0.12.26/terraform_0.12.26_freebsd_amd64.zip")).unwrap(),
                 },
                 Build {
                     arch: "amd64".into(),
                     os:   "linux".into(),
-                    url:  Url::parse(&format!("{}/terraform/0.12.26/terraform_0.12.26_linux_amd64.zip", server_url)).unwrap(),
+                    url:  Url::parse(&format!("{server_url}/terraform/0.12.26/terraform_0.12.26_linux_amd64.zip")).unwrap(),
                 },
             ],
             url_shasums_signatures: vec![
-                Url::parse(&format!("{}/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.sig", server_url)).unwrap(),
+                Url::parse(&format!("{server_url}/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.sig")).unwrap(),
             ],
         };
 
@@ -391,7 +384,7 @@ mod tests {
     async fn test_get_text() {
         let mut server = mockito::Server::new_async().await;
         let server_url = server.url();
-        let url        = Url::parse(&format!("{}/test.txt", server_url)).unwrap();
+        let url        = Url::parse(&format!("{server_url}/test.txt")).unwrap();
         let expected   = Bytes::from("Test text\n");
         let data       = data_path("test.txt");
 

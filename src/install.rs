@@ -103,8 +103,8 @@ where
 {
     if !dir.is_dir() {
         let err = anyhow!(
-            "install: Destination '{}' is not a directory",
-            dir.display(),
+            "install: Destination '{path}' is not a directory",
+            path = dir.display(),
         );
 
         return Err(err);

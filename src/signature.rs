@@ -152,8 +152,8 @@ fn get_public_key_path() -> Result<PathBuf> {
         // Ensure that the data dir exists
         if !path.exists() || !path.is_dir() {
             let msg = anyhow!(
-                "Data directory {} does not exist or is not a directory",
-                path.display(),
+                "Data directory {dir} does not exist or is not a directory",
+                dir = path.display(),
             );
 
             return Err(msg);
@@ -165,9 +165,9 @@ fn get_public_key_path() -> Result<PathBuf> {
         // Ensure that the GPG key exists
         if !path.exists() || !path.is_file() {
             let msg = format!(
-                "GPG key file {} does not exist or it not a file.\n\
+                "GPG key file {path} does not exist or it not a file.\n\
                  Check https://www.hashicorp.com/security to find the GPG key",
-                path.display(),
+                path = path.display(),
             );
 
             return Err(anyhow!(msg));
