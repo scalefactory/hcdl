@@ -13,9 +13,6 @@ pub mod crc32;
 /// Handle extracting and installing downloaded product.
 pub mod install;
 
-/// List of [HashiCorp](https://www.hashicorp.com/) products.
-pub mod products;
-
 /// Handle drawing progress bars during download and install.
 pub mod progressbar;
 

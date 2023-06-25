@@ -5,7 +5,6 @@ use anyhow::Result;
 use hcdl::{
     client,
     install,
-    products,
     shasums,
 };
 use hcdl::tmpfile::TmpFile;
@@ -17,6 +16,7 @@ use std::process::exit;
 
 mod cli;
 mod messages;
+mod products;
 
 use messages::Messages;
 
