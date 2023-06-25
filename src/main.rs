@@ -12,7 +12,10 @@ use hcdl::{
 };
 use hcdl::messages::Messages;
 use hcdl::tmpfile::TmpFile;
-use std::path::PathBuf;
+use std::path::{
+    Path,
+    PathBuf,
+};
 use std::process::exit;
 
 mod cli;
@@ -182,7 +185,12 @@ async fn main() -> Result<()> {
     messages.unzipping(filename, &bin_dir);
 
     let mut zip_handle = tmpfile.handle()?;
-    match install::install(&messages, &mut zip_handle, &bin_dir) {
+
+    let extract_message = |filename: &Path, path: &Path| {
+        messages.extracting_file(filename, path);
+    };
+
+    match install::install(Some(&extract_message), &mut zip_handle, &bin_dir) {
         Ok(_)  => messages.installation_successful(),
         Err(e) => {
             messages.installation_failed(&e);

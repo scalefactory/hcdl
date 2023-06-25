@@ -2,7 +2,6 @@
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
 use super::crc32;
-use super::messages::Messages;
 use anyhow::{
     anyhow,
     Result,
@@ -90,8 +89,12 @@ fn extract(mut zipfile: &mut ZipFile, dir: &Path) -> Result<TempPath> {
 ///   - Failing to extract files from the `zipfile`
 ///   - Failing to persist the extracted file
 ///   - Failing to set file permissions on the extracted file
+//
+// type_complexity is allowed here, since attempting to make the suggested
+// type alias results in other complains with no good compiler suggestions.
+#[allow(clippy::type_complexity)]
 pub fn install<F>(
-    messages: &Messages,
+    message_fn: Option<&dyn Fn(&Path, &Path)>,
     zipfile: &mut F,
     dir: &Path,
 ) -> Result<()>
@@ -125,7 +128,10 @@ where
         // Finally get a pathbuf of the basename
         let filename = Path::new(basename).to_path_buf();
 
-        messages.extracting_file(&filename, dir);
+        // If a message function was given, call it.
+        if let Some(message_fn) = message_fn {
+            message_fn(&filename, dir);
+        }
 
         // Extract the file
         let tmpfile = extract(&mut file, dir)?;
@@ -159,10 +165,11 @@ mod tests {
 
         // This should really be mocked, but for now we have a real file we
         // can open from the test-data.
-        let mut file = File::open(&test_file).unwrap();
-        let dest     = Path::new(test_file).to_path_buf();
-        let messages = Messages::new(false);
-        let res      = install(&messages, &mut file, &dest);
+        let mut file   = File::open(&test_file).unwrap();
+        let dest       = Path::new(test_file).to_path_buf();
+        let message_fn = |_: &Path, _: &Path| {};
+
+        let res = install(Some(&message_fn), &mut file, &dest);
 
         assert!(res.is_err());
     }
