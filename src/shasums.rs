@@ -1,7 +1,7 @@
 // shasums: Handle checking of files against shasums
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
-use super::TmpFile;
+use crate::tmpfile::TmpFile;
 use anyhow::{
     anyhow,
     Result,
@@ -13,17 +13,24 @@ use sha2::{
 use std::collections::HashMap;
 use std::io;
 
+/// This enum represents the outcome of shasum verification.
 #[derive(Debug, Eq, PartialEq)]
 pub enum Checksum {
-    OK,
+    /// Sha checksum did not verify.
     Bad,
+
+    /// Sha checksum verified correctly.
+    OK,
 }
 
+/// [`Shasums`] represents a downloaded shasum file.
 pub struct Shasums {
     content: String,
 }
 
 impl Shasums {
+    /// Create a new [`Shasums`] from the given shasum content.
+    #[must_use]
     pub fn new(shasums: String) -> Self {
         Self {
             content: shasums,
@@ -51,7 +58,15 @@ impl Shasums {
         hash
     }
 
-    // Check the shasum of the specified file
+    /// Check the shasum of the given `tmpfile` against our [`Shasums`]
+    /// content.
+    ///
+    /// # Errors
+    ///
+    /// Can error if:
+    ///   - Failing to find the shasum for the `tmpfile` filename
+    ///   - Failing to obtain a handle for the `tmpfile`
+    ///   - Failing to hash the file content
     pub fn check(&self, tmpfile: &mut TmpFile) -> Result<Checksum> {
         let filename = tmpfile.filename();
         let shasum   = self.shasum(filename)
@@ -74,7 +89,8 @@ impl Shasums {
         Ok(res)
     }
 
-    // Return a reference to the shasums
+    /// Return a reference to the [`Shasums`] content.
+    #[must_use]
     pub fn content(&self) -> &str {
         &self.content
     }

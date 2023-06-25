@@ -26,6 +26,9 @@ const USER_AGENT: &str = concat!(
     env!("CARGO_PKG_VERSION"),
 );
 
+/// A [`Client`] for downloading [HashiCorp](https://www.hashicorp.com)
+/// products.
+#[derive(Debug)]
 pub struct Client {
     api_url: String,
     client:  reqwest::Client,
@@ -33,8 +36,13 @@ pub struct Client {
 }
 
 impl Client {
-    // Return a new reqwest client with our user-agent
+    /// Creates a new [`Client`] with the given [`ClientConfig`].
+    ///
+    /// # Errors
+    ///
+    /// Errors if failing to build the [`reqwest::Client`].
     pub fn new(config: ClientConfig) -> Result<Self> {
+        // Get a new reqwest client with our user-agent
         let client = reqwest::ClientBuilder::new()
             .gzip(true)
             .user_agent(USER_AGENT)
@@ -49,7 +57,15 @@ impl Client {
         Ok(client)
     }
 
-    // Version check the given product via the checkpoint API
+    /// Checks the current version of the given `product` against the
+    /// [HashiCorp](https://www.hashicorp.com) checkpoint API.
+    ///
+    /// # Errors
+    ///
+    /// Errors if:
+    ///   - Failing to parse the created checkpoint URL
+    ///   - Failing to get the product version
+    ///   - Failing to create a [`ProductVersion`]
     pub async fn check_version(&self, product: &str) -> Result<ProductVersion> {
         // We to_string here for the test scenario.
         #![allow(clippy::to_string_in_format_args)]
@@ -69,8 +85,19 @@ impl Client {
         Ok(resp)
     }
 
-    // Download from the given URL to the output file.
-    pub async fn download(&self, url: Url, tmpfile: &mut TmpFile) -> Result<()> {
+    /// Downloads content from the given `url` to `tmpfile`.
+    ///
+    /// # Errors
+    ///
+    /// Errors if:
+    ///   - Failing to make a request to the given `url`
+    ///   - Failing to download the content from the given `url`
+    ///   - Failing to write the downloaded content to the `tmpfile`
+    pub async fn download(
+        &self,
+        url: Url,
+        tmpfile: &mut TmpFile,
+    ) -> Result<()> {
         let file = tmpfile.handle()?;
 
         // Start the GET and attempt to get a content-length
@@ -98,8 +125,8 @@ impl Client {
         Ok(())
     }
 
-    // Perform an HTTP GET on the given URL
-    pub async fn get(&self, url: Url) -> Result<Response> {
+    /// Perform an HTTP GET on the given `url`.
+    async fn get(&self, url: Url) -> Result<Response> {
         let resp = self.client
             .get(url)
             .send()
@@ -108,8 +135,9 @@ impl Client {
         Ok(resp)
     }
 
-    // Perform an HTTP GET on the given URL and return the result as Bytes
-    pub async fn get_bytes(&self, url: Url) -> Result<Bytes> {
+    /// Perform an HTTP GET on the given `url` and return the result as
+    /// [`Bytes`].
+    async fn get_bytes(&self, url: Url) -> Result<Bytes> {
         let resp = self.get(url)
             .await?
             .bytes()
@@ -118,8 +146,9 @@ impl Client {
         Ok(resp)
     }
 
-    // Perform an HTTP GET on the given URL and return the result as a String
-    pub async fn get_text(&self, url: Url) -> Result<String> {
+    /// Perform an HTTP GET on the given `url` and return the result as a
+    /// `String`.
+    async fn get_text(&self, url: Url) -> Result<String> {
         let resp = self.get(url)
             .await?
             .text()
@@ -128,7 +157,12 @@ impl Client {
         Ok(resp)
     }
 
-    // Get the shasums for the given product version and return a new Shasums.
+    /// Get the checksums for the given [`ProductVersion`] and return a new
+    /// [`Shasums`].
+    ///
+    /// # Errors
+    ///
+    /// Errors when failing to get the shasum file.
     pub async fn get_shasums(
         &self,
         version: &ProductVersion,
@@ -140,8 +174,14 @@ impl Client {
         Ok(shasums)
     }
 
-    // Get the signature for the given ProductVersion and return a new
-    // Signature.
+    /// Get the signature for the given [`ProductVersion`] and return a new
+    /// [`Signature`].
+    ///
+    /// # Errors
+    ///
+    /// Errors if:
+    ///   - Failing to get the shasums signature
+    ///   - Failing to create a [`Signature`]
     pub async fn get_signature(
         &self,
         version: &ProductVersion,
@@ -153,7 +193,14 @@ impl Client {
         Ok(signature)
     }
 
-    // Get the ProductVersion for a given product and version.
+    /// Get the [`ProductVersion`] for a given `product` and `version`.
+    ///
+    /// # Errors
+    ///
+    /// Errors if:
+    ///   - Failing to get the version from the remote server
+    ///   - Failing to deserialize the obtained version into a
+    ///     [`ProductVersion`]
     pub async fn get_version(
         &self,
         product: &str,

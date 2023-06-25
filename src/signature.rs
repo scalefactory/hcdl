@@ -33,6 +33,7 @@ const HASHICORP_GPG_KEY_FILENAME: &str = "hashicorp.asc";
 #[cfg(feature = "embed_gpg_key")]
 const HASHICORP_GPG_KEY: &str = include_str!("../gpg/hashicorp.asc");
 
+/// Handle checking `signature` against `public_key`.
 #[derive(Debug)]
 pub struct Signature {
     // The public key
@@ -54,6 +55,11 @@ impl PartialEq for Signature {
 }
 
 impl Signature {
+    /// Create a new [`Signature`] handler from the given `signature`.
+    ///
+    /// # Errors
+    ///
+    /// Can error if failing to get the public key.
     pub fn new(signature: Bytes) -> Result<Self> {
         let public_key = get_public_key()?;
 
@@ -65,27 +71,37 @@ impl Signature {
         Ok(signature)
     }
 
+    /// Create a new [`Signature`] handler from the given `signature` and
+    /// `public_key`.
+    ///
+    /// # Errors
+    ///
+    /// Can error if failing to read the public key or the signature.
     pub fn with_public_key(signature: Bytes, public_key: &str) -> Result<Self> {
         let mut cursor = Cursor::new(public_key.as_bytes());
         let public_key = SignedPublicKey::from_armor_single(&mut cursor)?;
-        let public_key = public_key.0;
-
         let reader = BufReader::new(signature.reader());
         let signature = StandaloneSignature::from_bytes(reader)?;
 
         let signature = Self {
             signature:  signature,
-            public_key: public_key,
+            public_key: public_key.0,
         };
 
         Ok(signature)
     }
 
-    // We have to check the signature against all public subkeys and the
-    // overall public key.
+    /// Check the given [`Shasums`] content against the [`Signature`].
+    ///
+    /// # Errors
+    ///
+    /// Will return an error if unable to verify the signature against the
+    /// public key or any of its subkeys.
     pub fn check(&self, shasums: &Shasums) -> Result<()> {
         let shasums = shasums.content().as_bytes();
 
+        // We have to check the signature against all public subkeys and the
+        // overall public key.
         for subkey in &self.public_key.public_subkeys {
             match self.signature.verify(&subkey, shasums) {
                 Err(_) => continue,

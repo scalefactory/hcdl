@@ -15,7 +15,14 @@ use std::path::Path;
 // Buffer size, 256KiB
 const BUFFER_SIZE: usize = 256 * 1_024;
 
-// Check the given `path`'s CRC32 against the `expected` CRC32.
+/// Check the given `path`'s CRC32 against the `expected` CRC32.
+///
+/// # Errors
+///
+/// Errors if:
+///   - Failing to open the given `path`
+///   - Failing to read from the given `path`
+///   - If the CRC32 of the given `path` doesn't match the `expected` value
 pub fn check<P>(path: P, expected: u32) -> Result<()>
 where
     P: AsRef<Path>,

@@ -31,6 +31,7 @@ const PROGRESS_TEMPLATE_NO_COLOR: &str = concat!(
     " {msg}",
 );
 
+/// A builder for [`ProgressBar`].
 #[derive(Default)]
 pub struct ProgressBarBuilder {
     no_color: bool,
@@ -39,25 +40,36 @@ pub struct ProgressBarBuilder {
 }
 
 impl ProgressBarBuilder {
+    /// Create a new [`ProgressBarBuilder`] with the default settings.
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Disable the [`ProgressBar`] colours.
+    #[must_use]
     pub fn no_color(mut self, no_color: bool) -> Self {
         self.no_color = no_color;
         self
     }
 
+    /// Set quiet mode on the [`ProgressBar`], no output will be drawn.
+    #[must_use]
     pub fn quiet(mut self, quiet: bool) -> Self {
         self.quiet = quiet;
         self
     }
 
+    /// Set the size of the [`ProgressBar`].
+    #[must_use]
     pub fn size(mut self, size: Option<u64>) -> Self {
         self.size = size;
         self
     }
 
+    /// Build and return the [`ProgressBar`].
+    #[allow(clippy::missing_panics_doc)]
+    #[must_use]
     pub fn build(self) -> ProgressBar {
         // No progress bar for quiet mode.
         if self.quiet {
@@ -79,6 +91,8 @@ impl ProgressBarBuilder {
                 PROGRESS_TEMPLATE
             };
 
+            // We shouldn't ever panic here, since our progress bar templates
+            // are not user provided, we've tested them.
             let style = ProgressStyle::default_bar()
                 .template(template)
                 .unwrap()
@@ -107,15 +121,18 @@ impl ProgressBarBuilder {
     }
 }
 
+/// A wrapper for an [`indicatif::ProgressBar`].
 pub struct ProgressBar {
     bar: indicatif::ProgressBar,
 }
 
 impl ProgressBar {
+    /// Wraps the given writer with the [`ProgressBar`].
     pub fn wrap_write<W: Write>(&self, writer: W) -> ProgressBarIter<W> {
         self.bar.wrap_write(writer)
     }
 
+    /// Flags the [`ProgressBar`] as finished and prints a final message.
     pub fn finished(&self) {
         self.bar.finish_with_message(PROGRESS_FINISHED_MSG);
     }

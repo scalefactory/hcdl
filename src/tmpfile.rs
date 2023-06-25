@@ -13,13 +13,18 @@ use tempfile::NamedTempFile;
 #[cfg(target_family = "unix")]
 use std::os::unix::fs::OpenOptionsExt;
 
+/// Wrapper for a [`tempfile::NamedTempFile`].
 pub struct TmpFile {
     tmpfile:  NamedTempFile,
     filename: String,
 }
 
 impl TmpFile {
-    // Make a new TmpFile for filename
+    /// Make a new [`TmpFile`] for filename.
+    ///
+    /// # Errors
+    ///
+    /// Can error if unable to create a [`NamedTempFile`].
     pub fn new(filename: &str) -> Result<Self> {
         let tmp = Self {
             filename: filename.to_owned(),
@@ -29,19 +34,31 @@ impl TmpFile {
         Ok(tmp)
     }
 
-    // Return the tmpfile filename
+    /// Return the tmpfile filename
+    #[must_use]
     pub fn filename(&self) -> &str {
         &self.filename
     }
 
-    // Return a handle that has been rewound to 0
+    /// Return a [`NamedTempFile`] handle that has been rewound to 0.
+    ///
+    /// # Errors
+    ///
+    /// Can error if seeking to the beginning of the `tmpfile` fails.
     pub fn handle(&mut self) -> Result<&mut NamedTempFile> {
         self.tmpfile.seek(SeekFrom::Start(0))?;
 
         Ok(&mut self.tmpfile)
     }
 
-    // Persist the file into our current directory as self.filename
+    /// Persist the file into our current directory as self.filename
+    ///
+    /// # Errors
+    ///
+    /// Can error under various common IO issues such as:
+    ///   - Failure to open file for writing
+    ///   - Attempting to get the file handle for the `tmpfile`
+    ///   - Issues while writing to the `tmpfile`
     pub fn persist(&mut self) -> Result<()> {
         let dest        = Path::new(&self.filename);
         let mut options = OpenOptions::new();

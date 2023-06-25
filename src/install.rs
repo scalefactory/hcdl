@@ -2,7 +2,7 @@
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
 use super::crc32;
-use super::Messages;
+use super::messages::Messages;
 use anyhow::{
     anyhow,
     Result,
@@ -32,7 +32,13 @@ use std::fs::Permissions;
 #[cfg(target_family = "unix")]
 use std::os::unix::fs::PermissionsExt;
 
-// Find a suitable bindir for installing to.
+/// `bin_dir` finds a suitable executable directory to install a product to.
+///
+/// # Errors
+///
+/// Errors if:
+///   - Failing to find a suitable executable directory
+///   - Failing to create the executable directory if needed
 pub fn bin_dir() -> Result<PathBuf> {
     if let Some(dir) = dirs::executable_dir() {
         // Attempt to create the directory if it doesn't exist
@@ -53,9 +59,10 @@ pub fn bin_dir() -> Result<PathBuf> {
     }
 }
 
-// Extracts a given `zipfile` to a temporary file under `dir`. Also checks
-// the CRC32 of the extracted file to make sure extraction was successful.
-// Returns a TempPath which the caller is responsible for persisting.
+/// Extracts a given `zipfile` to a temporary file under `dir`. Also checks
+/// the CRC32 of the extracted file to make sure extraction was successful.
+/// Returns a [`tempfile::TempPath`] which the caller is responsible for
+/// persisting.
 fn extract(mut zipfile: &mut ZipFile, dir: &Path) -> Result<TempPath> {
     // Get a tempfile to extract to under the dest path
     let mut tmpfile = NamedTempFile::new_in(dir)?;
@@ -73,8 +80,21 @@ fn extract(mut zipfile: &mut ZipFile, dir: &Path) -> Result<TempPath> {
     Ok(tmpfile)
 }
 
-// Installs files from the gien `zipfile` under the directory at `dir`.
-pub fn install<F>(messages: &Messages, zipfile: &mut F, dir: &Path) -> Result<()>
+/// Installs files from the given `zipfile` under the directory at `dir`.
+///
+/// # Errors
+///
+/// Can error if:
+///   - Installation directory doesn't exist
+///   - Failing to get a file index from the `zipfile`
+///   - Failing to extract files from the `zipfile`
+///   - Failing to persist the extracted file
+///   - Failing to set file permissions on the extracted file
+pub fn install<F>(
+    messages: &Messages,
+    zipfile: &mut F,
+    dir: &Path,
+) -> Result<()>
 where
     F: Read + Seek,
 {
@@ -98,10 +118,9 @@ where
         let filename = file.name();
 
         // Attempt to get the basename of the filename
-        let basename = Path::new(filename).file_name()
-            .ok_or_else(|| {
-                anyhow!("Couldn't get basename from: {}", filename)
-            })?;
+        let basename = Path::new(filename)
+            .file_name()
+            .ok_or_else(|| anyhow!("Couldn't get basename from: {filename}"))?;
 
         // Finally get a pathbuf of the basename
         let filename = Path::new(basename).to_path_buf();

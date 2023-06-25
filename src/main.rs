@@ -4,28 +4,25 @@
 #![allow(clippy::module_name_repetitions)]
 #![allow(clippy::redundant_field_names)]
 use anyhow::Result;
+use hcdl::{
+    client,
+    install,
+    products,
+    shasums,
+};
+use hcdl::messages::Messages;
+use hcdl::tmpfile::TmpFile;
 use std::path::PathBuf;
 use std::process::exit;
 
 mod cli;
-mod client;
-mod crc32;
-mod install;
-mod messages;
-mod products;
-mod progressbar;
-mod shasums;
-mod signature;
-mod tmpfile;
-
-use messages::Messages;
-use tmpfile::TmpFile;
 
 #[cfg(feature = "shell_completion")]
 use clap_complete::Shell;
 
 const LATEST: &str = "latest";
 
+#[allow(clippy::too_many_lines)]
 #[tokio::main]
 async fn main() -> Result<()> {
     let matches  = cli::parse_args();

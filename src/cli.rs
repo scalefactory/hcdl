@@ -96,6 +96,7 @@ fn is_valid_install_dir(s: &str) -> Result<PathBuf, String> {
     Ok(path.to_path_buf())
 }
 
+#[allow(clippy::too_many_lines)]
 fn create_app() -> Command {
     let app = Command::new(crate_name!())
         .version(crate_version!())
