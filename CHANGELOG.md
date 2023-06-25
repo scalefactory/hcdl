@@ -2,8 +2,9 @@
 
 ## v0.13.0
 
-  - Bump MSRV to 1.65.0
+  - Bump MSRV to 1.68.2
   - Bump dependencies
+  - Moved lots of functionality under `lib.rs`
 
 ## v0.12.0
 
