@@ -13,9 +13,6 @@ pub mod crc32;
 /// Handle extracting and installing downloaded product.
 pub mod install;
 
-/// Various output messages.
-pub mod messages;
-
 /// List of [HashiCorp](https://www.hashicorp.com/) products.
 pub mod products;
 

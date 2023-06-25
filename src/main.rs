@@ -10,7 +10,6 @@ use hcdl::{
     products,
     shasums,
 };
-use hcdl::messages::Messages;
 use hcdl::tmpfile::TmpFile;
 use std::path::{
     Path,
@@ -19,6 +18,9 @@ use std::path::{
 use std::process::exit;
 
 mod cli;
+mod messages;
+
+use messages::Messages;
 
 #[cfg(feature = "shell_completion")]
 use clap_complete::Shell;
