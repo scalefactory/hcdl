@@ -1,8 +1,10 @@
 // Messages output by other parts of the program
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
-use anyhow::Error;
-use hcdl::error::InstallError;
+use hcdl::error::{
+    InstallError,
+    SignatureError,
+};
 use std::path::Path;
 
 /// Handler for the various message we need to output.
@@ -126,7 +128,7 @@ impl Messages {
     }
 
     /// Output when signature verification has failed.
-    pub fn signature_verification_failed(&self, error: &Error) {
+    pub fn signature_verification_failed(&self, error: &SignatureError) {
         let msg = format!("Verification failed, error: {error}");
 
         self.stderr(&msg);

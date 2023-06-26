@@ -53,3 +53,28 @@ pub enum InstallError {
     #[error("zip index error")]
     ZipIndex(#[from] zip::result::ZipError),
 }
+
+/// Errors encountered in the [`signature`] module.
+#[derive(Debug, Error)]
+pub enum SignatureError {
+    /// Returned if the GPG key path does not exist or is not a file.
+    #[error("gpg key file '{0}' does not exist or is not a file")]
+    GpgKey(PathBuf),
+
+    /// Returned when there's an IO error dealing with signature data.
+    #[error(transparent)]
+    IoError(#[from] std::io::Error),
+
+    /// Returned if there's no XDG shared data directory returned.
+    #[error("couldn't find shared data directory")]
+    NoSharedDataDir,
+
+    /// Returned when the XDG shared data path returned does not exist or is
+    /// not a directory.
+    #[error("data directory '{0}' does not exist or is not a directory")]
+    NoSharedDataDirExists(PathBuf),
+
+    /// Returned when the shasum signatures couldn't be verified.
+    #[error(transparent)]
+    Pgp(#[from] pgp::errors::Error),
+}
