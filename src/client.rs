@@ -5,7 +5,7 @@ use crate::progressbar::ProgressBarBuilder;
 use crate::shasums::Shasums;
 use crate::signature::Signature;
 use crate::tmpfile::TmpFile;
-use anyhow::Result;
+use super::error::ClientError;
 use bytes::Bytes;
 use reqwest::Response;
 use std::io::prelude::*;
@@ -47,12 +47,13 @@ impl Client {
     /// # Errors
     ///
     /// Errors if failing to build the [`reqwest::Client`].
-    pub fn new(config: ClientConfig) -> Result<Self> {
+    pub fn new(config: ClientConfig) -> Result<Self, ClientError> {
         // Get a new reqwest client with our user-agent
         let client = reqwest::ClientBuilder::new()
             .gzip(true)
             .user_agent(USER_AGENT)
-            .build()?;
+            .build()
+            .map_err(|_err| ClientError::ClientBuilder)?;
 
         let client = Self {
             api_url: RELEASES_API.to_string(),
@@ -72,18 +73,23 @@ impl Client {
     ///   - Failing to parse the created checkpoint URL
     ///   - Failing to get the product version
     ///   - Failing to create a [`crate::client::product_version::ProductVersion`]
-    pub async fn check_version(&self, product: &str) -> Result<ProductVersion> {
+    pub async fn check_version(
+        &self,
+        product: &str,
+    ) -> Result<ProductVersion, ClientError> {
         let url = format!(
             "{api}/{product}/latest",
             api = self.api_url,
         );
 
-        let url = Url::parse(&url)?;
+        let url = Url::parse(&url)
+            .map_err(|_err| ClientError::Url("check_version"))?;
 
         let resp = self.get(url)
             .await?
             .json::<ProductVersion>()
-            .await?;
+            .await
+            .map_err(|_err| ClientError::ProductVersion)?;
 
         Ok(resp)
     }
@@ -100,7 +106,7 @@ impl Client {
         &self,
         url: Url,
         tmpfile: &mut TmpFile,
-    ) -> Result<()> {
+    ) -> Result<(), ClientError> {
         let file = tmpfile.handle()?;
 
         // Start the GET and attempt to get a content-length
@@ -118,7 +124,11 @@ impl Client {
         let mut writer = pb.wrap_write(writer);
 
         // Start downloading chunks.
-        while let Some(chunk) = resp.chunk().await? {
+        while let Some(chunk) = resp
+            .chunk()
+            .await
+            .map_err(|_| ClientError::Chunk)?
+        {
             // Write the chunk to the output file.
             writer.write_all(&chunk)?;
         }
@@ -129,33 +139,36 @@ impl Client {
     }
 
     /// Perform an HTTP GET on the given `url`.
-    async fn get(&self, url: Url) -> Result<Response> {
+    async fn get(&self, url: Url) -> Result<Response, ClientError> {
         let resp = self.client
-            .get(url)
+            .get(url.clone())
             .send()
-            .await?;
+            .await
+            .map_err(|_err| ClientError::Get(url))?;
 
         Ok(resp)
     }
 
     /// Perform an HTTP GET on the given `url` and return the result as
     /// [`Bytes`].
-    async fn get_bytes(&self, url: Url) -> Result<Bytes> {
+    async fn get_bytes(&self, url: Url) -> Result<Bytes, ClientError> {
         let resp = self.get(url)
             .await?
             .bytes()
-            .await?;
+            .await
+            .map_err(|_err| ClientError::GetBytes)?;
 
         Ok(resp)
     }
 
     /// Perform an HTTP GET on the given `url` and return the result as a
     /// `String`.
-    async fn get_text(&self, url: Url) -> Result<String> {
+    async fn get_text(&self, url: Url) -> Result<String, ClientError> {
         let resp = self.get(url)
             .await?
             .text()
-            .await?;
+            .await
+            .map_err(|_err| ClientError::GetText)?;
 
         Ok(resp)
     }
@@ -169,7 +182,7 @@ impl Client {
     pub async fn get_shasums(
         &self,
         version: &ProductVersion,
-    ) -> Result<Shasums> {
+    ) -> Result<Shasums, ClientError> {
         let url     = version.shasums_url();
         let shasums = self.get_text(url).await?;
         let shasums = Shasums::new(shasums);
@@ -188,7 +201,7 @@ impl Client {
     pub async fn get_signature(
         &self,
         version: &ProductVersion,
-    ) -> Result<Signature> {
+    ) -> Result<Signature, ClientError> {
         let url       = version.shasums_signature_url();
         let signature = self.get_bytes(url).await?;
         let signature = Signature::new(signature)?;
@@ -208,18 +221,20 @@ impl Client {
         &self,
         product: &str,
         version: &str,
-    ) -> Result<ProductVersion> {
+    ) -> Result<ProductVersion, ClientError> {
         let url = format!(
             "{api}/{product}/{version}",
             api = self.api_url,
         );
 
-        let url = Url::parse(&url)?;
+        let url = Url::parse(&url)
+            .map_err(|_err| ClientError::Url("get_version"))?;
 
         let resp = self.get(url)
             .await?
             .json::<ProductVersion>()
-            .await?;
+            .await
+            .map_err(|_err| ClientError::ProductVersion)?;
 
         Ok(resp)
     }

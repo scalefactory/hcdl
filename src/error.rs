@@ -3,6 +3,51 @@
 use std::path::PathBuf;
 use thiserror::Error;
 
+/// Errors encountered in the [`client`] module.
+#[derive(Debug, Error)]
+pub enum ClientError {
+    /// Returned when encountering an error building the [`Client`].
+    #[error("couldn't build http client")]
+    ClientBuilder,
+
+    /// Returned if there's an error downloading a chunk of content.
+    #[error("couldn't download chunk of content")]
+    Chunk,
+
+    /// Returned when there's an error getting a [`Url`].
+    #[error("couldn't get url '{0}'")]
+    Get(url::Url),
+
+    /// Returned if there's an error getting the [`Bytes`] from a GET request.
+    #[error("couldn't get bytes from get request")]
+    GetBytes,
+
+    /// Returned if there's an error getting a [`String`] from a GET request.
+    #[error("couldn't get text from get request")]
+    GetText,
+
+    /// Returned if there's an IO error while downloading content.
+    #[error(transparent)]
+    IoError(#[from] std::io::Error),
+
+    /// Returned if there's an error parsing the [`ProductVersion`].
+    #[error("couldn't parse product version")]
+    ProductVersion,
+
+    /// Returned when there's an error getting a [`Signature`] for the
+    /// [`ProductVersion`].
+    #[error(transparent)]
+    Signature(#[from] SignatureError),
+
+    /// Returned if there's [`TmpFile`] error while downloading content.
+    #[error(transparent)]
+    TmpFile(#[from] TmpFileError),
+
+    /// Returned if there's an error parsing a [`Url`].
+    #[error("couldn't parse {0} url")]
+    Url(&'static str),
+}
+
 /// Errors encountered in the [`crc32`] module.
 #[derive(Debug, Error)]
 pub enum Crc32Error {
