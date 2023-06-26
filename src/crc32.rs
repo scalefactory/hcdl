@@ -41,7 +41,7 @@ where
     let result = hasher.finalize();
 
     if result != expected {
-        return Err(Crc32Error::UnexpectedCrc32(expected, result));
+        return Err(Crc32Error::UnexpectedCrc32(result, expected));
     }
 
     Ok(())
@@ -63,7 +63,7 @@ mod tests {
 
         assert_eq!(
             result.unwrap_err().to_string(),
-            "Error CRC32: Expected: 0x00000000, Got: 0x891bc0e8",
+            "unexpected crc32: 0x891bc0e8, wanted: 0x00000000",
         );
     }
 

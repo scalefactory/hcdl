@@ -110,7 +110,8 @@ impl Signature {
         }
 
         // One last attempt, check against the main public key.
-        self.signature.verify(&self.public_key, shasums)?;
+        self.signature.verify(&self.public_key, shasums)
+            .map_err(|_err| SignatureError::Verification)?;
 
         Ok(())
     }
@@ -192,7 +193,7 @@ mod tests {
     use std::path::Path;
 
     // Read a file's contents into Bytes
-    fn read_file_bytes(path: &PathBuf) -> Result<Bytes> {
+    fn read_file_bytes(path: &PathBuf) -> Result<Bytes, SignatureError> {
         let file         = File::open(&path)?;
         let mut reader   = BufReader::new(file);
         let mut contents = Vec::new();
@@ -316,7 +317,7 @@ mod tests {
 
         assert_eq!(
             res.unwrap_err().to_string(),
-            "Couldn't verify signature",
+            "couldn't verify signature",
         )
     }
 
@@ -367,7 +368,7 @@ mod tests {
 
         assert_eq!(
             res.unwrap_err().to_string(),
-            "Couldn't verify signature",
+            "couldn't verify signature",
         )
     }
 }

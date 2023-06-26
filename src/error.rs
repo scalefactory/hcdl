@@ -8,12 +8,12 @@ use thiserror::Error;
 pub enum Crc32Error {
     /// Returned if there's an IO error while calculating the CRC32 for the
     /// extracted file.
-    #[error("io error")]
+    #[error(transparent)]
     IoError(#[from] std::io::Error),
 
     /// Returned if there's a problem with the calculated CRC32 for the
     /// extracted file.
-    #[error("unexpected crc32. expected: {0:#010x}, got: {1:#010x}")]
+    #[error("unexpected crc32: {0:#010x}, wanted: {1:#010x}")]
     UnexpectedCrc32(u32, u32),
 }
 
@@ -77,4 +77,8 @@ pub enum SignatureError {
     /// Returned when the shasum signatures couldn't be verified.
     #[error(transparent)]
     Pgp(#[from] pgp::errors::Error),
+
+    /// Returned when the signature couldn't be verified.
+    #[error("couldn't verify signature")]
+    Verification,
 }
