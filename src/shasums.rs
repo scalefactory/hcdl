@@ -2,10 +2,7 @@
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
 use crate::tmpfile::TmpFile;
-use anyhow::{
-    anyhow,
-    Result,
-};
+use super::error::ShasumsError;
 use sha2::{
     Digest,
     Sha256,
@@ -67,15 +64,21 @@ impl Shasums {
     ///   - Failing to find the shasum for the `tmpfile` filename
     ///   - Failing to obtain a handle for the `tmpfile`
     ///   - Failing to hash the file content
-    pub fn check(&self, tmpfile: &mut TmpFile) -> Result<Checksum> {
+    pub fn check(
+        &self,
+        tmpfile: &mut TmpFile,
+    ) -> Result<Checksum, ShasumsError> {
         let filename = tmpfile.filename();
         let shasum   = self.shasum(filename)
-            .ok_or_else(|| anyhow!("Couldn't find shasum for {filename}"))?;
+            .ok_or_else(|| {
+                ShasumsError::NoShasumForFile(filename.to_string())
+            })?;
 
         let mut file   = tmpfile.handle()?;
         let mut hasher = Sha256::new();
 
-        io::copy(&mut file, &mut hasher)?;
+        io::copy(&mut file, &mut hasher)
+            .map_err(|_err| ShasumsError::Hashing)?;
 
         let hash = hasher.finalize();
 

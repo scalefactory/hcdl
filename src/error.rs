@@ -54,6 +54,22 @@ pub enum InstallError {
     ZipIndex(#[from] zip::result::ZipError),
 }
 
+/// Errors encountered in the [`shasums`] module.
+#[derive(Debug, Error)]
+pub enum ShasumsError {
+    /// Returned if there's an error while calculating the shasum for the file.
+    #[error("io error while hashing file")]
+    Hashing,
+
+    /// Returned when the shasum for a file could not be found.
+    #[error("couldn't find shasum for {0}")]
+    NoShasumForFile(String),
+
+    /// Returned if there's a [`TmpFileError`] while hashing the file.
+    #[error(transparent)]
+    TmpFile(#[from] TmpFileError),
+}
+
 /// Errors encountered in the [`signature`] module.
 #[derive(Debug, Error)]
 pub enum SignatureError {
