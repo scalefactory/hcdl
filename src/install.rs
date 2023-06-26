@@ -2,10 +2,7 @@
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
 use super::crc32;
-use anyhow::{
-    anyhow,
-    Result,
-};
+use super::error::InstallError;
 use std::fs;
 use std::io::{
     self,
@@ -38,7 +35,7 @@ use std::os::unix::fs::PermissionsExt;
 /// Errors if:
 ///   - Failing to find a suitable executable directory
 ///   - Failing to create the executable directory if needed
-pub fn bin_dir() -> Result<PathBuf> {
+pub fn bin_dir() -> Result<PathBuf, InstallError> {
     if let Some(dir) = dirs::executable_dir() {
         // Attempt to create the directory if it doesn't exist
         if !dir.exists() {
@@ -49,12 +46,7 @@ pub fn bin_dir() -> Result<PathBuf> {
     }
     else {
         // If we get None, we're likely on Windows.
-        let msg = concat!(
-            "Could not find suitable install-dir.\n",
-            "Consider passing --install-dir to manually specify",
-        );
-
-        Err(anyhow!(msg))
+        Err(InstallError::NoExecutableDir)
     }
 }
 
@@ -62,7 +54,7 @@ pub fn bin_dir() -> Result<PathBuf> {
 /// the CRC32 of the extracted file to make sure extraction was successful.
 /// Returns a [`tempfile::TempPath`] which the caller is responsible for
 /// persisting.
-fn extract(mut zipfile: &mut ZipFile, dir: &Path) -> Result<TempPath> {
+fn extract(mut zipfile: &mut ZipFile, dir: &Path) -> Result<TempPath, InstallError> {
     // Get a tempfile to extract to under the dest path
     let mut tmpfile = NamedTempFile::new_in(dir)?;
 
@@ -96,17 +88,12 @@ fn extract(mut zipfile: &mut ZipFile, dir: &Path) -> Result<TempPath> {
 pub fn install<F>(
     zipfile: &mut F,
     dir: &Path,
-) -> Result<Vec<PathBuf>>
+) -> Result<Vec<PathBuf>, InstallError>
 where
     F: Read + Seek,
 {
     if !dir.is_dir() {
-        let err = anyhow!(
-            "install: Destination '{path}' is not a directory",
-            path = dir.display(),
-        );
-
-        return Err(err);
+        return Err(InstallError::NoInstallDir(dir.to_path_buf()));
     }
 
     let mut extracted_files = Vec::new();
@@ -123,7 +110,9 @@ where
         // Attempt to get the basename of the filename
         let basename = Path::new(filename)
             .file_name()
-            .ok_or_else(|| anyhow!("Couldn't get basename from: {filename}"))?;
+            .ok_or_else(|| {
+                InstallError::ZipFileBasename(filename.to_string())
+            })?;
 
         // Finally get a pathbuf of the basename
         let filename = Path::new(basename).to_path_buf();

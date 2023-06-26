@@ -1,9 +1,6 @@
 // crc32: Handle checking CRC32 of a given file against the expected CRC32.
 #![forbid(unsafe_code)]
-use anyhow::{
-    anyhow,
-    Result,
-};
+use super::error::Crc32Error;
 use crc32fast::Hasher;
 use std::fs::File;
 use std::io::{
@@ -23,7 +20,7 @@ const BUFFER_SIZE: usize = 256 * 1_024;
 ///   - Failing to open the given `path`
 ///   - Failing to read from the given `path`
 ///   - If the CRC32 of the given `path` doesn't match the `expected` value
-pub fn check<P>(path: P, expected: u32) -> Result<()>
+pub fn check<P>(path: P, expected: u32) -> Result<(), Crc32Error>
 where
     P: AsRef<Path>,
 {
@@ -44,13 +41,7 @@ where
     let result = hasher.finalize();
 
     if result != expected {
-        let msg = anyhow!(
-            "Error CRC32: Expected: {:#010x}, Got: {:#010x}",
-            expected,
-            result,
-        );
-
-        return Err(msg);
+        return Err(Crc32Error::UnexpectedCrc32(expected, result));
     }
 
     Ok(())

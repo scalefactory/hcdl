@@ -10,6 +10,9 @@ pub mod client;
 /// Handle checking the CRC32 of files extracted from zipfiles.
 pub mod crc32;
 
+/// This module contains the error types that the library can return.
+pub mod error;
+
 /// Handle extracting and installing downloaded product.
 pub mod install;
 

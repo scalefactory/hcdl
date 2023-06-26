@@ -2,6 +2,7 @@
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
 use anyhow::Error;
+use hcdl::error::InstallError;
 use std::path::Path;
 
 /// Handler for the various message we need to output.
@@ -79,7 +80,7 @@ impl Messages {
     }
 
     /// Output when a product installation has failed.
-    pub fn installation_failed(&self, error: &Error) {
+    pub fn installation_failed(&self, error: &InstallError) {
         let msg = format!("Installation failed with error: {error}");
 
         self.stderr(&msg);
