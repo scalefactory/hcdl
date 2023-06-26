@@ -12,9 +12,15 @@ use std::io::prelude::*;
 use std::io::BufWriter;
 use url::Url;
 
-mod build;
-mod config;
-mod product_version;
+/// Re-export of `build`.
+pub mod build;
+
+/// Re-export of `config`.
+pub mod config;
+
+/// Re-export of `product_version`.
+pub mod product_version;
+
 pub use config::ClientConfig;
 use product_version::ProductVersion;
 
@@ -65,7 +71,7 @@ impl Client {
     /// Errors if:
     ///   - Failing to parse the created checkpoint URL
     ///   - Failing to get the product version
-    ///   - Failing to create a [`ProductVersion`]
+    ///   - Failing to create a [`crate::client::product_version::ProductVersion`]
     pub async fn check_version(&self, product: &str) -> Result<ProductVersion> {
         let url = format!(
             "{api}/{product}/latest",

@@ -1,6 +1,6 @@
 // Client configuration
 
-/// [`ClientConfig`] is a configuration for [`Client`].
+/// [`ClientConfig`] is a configuration for [`crate::client::Client`].
 #[derive(Debug, Default)]
 pub struct ClientConfig {
     /// Control the output of colour in the crate messages and progress bars.
