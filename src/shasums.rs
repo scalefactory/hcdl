@@ -172,7 +172,7 @@ mod tests {
 
         assert_eq!(
             res.unwrap_err().to_string(),
-            format!("Couldn't find shasum for {test_data_path}"),
+            format!("couldn't find shasum for {test_data_path}"),
         );
     }
 
