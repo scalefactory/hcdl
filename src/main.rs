@@ -8,10 +8,7 @@ use hcdl::{
     shasums,
 };
 use hcdl::tmpfile::TmpFile;
-use std::path::{
-    Path,
-    PathBuf,
-};
+use std::path::PathBuf;
 use std::process::exit;
 
 mod cli;
@@ -186,12 +183,14 @@ async fn main() -> Result<()> {
 
     let mut zip_handle = tmpfile.handle()?;
 
-    let extract_message = |filename: &Path, path: &Path| {
-        messages.extracting_file(filename, path);
-    };
+    match install::install(&mut zip_handle, &bin_dir) {
+        Ok(extracted_files) => {
+            for file in extracted_files {
+                messages.extracted_file(&file, &bin_dir);
+            }
 
-    match install::install(Some(&extract_message), &mut zip_handle, &bin_dir) {
-        Ok(_)  => messages.installation_successful(),
+            messages.installation_successful();
+        },
         Err(e) => {
             messages.installation_failed(&e);
 

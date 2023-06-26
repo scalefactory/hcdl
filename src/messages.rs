@@ -60,9 +60,9 @@ impl Messages {
     }
 
     /// Output when a file is being extracted.
-    pub fn extracting_file(&self, filename: &Path, dest: &Path) {
+    pub fn extracted_file(&self, filename: &Path, dest: &Path) {
         let msg = format!(
-            "-> Extracting '{filename}' to '{dest}'...",
+            "-> Extracted '{filename}' to '{dest}'...",
             filename = filename.display(),
             dest = dest.display(),
         );

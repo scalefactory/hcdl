@@ -94,10 +94,9 @@ fn extract(mut zipfile: &mut ZipFile, dir: &Path) -> Result<TempPath> {
 // type alias results in other complains with no good compiler suggestions.
 #[allow(clippy::type_complexity)]
 pub fn install<F>(
-    message_fn: Option<&dyn Fn(&Path, &Path)>,
     zipfile: &mut F,
     dir: &Path,
-) -> Result<()>
+) -> Result<Vec<PathBuf>>
 where
     F: Read + Seek,
 {
@@ -110,6 +109,7 @@ where
         return Err(err);
     }
 
+    let mut extracted_files = Vec::new();
     let mut zip = ZipArchive::new(zipfile).expect("new ziparchive");
 
     for i in 0..zip.len() {
@@ -128,11 +128,6 @@ where
         // Finally get a pathbuf of the basename
         let filename = Path::new(basename).to_path_buf();
 
-        // If a message function was given, call it.
-        if let Some(message_fn) = message_fn {
-            message_fn(&filename, dir);
-        }
-
         // Extract the file
         let tmpfile = extract(&mut file, dir)?;
 
@@ -145,9 +140,11 @@ where
         if let Some(mode) = file.unix_mode() {
             fs::set_permissions(&dest, Permissions::from_mode(mode))?;
         }
+
+        extracted_files.push(filename);
     }
 
-    Ok(())
+    Ok(extracted_files)
 }
 
 #[cfg(test)]
@@ -167,9 +164,8 @@ mod tests {
         // can open from the test-data.
         let mut file   = File::open(&test_file).unwrap();
         let dest       = Path::new(test_file).to_path_buf();
-        let message_fn = |_: &Path, _: &Path| {};
 
-        let res = install(Some(&message_fn), &mut file, &dest);
+        let res = install(&mut file, &dest);
 
         assert!(res.is_err());
     }
