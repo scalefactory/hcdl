@@ -55,6 +55,7 @@ where
 
 impl ProductVersion {
     /// Pull a specific [`Build`] out of the [`ProductVersion`] `builds`.
+    #[must_use]
     pub fn build(&self, arch: &str, os: &str) -> Option<&Build> {
         let filtered: Vec<&Build> = self.builds
             .iter()
@@ -70,11 +71,18 @@ impl ProductVersion {
     }
 
     /// Create and return the shasums signature URL.
+    ///
+    /// # Panics
+    ///
+    /// This function could panic if there are no signature URLs returned by
+    /// the API.
+    #[must_use]
     pub fn shasums_signature_url(&self) -> Url {
         self.url_shasums_signatures.first().unwrap().clone()
     }
 
     /// Create and return the shasums URL.
+    #[must_use]
     pub fn shasums_url(&self) -> Url {
         self.url_shasums.clone()
     }
