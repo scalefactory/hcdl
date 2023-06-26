@@ -15,7 +15,7 @@ impl Messages {
     #[must_use]
     pub fn new(quiet: bool) -> Self {
         Self {
-            quiet: quiet,
+            quiet,
         }
     }
 
