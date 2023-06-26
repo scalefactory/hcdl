@@ -1,5 +1,5 @@
 // Handles a tmpfile for downloading
-use anyhow::Result;
+use super::error::TmpFileError;
 use std::fs::OpenOptions;
 use std::io::{
     self,
@@ -25,7 +25,7 @@ impl TmpFile {
     /// # Errors
     ///
     /// Can error if unable to create a [`NamedTempFile`].
-    pub fn new(filename: &str) -> Result<Self> {
+    pub fn new(filename: &str) -> Result<Self, TmpFileError> {
         let tmp = Self {
             filename: filename.to_owned(),
             tmpfile:  NamedTempFile::new()?,
@@ -45,7 +45,7 @@ impl TmpFile {
     /// # Errors
     ///
     /// Can error if seeking to the beginning of the `tmpfile` fails.
-    pub fn handle(&mut self) -> Result<&mut NamedTempFile> {
+    pub fn handle(&mut self) -> Result<&mut NamedTempFile, TmpFileError> {
         self.tmpfile.seek(SeekFrom::Start(0))?;
 
         Ok(&mut self.tmpfile)
@@ -59,7 +59,7 @@ impl TmpFile {
     ///   - Failure to open file for writing
     ///   - Attempting to get the file handle for the `tmpfile`
     ///   - Issues while writing to the `tmpfile`
-    pub fn persist(&mut self) -> Result<()> {
+    pub fn persist(&mut self) -> Result<(), TmpFileError> {
         let dest        = Path::new(&self.filename);
         let mut options = OpenOptions::new();
 

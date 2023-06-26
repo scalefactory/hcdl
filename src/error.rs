@@ -82,3 +82,11 @@ pub enum SignatureError {
     #[error("couldn't verify signature")]
     Verification,
 }
+
+/// Errors encountered in the [`tmpfile`] module.
+#[derive(Debug, Error)]
+pub enum TmpFileError {
+    /// Returned if IO errors are encountered.
+    #[error(transparent)]
+    IoError(#[from] std::io::Error),
+}
