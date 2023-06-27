@@ -1,5 +1,4 @@
 // Library errors.
-
 use std::path::PathBuf;
 use thiserror::Error;
 
