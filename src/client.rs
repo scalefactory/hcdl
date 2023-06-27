@@ -1,11 +1,13 @@
 // client: HTTP client and associated methods
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
-use crate::progressbar::ProgressBarBuilder;
-use crate::shasums::Shasums;
-use crate::signature::Signature;
-use crate::tmpfile::TmpFile;
-use super::error::ClientError;
+use crate::{
+    error::ClientError,
+    progressbar::ProgressBarBuilder,
+    shasums::Shasums,
+    signature::Signature,
+    tmpfile::TmpFile,
+};
 use bytes::Bytes;
 use reqwest::Response;
 use std::io::prelude::*;
