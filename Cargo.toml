@@ -22,6 +22,14 @@ exclude = [
     ".github",
 ]
 
+[[bin]]
+name = "hcdl"
+path = "src/main.rs"
+
+[lib]
+name = "hcdl"
+path = "src/lib.rs"
+
 [features]
 default = [
     "embed_gpg_key",
