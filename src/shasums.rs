@@ -21,6 +21,7 @@ pub enum Checksum {
 }
 
 /// [`Shasums`] represents a downloaded shasum file.
+#[derive(Debug)]
 pub struct Shasums {
     content: String,
 }

@@ -14,6 +14,7 @@ use tempfile::NamedTempFile;
 use std::os::unix::fs::OpenOptionsExt;
 
 /// Wrapper for a [`tempfile::NamedTempFile`].
+#[derive(Debug)]
 pub struct TmpFile {
     tmpfile:  NamedTempFile,
     filename: String,

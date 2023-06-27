@@ -122,6 +122,7 @@ impl ProgressBarBuilder {
 }
 
 /// A wrapper for an [`indicatif::ProgressBar`].
+#[derive(Debug)]
 pub struct ProgressBar {
     bar: indicatif::ProgressBar,
 }
