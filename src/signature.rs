@@ -120,7 +120,7 @@ impl Signature {
 // Read a file's content into a String
 #[cfg(any(test, not(feature = "embed_gpg_key")))]
 fn read_file_content(path: &PathBuf) -> Result<String, SignatureError> {
-    let file         = File::open(&path)?;
+    let file         = File::open(path)?;
     let mut reader   = BufReader::new(file);
     let mut contents = String::new();
 
