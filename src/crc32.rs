@@ -1,9 +1,6 @@
 // crc32: Handle checking CRC32 of a given file against the expected CRC32.
 #![forbid(unsafe_code)]
-use anyhow::{
-    anyhow,
-    Result,
-};
+use crate::error::Crc32Error;
 use crc32fast::Hasher;
 use std::fs::File;
 use std::io::{
@@ -15,8 +12,42 @@ use std::path::Path;
 // Buffer size, 256KiB
 const BUFFER_SIZE: usize = 256 * 1_024;
 
-// Check the given `path`'s CRC32 against the `expected` CRC32.
-pub fn check<P>(path: P, expected: u32) -> Result<()>
+/// Check the given `path`'s CRC32 against the `expected` CRC32.
+///
+/// # Errors
+///
+/// Errors if:
+///   - Failing to open the given `path`
+///   - Failing to read from the given `path`
+///   - If the CRC32 of the given `path` doesn't match the `expected` value
+///
+/// # Examples
+///
+/// Check that the CRC32 of the crate's test-data file is correct.
+///
+/// ```
+/// use hcdl::crc32;
+///
+/// let path = concat!(env!("CARGO_MANIFEST_DIR"), "/test-data/test.txt");
+/// let result = crc32::check(path, 0x891bc0e8);
+///
+/// assert!(result.is_ok());
+/// ```
+///
+/// The CRC32 was not what was expected.
+///
+/// ```
+/// use hcdl::{
+///     crc32,
+///     error::Crc32Error,
+/// };
+///
+/// let path = concat!(env!("CARGO_MANIFEST_DIR"), "/test-data/test.txt");
+/// let result = crc32::check(path, 0x12345678);
+///
+/// assert!(matches!(result.unwrap_err(), Crc32Error::UnexpectedCrc32(_, _)));
+/// ```
+pub fn check<P>(path: P, expected: u32) -> Result<(), Crc32Error>
 where
     P: AsRef<Path>,
 {
@@ -37,13 +68,7 @@ where
     let result = hasher.finalize();
 
     if result != expected {
-        let msg = anyhow!(
-            "Error CRC32: Expected: {:#010x}, Got: {:#010x}",
-            expected,
-            result,
-        );
-
-        return Err(msg);
+        return Err(Crc32Error::UnexpectedCrc32(result, expected));
     }
 
     Ok(())
@@ -65,7 +90,7 @@ mod tests {
 
         assert_eq!(
             result.unwrap_err().to_string(),
-            "Error CRC32: Expected: 0x00000000, Got: 0x891bc0e8",
+            "unexpected crc32: 0x891bc0e8, wanted: 0x00000000",
         );
     }
 

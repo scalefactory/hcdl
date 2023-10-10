@@ -2,11 +2,7 @@
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
 use super::crc32;
-use super::Messages;
-use anyhow::{
-    anyhow,
-    Result,
-};
+use super::error::InstallError;
 use std::fs;
 use std::io::{
     self,
@@ -32,8 +28,14 @@ use std::fs::Permissions;
 #[cfg(target_family = "unix")]
 use std::os::unix::fs::PermissionsExt;
 
-// Find a suitable bindir for installing to.
-pub fn bin_dir() -> Result<PathBuf> {
+/// `bin_dir` finds a suitable executable directory to install a product to.
+///
+/// # Errors
+///
+/// Errors if:
+///   - Failing to find a suitable executable directory
+///   - Failing to create the executable directory if needed
+pub fn bin_dir() -> Result<PathBuf, InstallError> {
     if let Some(dir) = dirs::executable_dir() {
         // Attempt to create the directory if it doesn't exist
         if !dir.exists() {
@@ -44,19 +46,15 @@ pub fn bin_dir() -> Result<PathBuf> {
     }
     else {
         // If we get None, we're likely on Windows.
-        let msg = concat!(
-            "Could not find suitable install-dir.\n",
-            "Consider passing --install-dir to manually specify",
-        );
-
-        Err(anyhow!(msg))
+        Err(InstallError::NoExecutableDir)
     }
 }
 
-// Extracts a given `zipfile` to a temporary file under `dir`. Also checks
-// the CRC32 of the extracted file to make sure extraction was successful.
-// Returns a TempPath which the caller is responsible for persisting.
-fn extract(mut zipfile: &mut ZipFile, dir: &Path) -> Result<TempPath> {
+/// Extracts a given `zipfile` to a temporary file under `dir`. Also checks
+/// the CRC32 of the extracted file to make sure extraction was successful.
+/// Returns a [`tempfile::TempPath`] which the caller is responsible for
+/// persisting.
+fn extract(mut zipfile: &mut ZipFile, dir: &Path) -> Result<TempPath, InstallError> {
     // Get a tempfile to extract to under the dest path
     let mut tmpfile = NamedTempFile::new_in(dir)?;
 
@@ -73,20 +71,32 @@ fn extract(mut zipfile: &mut ZipFile, dir: &Path) -> Result<TempPath> {
     Ok(tmpfile)
 }
 
-// Installs files from the gien `zipfile` under the directory at `dir`.
-pub fn install<F>(messages: &Messages, zipfile: &mut F, dir: &Path) -> Result<()>
+/// Installs files from the given `zipfile` under the directory at `dir`.
+///
+/// # Errors
+///
+/// Can error if:
+///   - Installation directory doesn't exist
+///   - Failing to get a file index from the `zipfile`
+///   - Failing to extract files from the `zipfile`
+///   - Failing to persist the extracted file
+///   - Failing to set file permissions on the extracted file
+//
+// type_complexity is allowed here, since attempting to make the suggested
+// type alias results in other complains with no good compiler suggestions.
+#[allow(clippy::type_complexity)]
+pub fn install<F>(
+    zipfile: &mut F,
+    dir: &Path,
+) -> Result<Vec<PathBuf>, InstallError>
 where
     F: Read + Seek,
 {
     if !dir.is_dir() {
-        let err = anyhow!(
-            "install: Destination '{}' is not a directory",
-            dir.display(),
-        );
-
-        return Err(err);
+        return Err(InstallError::NoInstallDir(dir.to_path_buf()));
     }
 
+    let mut extracted_files = Vec::new();
     let mut zip = ZipArchive::new(zipfile).expect("new ziparchive");
 
     for i in 0..zip.len() {
@@ -98,15 +108,14 @@ where
         let filename = file.name();
 
         // Attempt to get the basename of the filename
-        let basename = Path::new(filename).file_name()
+        let basename = Path::new(filename)
+            .file_name()
             .ok_or_else(|| {
-                anyhow!("Couldn't get basename from: {}", filename)
+                InstallError::ZipFileBasename(filename.to_string())
             })?;
 
         // Finally get a pathbuf of the basename
         let filename = Path::new(basename).to_path_buf();
-
-        messages.extracting_file(&filename, dir);
 
         // Extract the file
         let tmpfile = extract(&mut file, dir)?;
@@ -120,9 +129,11 @@ where
         if let Some(mode) = file.unix_mode() {
             fs::set_permissions(&dest, Permissions::from_mode(mode))?;
         }
+
+        extracted_files.push(filename);
     }
 
-    Ok(())
+    Ok(extracted_files)
 }
 
 #[cfg(test)]
@@ -140,10 +151,10 @@ mod tests {
 
         // This should really be mocked, but for now we have a real file we
         // can open from the test-data.
-        let mut file = File::open(&test_file).unwrap();
-        let dest     = Path::new(test_file).to_path_buf();
-        let messages = Messages::new(false);
-        let res      = install(&messages, &mut file, &dest);
+        let mut file   = File::open(&test_file).unwrap();
+        let dest       = Path::new(test_file).to_path_buf();
+
+        let res = install(&mut file, &dest);
 
         assert!(res.is_err());
     }

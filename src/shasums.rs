@@ -1,11 +1,8 @@
 // shasums: Handle checking of files against shasums
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
-use super::TmpFile;
-use anyhow::{
-    anyhow,
-    Result,
-};
+use crate::tmpfile::TmpFile;
+use super::error::ShasumsError;
 use sha2::{
     Digest,
     Sha256,
@@ -13,17 +10,25 @@ use sha2::{
 use std::collections::HashMap;
 use std::io;
 
+/// This enum represents the outcome of shasum verification.
 #[derive(Debug, Eq, PartialEq)]
 pub enum Checksum {
-    OK,
+    /// Sha checksum did not verify.
     Bad,
+
+    /// Sha checksum verified correctly.
+    OK,
 }
 
+/// [`Shasums`] represents a downloaded shasum file.
+#[derive(Debug)]
 pub struct Shasums {
     content: String,
 }
 
 impl Shasums {
+    /// Create a new [`Shasums`] from the given shasum content.
+    #[must_use]
     pub fn new(shasums: String) -> Self {
         Self {
             content: shasums,
@@ -51,16 +56,30 @@ impl Shasums {
         hash
     }
 
-    // Check the shasum of the specified file
-    pub fn check(&self, tmpfile: &mut TmpFile) -> Result<Checksum> {
+    /// Check the shasum of the given `tmpfile` against our [`Shasums`]
+    /// content.
+    ///
+    /// # Errors
+    ///
+    /// Can error if:
+    ///   - Failing to find the shasum for the `tmpfile` filename
+    ///   - Failing to obtain a handle for the `tmpfile`
+    ///   - Failing to hash the file content
+    pub fn check(
+        &self,
+        tmpfile: &mut TmpFile,
+    ) -> Result<Checksum, ShasumsError> {
         let filename = tmpfile.filename();
         let shasum   = self.shasum(filename)
-            .ok_or_else(|| anyhow!("Couldn't find shasum for {}", filename))?;
+            .ok_or_else(|| {
+                ShasumsError::NoShasumForFile(filename.to_string())
+            })?;
 
         let mut file   = tmpfile.handle()?;
         let mut hasher = Sha256::new();
 
-        io::copy(&mut file, &mut hasher)?;
+        io::copy(&mut file, &mut hasher)
+            .map_err(|_err| ShasumsError::Hashing)?;
 
         let hash = hasher.finalize();
 
@@ -74,7 +93,8 @@ impl Shasums {
         Ok(res)
     }
 
-    // Return a reference to the shasums
+    /// Return a reference to the [`Shasums`] content.
+    #[must_use]
     pub fn content(&self) -> &str {
         &self.content
     }
@@ -153,7 +173,7 @@ mod tests {
 
         assert_eq!(
             res.unwrap_err().to_string(),
-            format!("Couldn't find shasum for {}", test_data_path),
+            format!("couldn't find shasum for {test_data_path}"),
         );
     }
 

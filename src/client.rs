@@ -1,20 +1,28 @@
 // client: HTTP client and associated methods
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
-use crate::progressbar::ProgressBarBuilder;
-use crate::shasums::Shasums;
-use crate::signature::Signature;
-use crate::tmpfile::TmpFile;
-use anyhow::Result;
+use crate::{
+    error::ClientError,
+    progressbar::ProgressBarBuilder,
+    shasums::Shasums,
+    signature::Signature,
+    tmpfile::TmpFile,
+};
 use bytes::Bytes;
 use reqwest::Response;
 use std::io::prelude::*;
 use std::io::BufWriter;
 use url::Url;
 
-mod build;
-mod config;
-mod product_version;
+/// Re-export of `build`.
+pub mod build;
+
+/// Re-export of `config`.
+pub mod config;
+
+/// Re-export of `product_version`.
+pub mod product_version;
+
 pub use config::ClientConfig;
 use product_version::ProductVersion;
 
@@ -26,6 +34,9 @@ const USER_AGENT: &str = concat!(
     env!("CARGO_PKG_VERSION"),
 );
 
+/// A [`Client`] for downloading [HashiCorp](https://www.hashicorp.com)
+/// products.
+#[derive(Debug)]
 pub struct Client {
     api_url: String,
     client:  reqwest::Client,
@@ -33,12 +44,18 @@ pub struct Client {
 }
 
 impl Client {
-    // Return a new reqwest client with our user-agent
-    pub fn new(config: ClientConfig) -> Result<Self> {
+    /// Creates a new [`Client`] with the given [`ClientConfig`].
+    ///
+    /// # Errors
+    ///
+    /// Errors if failing to build the [`reqwest::Client`].
+    pub fn new(config: ClientConfig) -> Result<Self, ClientError> {
+        // Get a new reqwest client with our user-agent
         let client = reqwest::ClientBuilder::new()
             .gzip(true)
             .user_agent(USER_AGENT)
-            .build()?;
+            .build()
+            .map_err(|_err| ClientError::ClientBuilder)?;
 
         let client = Self {
             api_url: RELEASES_API.to_string(),
@@ -49,28 +66,49 @@ impl Client {
         Ok(client)
     }
 
-    // Version check the given product via the checkpoint API
-    pub async fn check_version(&self, product: &str) -> Result<ProductVersion> {
-        // We to_string here for the test scenario.
-        #![allow(clippy::to_string_in_format_args)]
+    /// Checks the current version of the given `product` against the
+    /// [HashiCorp](https://www.hashicorp.com) checkpoint API.
+    ///
+    /// # Errors
+    ///
+    /// Errors if:
+    ///   - Failing to parse the created checkpoint URL
+    ///   - Failing to get the product version
+    ///   - Failing to create a [`crate::client::product_version::ProductVersion`]
+    pub async fn check_version(
+        &self,
+        product: &str,
+    ) -> Result<ProductVersion, ClientError> {
         let url = format!(
             "{api}/{product}/latest",
             api = self.api_url,
-            product = product,
         );
 
-        let url = Url::parse(&url)?;
+        let url = Url::parse(&url)
+            .map_err(|_err| ClientError::Url("check_version"))?;
 
         let resp = self.get(url)
             .await?
             .json::<ProductVersion>()
-            .await?;
+            .await
+            .map_err(|_err| ClientError::ProductVersion)?;
 
         Ok(resp)
     }
 
-    // Download from the given URL to the output file.
-    pub async fn download(&self, url: Url, tmpfile: &mut TmpFile) -> Result<()> {
+    /// Downloads content from the given `url` to `tmpfile`.
+    ///
+    /// # Errors
+    ///
+    /// Errors if:
+    ///   - Failing to make a request to the given `url`
+    ///   - Failing to download the content from the given `url`
+    ///   - Failing to write the downloaded content to the `tmpfile`
+    pub async fn download(
+        &self,
+        url: Url,
+        tmpfile: &mut TmpFile,
+    ) -> Result<(), ClientError> {
         let file = tmpfile.handle()?;
 
         // Start the GET and attempt to get a content-length
@@ -88,7 +126,11 @@ impl Client {
         let mut writer = pb.wrap_write(writer);
 
         // Start downloading chunks.
-        while let Some(chunk) = resp.chunk().await? {
+        while let Some(chunk) = resp
+            .chunk()
+            .await
+            .map_err(|_| ClientError::Chunk)?
+        {
             // Write the chunk to the output file.
             writer.write_all(&chunk)?;
         }
@@ -98,41 +140,51 @@ impl Client {
         Ok(())
     }
 
-    // Perform an HTTP GET on the given URL
-    pub async fn get(&self, url: Url) -> Result<Response> {
+    /// Perform an HTTP GET on the given `url`.
+    async fn get(&self, url: Url) -> Result<Response, ClientError> {
         let resp = self.client
-            .get(url)
+            .get(url.clone())
             .send()
-            .await?;
+            .await
+            .map_err(|_err| ClientError::Get(url))?;
 
         Ok(resp)
     }
 
-    // Perform an HTTP GET on the given URL and return the result as Bytes
-    pub async fn get_bytes(&self, url: Url) -> Result<Bytes> {
+    /// Perform an HTTP GET on the given `url` and return the result as
+    /// [`Bytes`].
+    async fn get_bytes(&self, url: Url) -> Result<Bytes, ClientError> {
         let resp = self.get(url)
             .await?
             .bytes()
-            .await?;
+            .await
+            .map_err(|_err| ClientError::GetBytes)?;
 
         Ok(resp)
     }
 
-    // Perform an HTTP GET on the given URL and return the result as a String
-    pub async fn get_text(&self, url: Url) -> Result<String> {
+    /// Perform an HTTP GET on the given `url` and return the result as a
+    /// `String`.
+    async fn get_text(&self, url: Url) -> Result<String, ClientError> {
         let resp = self.get(url)
             .await?
             .text()
-            .await?;
+            .await
+            .map_err(|_err| ClientError::GetText)?;
 
         Ok(resp)
     }
 
-    // Get the shasums for the given product version and return a new Shasums.
+    /// Get the checksums for the given [`ProductVersion`] and return a new
+    /// [`Shasums`].
+    ///
+    /// # Errors
+    ///
+    /// Errors when failing to get the shasum file.
     pub async fn get_shasums(
         &self,
         version: &ProductVersion,
-    ) -> Result<Shasums> {
+    ) -> Result<Shasums, ClientError> {
         let url     = version.shasums_url();
         let shasums = self.get_text(url).await?;
         let shasums = Shasums::new(shasums);
@@ -140,12 +192,18 @@ impl Client {
         Ok(shasums)
     }
 
-    // Get the signature for the given ProductVersion and return a new
-    // Signature.
+    /// Get the signature for the given [`ProductVersion`] and return a new
+    /// [`Signature`].
+    ///
+    /// # Errors
+    ///
+    /// Errors if:
+    ///   - Failing to get the shasums signature
+    ///   - Failing to create a [`Signature`]
     pub async fn get_signature(
         &self,
         version: &ProductVersion,
-    ) -> Result<Signature> {
+    ) -> Result<Signature, ClientError> {
         let url       = version.shasums_signature_url();
         let signature = self.get_bytes(url).await?;
         let signature = Signature::new(signature)?;
@@ -153,27 +211,32 @@ impl Client {
         Ok(signature)
     }
 
-    // Get the ProductVersion for a given product and version.
+    /// Get the [`ProductVersion`] for a given `product` and `version`.
+    ///
+    /// # Errors
+    ///
+    /// Errors if:
+    ///   - Failing to get the version from the remote server
+    ///   - Failing to deserialize the obtained version into a
+    ///     [`ProductVersion`]
     pub async fn get_version(
         &self,
         product: &str,
         version: &str,
-    ) -> Result<ProductVersion> {
-        // We to_string here for the test scenario.
-        #![allow(clippy::to_string_in_format_args)]
+    ) -> Result<ProductVersion, ClientError> {
         let url = format!(
             "{api}/{product}/{version}",
             api = self.api_url,
-            product = product,
-            version = version,
         );
 
-        let url = Url::parse(&url)?;
+        let url = Url::parse(&url)
+            .map_err(|_err| ClientError::Url("get_version"))?;
 
         let resp = self.get(url)
             .await?
             .json::<ProductVersion>()
-            .await?;
+            .await
+            .map_err(|_err| ClientError::ProductVersion)?;
 
         Ok(resp)
     }
@@ -208,7 +271,7 @@ mod tests {
 
     // Builds up the path to the test file
     fn data_path(filename: &str) -> String {
-        format!("{}{}", TEST_DATA_DIR, filename)
+        format!("{TEST_DATA_DIR}{filename}")
     }
 
     fn read_file_bytes(path: &PathBuf) -> Bytes {
@@ -270,7 +333,7 @@ mod tests {
     async fn test_get_bytes() {
         let mut server = mockito::Server::new_async().await;
         let server_url = server.url();
-        let url        = Url::parse(&format!("{}/test.txt", server_url)).unwrap();
+        let url        = Url::parse(&format!("{server_url}/test.txt")).unwrap();
         let expected   = "Test text\n";
         let data       = data_path("test.txt");
 
@@ -304,22 +367,22 @@ mod tests {
             name:              "terraform".into(),
             timestamp_created: DateTime::<Utc>::from_str("2020-05-27T16:55:35.000Z").unwrap(),
             timestamp_updated: DateTime::<Utc>::from_str("2020-05-27T16:55:35.000Z").unwrap(),
-            url_shasums:       Url::parse(&format!("{}/terraform/0.12.26/terraform_0.12.26_SHA256SUMS", server_url)).unwrap(),
+            url_shasums:       Url::parse(&format!("{server_url}/terraform/0.12.26/terraform_0.12.26_SHA256SUMS")).unwrap(),
             version:           "0.12.26".into(),
             builds:            vec![
                 Build {
                     arch: "amd64".into(),
                     os:   "freebsd".into(),
-                    url:  Url::parse(&format!("{}/terraform/0.12.26/terraform_0.12.26_freebsd_amd64.zip", server_url)).unwrap(),
+                    url:  Url::parse(&format!("{server_url}/terraform/0.12.26/terraform_0.12.26_freebsd_amd64.zip")).unwrap(),
                 },
                 Build {
                     arch: "amd64".into(),
                     os:   "linux".into(),
-                    url:  Url::parse(&format!("{}/terraform/0.12.26/terraform_0.12.26_linux_amd64.zip", server_url)).unwrap(),
+                    url:  Url::parse(&format!("{server_url}/terraform/0.12.26/terraform_0.12.26_linux_amd64.zip")).unwrap(),
                 },
             ],
             url_shasums_signatures: vec![
-                Url::parse(&format!("{}/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.sig", server_url)).unwrap(),
+                Url::parse(&format!("{server_url}/terraform/0.12.26/terraform_0.12.26_SHA256SUMS.sig")).unwrap(),
             ],
         };
 
@@ -344,7 +407,7 @@ mod tests {
     async fn test_get_text() {
         let mut server = mockito::Server::new_async().await;
         let server_url = server.url();
-        let url        = Url::parse(&format!("{}/test.txt", server_url)).unwrap();
+        let url        = Url::parse(&format!("{server_url}/test.txt")).unwrap();
         let expected   = Bytes::from("Test text\n");
         let data       = data_path("test.txt");
 

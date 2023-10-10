@@ -8,7 +8,7 @@ license = "MIT OR Apache-2.0"
 readme = "README.md"
 homepage = "https://github.com/phyber/hcdl"
 repository = "https://github.com/phyber/hcdl"
-rust-version = "1.65.0"
+rust-version = "1.68.2"
 resolver = "2"
 categories = [
     "command-line-utilities",
@@ -21,6 +21,14 @@ exclude = [
     ".gitignore",
     ".github",
 ]
+
+[[bin]]
+name = "hcdl"
+path = "src/main.rs"
+
+[lib]
+name = "hcdl"
+path = "src/lib.rs"
 
 [features]
 default = [
@@ -45,6 +53,7 @@ pgp = "0.10"
 serde_json = "1.0"
 sha2 = "0.10"
 tempfile = "3.6"
+thiserror = "1.0"
 
 [dependencies.clap]
 version = "4.3.8"

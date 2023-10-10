@@ -1,11 +1,8 @@
 // signature: Check GPG signatures
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
+use super::error::SignatureError;
 use super::shasums::Shasums;
-use anyhow::{
-    anyhow,
-    Result,
-};
 use bytes::{
     Buf,
     Bytes,
@@ -33,6 +30,7 @@ const HASHICORP_GPG_KEY_FILENAME: &str = "hashicorp.asc";
 #[cfg(feature = "embed_gpg_key")]
 const HASHICORP_GPG_KEY: &str = include_str!("../gpg/hashicorp.asc");
 
+/// Handle checking `signature` against `public_key`.
 #[derive(Debug)]
 pub struct Signature {
     // The public key
@@ -54,7 +52,12 @@ impl PartialEq for Signature {
 }
 
 impl Signature {
-    pub fn new(signature: Bytes) -> Result<Self> {
+    /// Create a new [`Signature`] handler from the given `signature`.
+    ///
+    /// # Errors
+    ///
+    /// Can error if failing to get the public key.
+    pub fn new(signature: Bytes) -> Result<Self, SignatureError> {
         let public_key = get_public_key()?;
 
         let signature = Self::with_public_key(
@@ -65,27 +68,40 @@ impl Signature {
         Ok(signature)
     }
 
-    pub fn with_public_key(signature: Bytes, public_key: &str) -> Result<Self> {
+    /// Create a new [`Signature`] handler from the given `signature` and
+    /// `public_key`.
+    ///
+    /// # Errors
+    ///
+    /// Can error if failing to read the public key or the signature.
+    pub fn with_public_key(
+        signature: Bytes,
+        public_key: &str,
+    ) -> Result<Self, SignatureError> {
         let mut cursor = Cursor::new(public_key.as_bytes());
         let public_key = SignedPublicKey::from_armor_single(&mut cursor)?;
-        let public_key = public_key.0;
-
         let reader = BufReader::new(signature.reader());
         let signature = StandaloneSignature::from_bytes(reader)?;
 
         let signature = Self {
             signature:  signature,
-            public_key: public_key,
+            public_key: public_key.0,
         };
 
         Ok(signature)
     }
 
-    // We have to check the signature against all public subkeys and the
-    // overall public key.
-    pub fn check(&self, shasums: &Shasums) -> Result<()> {
+    /// Check the given [`Shasums`] content against the [`Signature`].
+    ///
+    /// # Errors
+    ///
+    /// Will return an error if unable to verify the signature against the
+    /// public key or any of its subkeys.
+    pub fn check(&self, shasums: &Shasums) -> Result<(), SignatureError> {
         let shasums = shasums.content().as_bytes();
 
+        // We have to check the signature against all public subkeys and the
+        // overall public key.
         for subkey in &self.public_key.public_subkeys {
             match self.signature.verify(&subkey, shasums) {
                 Err(_) => continue,
@@ -94,17 +110,17 @@ impl Signature {
         }
 
         // One last attempt, check against the main public key.
-        match self.signature.verify(&self.public_key, shasums) {
-            Err(_) => Err(anyhow!("Couldn't verify signature")),
-            Ok(()) => Ok(()),
-        }
+        self.signature.verify(&self.public_key, shasums)
+            .map_err(|_err| SignatureError::Verification)?;
+
+        Ok(())
     }
 }
 
 // Read a file's content into a String
 #[cfg(any(test, not(feature = "embed_gpg_key")))]
-fn read_file_content(path: &PathBuf) -> Result<String> {
-    let file         = File::open(&path)?;
+fn read_file_content(path: &PathBuf) -> Result<String, SignatureError> {
+    let file         = File::open(path)?;
     let mut reader   = BufReader::new(file);
     let mut contents = String::new();
 
@@ -115,7 +131,7 @@ fn read_file_content(path: &PathBuf) -> Result<String> {
 
 // Find the path where the GPG key should be stored.
 #[cfg(not(feature = "embed_gpg_key"))]
-fn get_public_key_path() -> Result<PathBuf> {
+fn get_public_key_path() -> Result<PathBuf, SignatureError> {
     // During tests we short circuit the path discovery to just take the
     // GPG key from the test-data directory.
     let path = if cfg!(test) {
@@ -131,16 +147,11 @@ fn get_public_key_path() -> Result<PathBuf> {
     }
     else {
         let mut path = dirs::data_dir()
-            .ok_or_else(|| anyhow!("Couldn't find shared data directory"))?;
+            .ok_or_else(|| SignatureError::NoSharedDataDir)?;
 
         // Ensure that the data dir exists
         if !path.exists() || !path.is_dir() {
-            let msg = anyhow!(
-                "Data directory {} does not exist or is not a directory",
-                path.display(),
-            );
-
-            return Err(msg);
+            return Err(SignatureError::NoSharedDataDirExists(path));
         }
 
         path = path.join(env!("CARGO_PKG_NAME"));
@@ -148,13 +159,7 @@ fn get_public_key_path() -> Result<PathBuf> {
 
         // Ensure that the GPG key exists
         if !path.exists() || !path.is_file() {
-            let msg = format!(
-                "GPG key file {} does not exist or it not a file.\n\
-                 Check https://www.hashicorp.com/security to find the GPG key",
-                path.display(),
-            );
-
-            return Err(anyhow!(msg));
+            return Err(SignatureError::GpgKey(path));
         }
 
         path
@@ -165,7 +170,7 @@ fn get_public_key_path() -> Result<PathBuf> {
 
 // Locate and read the GPG key.
 #[cfg(not(feature = "embed_gpg_key"))]
-fn get_public_key() -> Result<String> {
+fn get_public_key() -> Result<String, SignatureError> {
     let path       = get_public_key_path()?;
     let public_key = read_file_content(&path)?;
 
@@ -176,7 +181,7 @@ fn get_public_key() -> Result<String> {
 // embed_gpg_key feature.
 #[cfg(feature = "embed_gpg_key")]
 #[allow(clippy::unnecessary_wraps)]
-fn get_public_key() -> Result<String> {
+fn get_public_key() -> Result<String, SignatureError> {
     let public_key = HASHICORP_GPG_KEY.to_string();
 
     Ok(public_key)
@@ -188,7 +193,7 @@ mod tests {
     use std::path::Path;
 
     // Read a file's contents into Bytes
-    fn read_file_bytes(path: &PathBuf) -> Result<Bytes> {
+    fn read_file_bytes(path: &PathBuf) -> Result<Bytes, SignatureError> {
         let file         = File::open(&path)?;
         let mut reader   = BufReader::new(file);
         let mut contents = Vec::new();
@@ -312,7 +317,7 @@ mod tests {
 
         assert_eq!(
             res.unwrap_err().to_string(),
-            "Couldn't verify signature",
+            "couldn't verify signature",
         )
     }
 
@@ -363,7 +368,7 @@ mod tests {
 
         assert_eq!(
             res.unwrap_err().to_string(),
-            "Couldn't verify signature",
+            "couldn't verify signature",
         )
     }
 }

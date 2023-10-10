@@ -12,21 +12,33 @@ use serde::{
 };
 use std::fmt;
 use std::str::FromStr;
-use super::build::Build;
 use url::Url;
 
-// Represents a single version of a HashiCorp product
+pub use super::build::Build;
+
+/// Represents a single version of a [HashiCorp](https://hashicorp.io) product.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct ProductVersion {
-    pub builds:                 Vec<Build>,
-    pub name:                   String,
-    pub url_shasums:            Url,
-    pub url_shasums_signatures: Vec<Url>,
-    pub version:                String,
+    /// A `Vec` of [`Build`] for the [`ProductVersion`].
+    pub builds: Vec<Build>,
 
+    /// The name of the product.
+    pub name: String,
+
+    /// The [`Url`] that the product shasums can be found at.
+    pub url_shasums: Url,
+
+    /// The [`Url`] that the product's shasums signature can be found at.
+    pub url_shasums_signatures: Vec<Url>,
+
+    /// The version number of the product.
+    pub version: String,
+
+    /// A timestamp representing when the product version was created.
     #[serde(deserialize_with = "deserialize_from_str")]
     pub timestamp_created: DateTime<Utc>,
 
+    /// A timestamp representing when the product version was updated.
     #[serde(deserialize_with = "deserialize_from_str")]
     pub timestamp_updated: DateTime<Utc>,
 }
@@ -42,7 +54,8 @@ where
 }
 
 impl ProductVersion {
-    // Pull a specific build out of the product version builds.
+    /// Pull a specific [`Build`] out of the [`ProductVersion`] `builds`.
+    #[must_use]
     pub fn build(&self, arch: &str, os: &str) -> Option<&Build> {
         let filtered: Vec<&Build> = self.builds
             .iter()
@@ -57,12 +70,19 @@ impl ProductVersion {
         }
     }
 
-    // Create and return the shasums signature URL.
+    /// Create and return the shasums signature URL.
+    ///
+    /// # Panics
+    ///
+    /// This function could panic if there are no signature URLs returned by
+    /// the API.
+    #[must_use]
     pub fn shasums_signature_url(&self) -> Url {
         self.url_shasums_signatures.first().unwrap().clone()
     }
 
-    // Create and return the shasums URL.
+    /// Create and return the shasums URL.
+    #[must_use]
     pub fn shasums_url(&self) -> Url {
         self.url_shasums.clone()
     }

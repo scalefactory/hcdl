@@ -1,5 +1,5 @@
 // Handles a tmpfile for downloading
-use anyhow::Result;
+use super::error::TmpFileError;
 use std::fs::OpenOptions;
 use std::io::{
     self,
@@ -13,14 +13,20 @@ use tempfile::NamedTempFile;
 #[cfg(target_family = "unix")]
 use std::os::unix::fs::OpenOptionsExt;
 
+/// Wrapper for a [`tempfile::NamedTempFile`].
+#[derive(Debug)]
 pub struct TmpFile {
     tmpfile:  NamedTempFile,
     filename: String,
 }
 
 impl TmpFile {
-    // Make a new TmpFile for filename
-    pub fn new(filename: &str) -> Result<Self> {
+    /// Make a new [`TmpFile`] for filename.
+    ///
+    /// # Errors
+    ///
+    /// Can error if unable to create a [`NamedTempFile`].
+    pub fn new(filename: &str) -> Result<Self, TmpFileError> {
         let tmp = Self {
             filename: filename.to_owned(),
             tmpfile:  NamedTempFile::new()?,
@@ -29,20 +35,32 @@ impl TmpFile {
         Ok(tmp)
     }
 
-    // Return the tmpfile filename
+    /// Return the tmpfile filename
+    #[must_use]
     pub fn filename(&self) -> &str {
         &self.filename
     }
 
-    // Return a handle that has been rewound to 0
-    pub fn handle(&mut self) -> Result<&mut NamedTempFile> {
+    /// Return a [`NamedTempFile`] handle that has been rewound to 0.
+    ///
+    /// # Errors
+    ///
+    /// Can error if seeking to the beginning of the `tmpfile` fails.
+    pub fn handle(&mut self) -> Result<&mut NamedTempFile, TmpFileError> {
         self.tmpfile.seek(SeekFrom::Start(0))?;
 
         Ok(&mut self.tmpfile)
     }
 
-    // Persist the file into our current directory as self.filename
-    pub fn persist(&mut self) -> Result<()> {
+    /// Persist the file into our current directory as self.filename
+    ///
+    /// # Errors
+    ///
+    /// Can error under various common IO issues such as:
+    ///   - Failure to open file for writing
+    ///   - Attempting to get the file handle for the `tmpfile`
+    ///   - Issues while writing to the `tmpfile`
+    pub fn persist(&mut self) -> Result<(), TmpFileError> {
         let dest        = Path::new(&self.filename);
         let mut options = OpenOptions::new();
 

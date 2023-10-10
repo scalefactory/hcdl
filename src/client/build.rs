@@ -4,10 +4,15 @@
 use serde::Deserialize;
 use url::Url;
 
-// Represents a single build of a HashiCorp product
+/// Represents a single build of a [HashiCorp](https://hashicorp.io) product.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct Build {
+    /// The `arch` of the build.
     pub arch: String,
-    pub os:   String,
-    pub url:  Url,
+
+    /// The `os` of the build.
+    pub os: String,
+
+    /// The [`Url`] where the build can be found.
+    pub url: Url,
 }
