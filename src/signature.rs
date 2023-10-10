@@ -11,7 +11,7 @@ use pgp::composed::{
     Deserializable,
     StandaloneSignature,
 };
-use pgp::composed::signed_key::public::SignedPublicKey;
+use pgp::composed::signed_key::SignedPublicKey;
 use std::io::BufReader;
 use std::io::Cursor;
 
