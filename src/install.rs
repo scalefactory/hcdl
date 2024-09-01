@@ -97,7 +97,7 @@ where
     }
 
     let mut extracted_files = Vec::new();
-    let mut zip = ZipArchive::new(zipfile).expect("new ziparchive");
+    let mut zip = ZipArchive::new(zipfile)?;
 
     for i in 0..zip.len() {
         let mut file = zip.by_index(i)?;

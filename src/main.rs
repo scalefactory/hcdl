@@ -104,7 +104,7 @@ async fn main() -> Result<()> {
         let signature = client.get_signature(&builds).await?;
 
         match signature.check(&shasums) {
-            Ok(_) => {
+            Ok(()) => {
                 let url = builds.shasums_signature_url();
                 let signature_filename = url
                     .path_segments()

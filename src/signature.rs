@@ -269,7 +269,7 @@ mod tests {
 
         assert_eq!(
             signature.unwrap_err().to_string(),
-            "io error: Custom { kind: Interrupted, error: \"incomplete parse\" }",
+            "\"failed reading: armor header: not enough bytes\"",
         )
     }
 
