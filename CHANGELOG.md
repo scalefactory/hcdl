@@ -5,6 +5,7 @@
   - Bump MSRV to 1.70.0
   - Bump dependencies
   - Moved lots of functionality under `lib.rs`
+  - Added `aarch64` (`arm64`) as a supported architecture
 
 ## v0.12.0
 

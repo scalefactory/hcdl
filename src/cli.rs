@@ -31,6 +31,9 @@ use clap_complete::Shell;
 #[cfg(feature = "shell_completion")]
 use std::io;
 
+#[cfg(target_arch = "aarch64")]
+pub const DEFAULT_ARCH: &str = "arm64";
+
 #[cfg(target_arch = "arm")]
 pub const DEFAULT_ARCH: &str = "arm";
 
@@ -44,6 +47,7 @@ const VALID_ARCH: &[&str] = &[
     "386",
     "amd64",
     "arm",
+    "arm64",
 ];
 
 #[cfg(target_os = "freebsd")]
