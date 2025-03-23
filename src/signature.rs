@@ -269,7 +269,7 @@ mod tests {
 
         assert_eq!(
             signature.unwrap_err().to_string(),
-            "\"failed reading: armor header: not enough bytes\"",
+            "\"not enough bytes in buffer: armor header\"",
         )
     }
 

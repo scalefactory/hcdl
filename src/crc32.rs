@@ -9,8 +9,8 @@ use std::io::{
 };
 use std::path::Path;
 
-// Buffer size, 256KiB
-const BUFFER_SIZE: usize = 256 * 1_024;
+// Buffer size, 16KiB
+const BUFFER_SIZE: usize = 16 * 1_024;
 
 /// Check the given `path`'s CRC32 against the `expected` CRC32.
 ///
