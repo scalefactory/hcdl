@@ -2,6 +2,11 @@
 
 `hcdl` is a tool for easily downloading and installing [HashiCorp] products.
 
+This tool is deprecated. I originally wrote it to learn how various parts of
+Rust worked, as well as to be a handy tool for updating my own copy of
+Terraform. If anyone other than me uses this tool, I would highly suggest
+switching to [mise].
+
 ## Installation
 
 `hcdl` is available for install from [crates.io] if you have a stable [Rust]
@@ -240,6 +245,7 @@ be dual licensed as above, without any additional terms or conditions.
 
 <!-- links -->
 [crates.io]: https://crates.io/crates/hcdl
+[mise]: https://mise.jdx.dev/
 [FreeBSD]: https://www.freebsd.org/
 [HashiCorp]: https://www.hashicorp.com/
 [LICENSE-APACHE]: LICENSE-APACHE
