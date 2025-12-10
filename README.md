@@ -5,7 +5,7 @@
 ## Installation
 
 `hcdl` is available for install from [crates.io] if you have a stable [Rust]
-toolchain of at least v1.75.0 installed.
+toolchain of at least v1.88.0 installed.
 
 This can be done with the standard Cargo install command:
 

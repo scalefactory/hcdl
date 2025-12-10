@@ -8,7 +8,7 @@ license = "MIT OR Apache-2.0"
 readme = "README.md"
 homepage = "https://github.com/phyber/hcdl"
 repository = "https://github.com/phyber/hcdl"
-rust-version = "1.81.0"
+rust-version = "1.88.0"
 resolver = "2"
 categories = [
     "command-line-utilities",
@@ -43,20 +43,20 @@ shell_completion = [
 
 [dependencies]
 anyhow = "1.0"
-bytes = "1.10"
+bytes = "1.11"
 chrono = "0.4"
-crc32fast = "1.4"
+crc32fast = "1.5"
 dirs = "6.0"
 hex = "0.4"
-indicatif = "0.17"
-pgp = "0.15"
+indicatif = "0.18"
+pgp = "0.18"
 serde_json = "1.0"
 sha2 = "0.10"
-tempfile = "3.19"
+tempfile = "3.23"
 thiserror = "2.0"
 
 [dependencies.clap]
-version = "4.5.32"
+version = "4.5.53"
 features = [
     "cargo",
     "deprecated",
@@ -65,7 +65,7 @@ features = [
 ]
 
 [dependencies.clap_complete]
-version = "4.5.47"
+version = "4.5.61"
 optional = true
 
 [dependencies.reqwest]
@@ -85,7 +85,7 @@ features = [
 ]
 
 [dependencies.tokio]
-version = "1.44"
+version = "1.48"
 features = [
     "macros",
     "rt-multi-thread",
@@ -100,7 +100,7 @@ features = [
 # Force this due to flate2 forcing us to lower zip versions, this is due to
 # restrictions on flate2 versions in the zip-rs Cargo.toml
 [dependencies.zip]
-version = "2.4.2"
+version = "6.0.0"
 default-features = false
 features = [
     "deflate",

@@ -9,9 +9,9 @@ use bytes::{
 };
 use pgp::composed::{
     Deserializable,
-    StandaloneSignature,
+    DetachedSignature,
 };
-use pgp::composed::signed_key::SignedPublicKey;
+use pgp::composed::SignedPublicKey;
 use std::io::BufReader;
 use std::io::Cursor;
 
@@ -37,7 +37,7 @@ pub struct Signature {
     public_key: SignedPublicKey,
 
     // This is the signature of the shasums file.
-    signature: StandaloneSignature,
+    signature: DetachedSignature,
 }
 
 // Only used by client::test_get_signature.
@@ -81,7 +81,7 @@ impl Signature {
         let mut cursor = Cursor::new(public_key.as_bytes());
         let public_key = SignedPublicKey::from_armor_single(&mut cursor)?;
         let reader = BufReader::new(signature.reader());
-        let signature = StandaloneSignature::from_bytes(reader)?;
+        let signature = DetachedSignature::from_bytes(reader)?;
 
         let signature = Self {
             signature:  signature,
@@ -104,7 +104,7 @@ impl Signature {
         // overall public key.
         for subkey in &self.public_key.public_subkeys {
             match self.signature.verify(&subkey, shasums) {
-                Err(_) => continue,
+                Err(_) => {},
                 Ok(()) => return Ok(()),
             }
         }
@@ -269,7 +269,7 @@ mod tests {
 
         assert_eq!(
             signature.unwrap_err().to_string(),
-            "\"not enough bytes in buffer: armor header\"",
+            "not enough bytes in buffer: armor header",
         )
     }
 

@@ -37,6 +37,7 @@ const USER_AGENT: &str = concat!(
 /// A [`Client`] for downloading [HashiCorp](https://www.hashicorp.com)
 /// products.
 #[derive(Debug)]
+#[allow(clippy::struct_field_names)]
 pub struct Client {
     api_url: String,
     client:  reqwest::Client,

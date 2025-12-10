@@ -54,7 +54,12 @@ pub fn bin_dir() -> Result<PathBuf, InstallError> {
 /// the CRC32 of the extracted file to make sure extraction was successful.
 /// Returns a [`tempfile::TempPath`] which the caller is responsible for
 /// persisting.
-fn extract(mut zipfile: &mut ZipFile, dir: &Path) -> Result<TempPath, InstallError> {
+fn extract<R>(
+    mut zipfile: &mut ZipFile<R>,
+    dir: &Path,
+) -> Result<TempPath, InstallError>
+    where R: std::io::Read,
+{
     // Get a tempfile to extract to under the dest path
     let mut tmpfile = NamedTempFile::new_in(dir)?;
 

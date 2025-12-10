@@ -48,7 +48,7 @@ async fn main() -> Result<()> {
         messages.list_products(products::PRODUCTS_LIST);
 
         exit(0);
-    };
+    }
 
     // Pull options from matches
     // Unwraps here should be fine as these are checked and have default
@@ -96,7 +96,7 @@ async fn main() -> Result<()> {
         let shasums_filename = builds.url_shasums
             .path_segments()
             .unwrap()
-            .last()
+            .next_back()
             .unwrap();
         messages.verifying_signature(shasums_filename);
 
@@ -109,7 +109,7 @@ async fn main() -> Result<()> {
                 let signature_filename = url
                     .path_segments()
                     .unwrap()
-                    .last()
+                    .next_back()
                     .unwrap();
 
                 messages.signature_verification_success(signature_filename);
@@ -119,7 +119,7 @@ async fn main() -> Result<()> {
 
                 exit(1);
             },
-        };
+        }
     }
 
     // Download the product
@@ -127,7 +127,7 @@ async fn main() -> Result<()> {
     let filename     = download_url
         .path_segments()
         .unwrap()
-        .last()
+        .next_back()
         .unwrap();
 
     // Get a new tmpfile for the download.
@@ -144,7 +144,7 @@ async fn main() -> Result<()> {
 
             exit(1);
         },
-    };
+    }
 
     // If we're DOWNLOAD_ONLY (implies KEEP), just persist the file and
     // we're done.
